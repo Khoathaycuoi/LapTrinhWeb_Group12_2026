@@ -1,0 +1,6 @@
+@BTL_NhaKhoa_HostAddress = http://localhost:5062
+
+GET {{BTL_NhaKhoa_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
