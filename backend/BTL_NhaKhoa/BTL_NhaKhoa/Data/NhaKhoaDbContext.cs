@@ -1,12 +1,21 @@
 using BTL_NhaKhoa.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BTL_NhaKhoa.Data;
 
 public sealed class NhaKhoaDbContext(DbContextOptions<NhaKhoaDbContext> options)
     : DbContext(options)
 {
+    private static readonly ValueConverter<DateOnly, DateTime> ChuyenNgay = new(
+        ngay => ngay.ToDateTime(TimeOnly.MinValue),
+        ngayGio => DateOnly.FromDateTime(ngayGio));
+
+    private static readonly ValueConverter<TimeOnly, TimeSpan> ChuyenGio = new(
+        gio => gio.ToTimeSpan(),
+        khoangThoiGian => TimeOnly.FromTimeSpan(khoangThoiGian));
+
     public DbSet<VaiTro> VaiTros => Set<VaiTro>();
     public DbSet<ConNguoi> ConNguois => Set<ConNguoi>();
     public DbSet<TaiKhoan> TaiKhoans => Set<TaiKhoan>();
@@ -41,6 +50,17 @@ public sealed class NhaKhoaDbContext(DbContextOptions<NhaKhoaDbContext> options)
         {
             foreach (var property in entityType.GetProperties())
             {
+                if (property.ClrType == typeof(DateOnly) || property.ClrType == typeof(DateOnly?))
+                {
+                    property.SetValueConverter(ChuyenNgay);
+                    property.SetColumnType("date");
+                }
+                else if (property.ClrType == typeof(TimeOnly) || property.ClrType == typeof(TimeOnly?))
+                {
+                    property.SetValueConverter(ChuyenGio);
+                    property.SetColumnType("time");
+                }
+
                 property.SetColumnName(ToSnakeCase(property.Name));
             }
         }
