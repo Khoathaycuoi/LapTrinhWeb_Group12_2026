@@ -13,7 +13,7 @@ public sealed class DangKyService(NhaKhoaDbContext db)
 {
     private readonly PasswordHasher<TaiKhoan> _maHoaMatKhau = new();
 
-    public async Task<KetQuaDangKy> DangKyAsync(YeuCauDangKy yeuCau, string maVaiTro)
+    public async Task<KetQuaDangKy> DangKyAsync(DangKyRequest yeuCau, string maVaiTro)
     {
         if (string.IsNullOrWhiteSpace(yeuCau.HoTen))
         {
@@ -75,7 +75,7 @@ public sealed class DangKyService(NhaKhoaDbContext db)
             {
                 ConNguoi = conNguoi,
                 NgayDangKy = DateOnly.FromDateTime(DateTime.UtcNow),
-                TienSuBenh = (yeuCau as YeuCauDangKyKhachHang)?.TienSuBenh
+                TienSuBenh = (yeuCau as DangKyKhachHangRequest)?.TienSuBenh
             });
         }
         else if (maVaiTro is "QUAN_LY" or "LE_TAN" or "BAC_SI")
@@ -85,7 +85,7 @@ public sealed class DangKyService(NhaKhoaDbContext db)
 
             if (maVaiTro == "BAC_SI")
             {
-                var thongTinBacSi = yeuCau as YeuCauDangKyBacSi;
+                var thongTinBacSi = yeuCau as DangKyBacSiRequest;
                 db.BacSis.Add(new BacSi
                 {
                     NhanVien = nhanVien,

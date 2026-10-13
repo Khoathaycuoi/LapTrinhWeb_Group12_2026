@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace BTL_NhaKhoa.DTOs;
 
-public class YeuCauDangKy
+public class DangKyRequest
 {
     [JsonPropertyName("maDinhDanh")]
     [RegularExpression(@"^\d{12}$", ErrorMessage = "Mã định danh phải có đúng 12 chữ số.")]
@@ -36,23 +36,3 @@ public class YeuCauDangKy
     public string MatKhau { get; set; } = string.Empty;
 }
 
-public sealed class YeuCauDangKyKhachHang : YeuCauDangKy
-{
-    [JsonPropertyName("tienSuBenh")]
-    public string? TienSuBenh { get; set; }
-}
-
-public sealed class YeuCauDangKyBacSi : YeuCauDangKy
-{
-    [JsonPropertyName("chungChi")]
-    [StringLength(255)]
-    public string? ChungChi { get; set; }
-
-    [JsonPropertyName("bangCap")]
-    [StringLength(255)]
-    public string? BangCap { get; set; }
-
-    [JsonPropertyName("namKinhNghiem")]
-    [Range(0, 65535)]
-    public ushort? SoNamKinhNghiem { get; set; }
-}

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace BTL_NhaKhoa.DTOs;
 
-public sealed class YeuCauDangNhap
+public sealed class DangNhapRequest
 {
     [JsonPropertyName("username")]
     [Required]
