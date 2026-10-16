@@ -81,10 +81,38 @@ public sealed class QuanLyNguoiDungService(NhaKhoaDbContext db)
             BangCap = bacSi?.BangCap,
             ChungChi = bacSi?.ChungChi,
             NgaySinh = conNguoi.NgaySinh,
-            TienSuBenh = taiKhoan.MaVaiTro == "KHACH_HANG" ? conNguoi.KhachHang?.TienSuBenh : null,
+            TienSuBenh = null,
             SoNamKinhNghiem = bacSi?.SoNamKinhNghiem,
             TrangThai = HienThiTrangThai(taiKhoan.TrangThai)
         };
+    }
+
+    public async Task<(bool TonTai, bool DuocXem, TienSuBenhKhachHangResponse? DuLieu)>
+        LayTienSuBenhKhachHangAsync(string maKhachHang, ulong maTaiKhoan)
+    {
+        if (!QuanLyLichHenService.ThuDocMa(maKhachHang, "KH_", out var idKhachHang))
+            return (false, false, null);
+
+        var khachHang = await db.KhachHangs.AsNoTracking()
+            .Where(x => x.MaKhachHang == idKhachHang)
+            .Select(x => new { x.MaKhachHang, x.TienSuBenh })
+            .FirstOrDefaultAsync();
+        if (khachHang == null) return (false, false, null);
+
+        var duocPhanCong = await db.LichHens.AsNoTracking().AnyAsync(x =>
+            x.MaKhachHang == idKhachHang &&
+            (x.TrangThai == "DA_XAC_NHAN" || x.TrangThai == "DA_DEN" ||
+                x.TrangThai == "DANG_KHAM") &&
+            x.BacSi != null && x.BacSi.NhanVien.ConNguoi.TaiKhoan != null &&
+            x.BacSi.NhanVien.ConNguoi.TaiKhoan.MaTaiKhoan == maTaiKhoan &&
+            x.BacSi.NhanVien.ConNguoi.TaiKhoan.MaVaiTro == "BAC_SI");
+        if (!duocPhanCong) return (true, false, null);
+
+        return (true, true, new TienSuBenhKhachHangResponse
+        {
+            MaKhachHang = maKhachHang,
+            TienSuBenh = khachHang.TienSuBenh
+        });
     }
 
     public async Task<KetQuaDoiTrangThaiTaiKhoan> DoiTrangThaiAsync(

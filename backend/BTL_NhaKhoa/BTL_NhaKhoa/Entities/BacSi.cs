@@ -11,6 +11,5 @@ public sealed class BacSi
     public DateTime UpdatedAt { get; set; }
     public NhanVien NhanVien { get; set; } = null!;
     public ICollection<LichHen> LichHens { get; set; } = new List<LichHen>();
-    public ICollection<LichLamViecBacSi> LichLamViecs { get; set; } = new List<LichLamViecBacSi>();
     public ICollection<HoSoKham> HoSoKhams { get; set; } = new List<HoSoKham>();
 }

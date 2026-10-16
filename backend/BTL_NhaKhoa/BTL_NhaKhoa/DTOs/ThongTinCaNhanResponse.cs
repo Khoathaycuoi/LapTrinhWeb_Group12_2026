@@ -32,6 +32,7 @@ public sealed class ThongTinCaNhanResponse
     public DateOnly? NgaySinh { get; init; }
 
     [JsonPropertyName("tienSuBenh")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? TienSuBenh { get; init; }
 
     [JsonPropertyName("soNamKinhNghiem")]

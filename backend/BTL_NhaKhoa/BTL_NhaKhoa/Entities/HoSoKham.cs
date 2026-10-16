@@ -12,6 +12,7 @@ public sealed class HoSoKham
     public string? TomTatChoKhach { get; set; }
     public string? GhiChuNoiBo { get; set; }
     public DateOnly? NgayTaiKham { get; set; }
+    public DateTime? ChotLuc { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public KhachHang KhachHang { get; set; } = null!;

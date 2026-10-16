@@ -104,6 +104,19 @@ public sealed class NguoiDungController(
         return chiTiet == null ? NotFound("Không tìm thấy người dùng.") : Ok(chiTiet);
     }
 
+    [HttpGet("khach-hang/{maKhachHang}/tien-su-benh")]
+    [Authorize(Roles = "BAC_SI")]
+    public async Task<IActionResult> LayTienSuBenhKhachHang(string maKhachHang)
+    {
+        if (!ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out var maTaiKhoan))
+            return Unauthorized();
+
+        var (tonTai, duocXem, duLieu) = await quanLyNguoiDungService
+            .LayTienSuBenhKhachHangAsync(maKhachHang, maTaiKhoan);
+        if (!tonTai) return NotFound("Không tìm thấy khách hàng.");
+        return duocXem ? Ok(duLieu) : Forbid();
+    }
+
     [HttpPut("{soDienThoai}/xoa")]
     [Authorize(Roles = "QUAN_LY")]
     public async Task<IActionResult> VoHieuHoa(string soDienThoai)
@@ -160,6 +173,23 @@ public sealed class NguoiDungController(
             return ketQua.KhongTimThay ? NotFound(ketQua.Loi) : BadRequest(ketQua.Loi);
         }
         return Content("Đổi mật khẩu thành công!", "text/plain");
+    }
+
+    [HttpPut("me/so-dien-thoai")]
+    public async Task<IActionResult> DoiSoDienThoai([FromBody] DoiSoDienThoaiRequest yeuCau)
+    {
+        if (!ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out var maTaiKhoan))
+        {
+            return Unauthorized();
+        }
+
+        var ketQua = await taiKhoanCaNhanService.DoiSoDienThoaiAsync(maTaiKhoan, yeuCau);
+        if (ketQua.Loi != null)
+        {
+            if (ketQua.KhongTimThay) return NotFound(ketQua.Loi);
+            return ketQua.TrungDuLieu ? Conflict(ketQua.Loi) : BadRequest(ketQua.Loi);
+        }
+        return Content("Đổi số điện thoại thành công! Vui lòng đăng nhập lại.", "text/plain");
     }
 
     private async Task<IActionResult> DoiTrangThai(string soDienThoai, bool voHieuHoa)
