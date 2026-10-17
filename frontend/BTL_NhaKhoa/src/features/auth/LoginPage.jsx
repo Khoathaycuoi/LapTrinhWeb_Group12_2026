@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import AuthLayout from './AuthLayout'
+import ToastNotice from '../../components/ToastNotice'
 
-export default function LoginPage({ onLogin, onNavigateRegister, registeredPhone = '', notice = '' }) {
+export default function LoginPage({ onLogin, onNavigateRegister, onNoticeDismiss, registeredPhone = '', notice = '' }) {
   const [phone, setPhone] = useState(registeredPhone)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -23,7 +24,7 @@ export default function LoginPage({ onLogin, onNavigateRegister, registeredPhone
   return <AuthLayout>
     <div className="auth-heading"><p className="eyebrow">XIN CHÀO</p><h2>Đăng nhập</h2><p>Đăng nhập để tiếp tục vào hệ thống.</p></div>
     {error && <div className="alert alert-error" role="alert">{error}</div>}
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
+    <ToastNotice message={notice} onDismiss={onNoticeDismiss} />
     <form onSubmit={submit} className="auth-form">
       <label>Số điện thoại<input autoComplete="username" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Ví dụ: 0912345678" required /></label>
       <label>Mật khẩu<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Nhập mật khẩu" required /></label>

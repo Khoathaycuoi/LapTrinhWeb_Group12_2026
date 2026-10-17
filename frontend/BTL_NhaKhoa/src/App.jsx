@@ -51,6 +51,7 @@ function AppContent() {
         onSuccess={(phone, message) => { setRegistrationResult({ phone, message }); navigate('/dang-nhap') }} />
     }
     return <LoginPage registeredPhone={registrationResult?.phone} notice={registrationResult?.message}
+      onNoticeDismiss={() => setRegistrationResult(null)}
       onNavigateRegister={() => { setRegistrationResult(null); navigate('/dang-ky') }}
       onLogin={async (phone, password) => {
         const authenticated = await login(phone, password)

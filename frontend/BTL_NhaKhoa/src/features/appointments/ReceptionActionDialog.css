@@ -1,0 +1,8 @@
+.reception-action-dialog { text-align: left; }
+.reception-action-dialog h2 { text-align: center; }
+.reception-action-dialog p { margin: 10px 0; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
+.reception-action-dialog p strong { color: var(--color-text); }
+.reception-action-dialog label { display: grid; gap: 8px; margin-top: 18px; color: var(--color-text); font-size: 12px; font-weight: 700; }
+.reception-action-dialog textarea { width: 100%; padding: 11px; border: 1px solid var(--color-border); border-radius: 9px; color: var(--color-text); font: inherit; font-weight: 400; resize: vertical; }
+.reception-action-dialog .alert { margin-top: 14px; }
+.reception-action-dialog .confirm-actions { margin-top: 20px; }

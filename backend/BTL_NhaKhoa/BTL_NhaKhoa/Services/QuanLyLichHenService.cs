@@ -467,6 +467,40 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         return new KetQuaLichHen();
     }
 
+    public async Task<(KetQuaLichHen KetQua, IReadOnlyList<string>? BacSis)> LayBacSiTrongAsync(
+        string maLichHen)
+    {
+        if (!ThuDocMa(maLichHen, "LH_", out var id))
+            return (new KetQuaLichHen("Mã lịch hẹn không hợp lệ."), null);
+        var lichHen = await db.LichHens.AsNoTracking()
+            .Where(x => x.MaLichHen == id)
+            .Select(x => new { x.MaKhachHang, x.ThoiGianBatDau, x.ThoiLuongDuKienPhut, x.TrangThai })
+            .FirstOrDefaultAsync();
+        if (lichHen == null)
+            return (new KetQuaLichHen("Không tìm thấy lịch hẹn.", KhongTimThay: true), null);
+        if (lichHen.TrangThai != "CHO_XAC_NHAN")
+            return (new KetQuaLichHen("Chỉ xem bác sĩ trống cho lịch đang chờ xác nhận."), null);
+        if (lichHen.ThoiGianBatDau <= DateTime.Now)
+            return (new KetQuaLichHen("Lịch chờ xác nhận đã quá giờ hẹn."), null);
+        if (await KhachHangBanAsync(lichHen.MaKhachHang, lichHen.ThoiGianBatDau,
+            lichHen.ThoiLuongDuKienPhut, boQuaLichHen: id))
+            return (new KetQuaLichHen("Khách hàng đã có lịch được xác nhận trùng thời gian này."), null);
+
+        var maBacSis = await db.BacSis.AsNoTracking()
+            .Where(x => x.NhanVien.TrangThai == "DANG_LAM_VIEC" &&
+                x.NhanVien.ConNguoi.TaiKhoan != null &&
+                x.NhanVien.ConNguoi.TaiKhoan.TrangThai == "HOAT_DONG")
+            .OrderBy(x => x.MaBacSi).Select(x => x.MaBacSi).ToListAsync();
+        var bacSiTrong = new List<string>();
+        foreach (var maBacSi in maBacSis)
+        {
+            if (!await BacSiBanAsync(maBacSi, lichHen.ThoiGianBatDau,
+                lichHen.ThoiLuongDuKienPhut, id))
+                bacSiTrong.Add(TaoMa("BS_", maBacSi));
+        }
+        return (new KetQuaLichHen(), bacSiTrong);
+    }
+
     public async Task<(KetQuaLichHen KetQua, object? Phongs)> LayPhongTrongAsync(
         string maLichHen, ulong maTaiKhoan)
     {

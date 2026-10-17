@@ -112,6 +112,14 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
         return ketQua.Loi != null ? Loi(ketQua) : Ok(phongs);
     }
 
+    [HttpGet("bac-si-trong/{maLichHen}")]
+    [Authorize(Roles = "LE_TAN,QUAN_LY")]
+    public async Task<IActionResult> LayBacSiTrong(string maLichHen)
+    {
+        var (ketQua, bacSis) = await quanLyLichHenService.LayBacSiTrongAsync(maLichHen);
+        return ketQua.Loi != null ? Loi(ketQua) : Ok(bacSis);
+    }
+
     [HttpPut("gan-bac-si/{maLichHen}")]
     [Authorize(Roles = "LE_TAN,QUAN_LY")]
     public async Task<IActionResult> GanBacSi(string maLichHen, [FromBody] GanBacSiLichHenRequest yeuCau)
