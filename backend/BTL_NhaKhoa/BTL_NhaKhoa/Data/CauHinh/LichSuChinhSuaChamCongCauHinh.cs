@@ -13,6 +13,9 @@ public sealed class LichSuChinhSuaChamCongCauHinh : IEntityTypeConfiguration<Lic
         entity.Property(x => x.MaLichSu).HasColumnType("bigint unsigned").ValueGeneratedOnAdd();
         entity.Property(x => x.MaChamCong).HasColumnType("bigint unsigned");
         entity.Property(x => x.NguoiSuaTaiKhoanId).HasColumnType("bigint unsigned");
+        entity.Property(x => x.Buoi).HasMaxLength(10).HasDefaultValue("CA_NGAY");
+        entity.Property(x => x.TinhTrangCu).HasMaxLength(25);
+        entity.Property(x => x.TinhTrangMoi).HasMaxLength(25);
         entity.Property(x => x.GioVaoCu).HasColumnType("datetime");
         entity.Property(x => x.GioRaCu).HasColumnType("datetime");
         entity.Property(x => x.GioVaoMoi).HasColumnType("datetime");

@@ -23,9 +23,12 @@ public sealed class ThanhToanCauHinh : IEntityTypeConfiguration<ThanhToan>
         entity.Property(x => x.TrangThai).HasMaxLength(20).HasDefaultValue("DA_XAC_NHAN");
         entity.Property(x => x.ThoiDiemThanhToan).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAdd();
         entity.Property(x => x.LyDoHuy).HasColumnType("text");
+        entity.Property(x => x.NguoiHuyTaiKhoanId).HasColumnType("bigint unsigned");
+        entity.Property(x => x.HuyLuc).HasColumnType("datetime");
         entity.Property(x => x.GhiChu).HasMaxLength(255);
         entity.HasIndex(x => x.MaHoaDon);
         entity.HasOne(x => x.HoaDon).WithMany(x => x.ThanhToans).HasForeignKey(x => x.MaHoaDon).OnDelete(DeleteBehavior.Restrict);
         entity.HasOne(x => x.NguoiXacNhanTaiKhoan).WithMany(x => x.ThanhToanDaXacNhan).HasForeignKey(x => x.NguoiXacNhanTaiKhoanId).OnDelete(DeleteBehavior.Restrict);
+        entity.HasOne(x => x.NguoiHuyTaiKhoan).WithMany(x => x.ThanhToanDaHuy).HasForeignKey(x => x.NguoiHuyTaiKhoanId).OnDelete(DeleteBehavior.Restrict);
     }
 }

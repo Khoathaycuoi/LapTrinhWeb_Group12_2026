@@ -43,6 +43,16 @@ namespace BTL_NhaKhoa
 
             builder.Services.AddScoped<DangNhapService>();
             builder.Services.AddScoped<DangKyService>();
+            builder.Services.AddScoped<TaiKhoanCaNhanService>();
+            builder.Services.AddScoped<QuanLyNguoiDungService>();
+            builder.Services.AddScoped<QuanLyDichVuService>();
+            builder.Services.AddScoped<HuyLichHenService>();
+            builder.Services.AddScoped<QuanLyLichHenService>();
+            builder.Services.AddScoped<QuanLyPhongService>();
+            builder.Services.AddScoped<QuanLyKhamBenhService>();
+            builder.Services.AddScoped<QuanLyHoaDonService>();
+            builder.Services.AddScoped<QuanLyChamCongService>();
+            builder.Services.AddScoped<DashboardService>();
             builder.Services.AddSingleton(new CauHinhJwt(signingKey, jwtIssuer, jwtAudience));
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -123,7 +133,7 @@ namespace BTL_NhaKhoa
                 if (!db.TaiKhoans.Any(x => x.MaVaiTro == "QUAN_LY"))
                 {
                     var dangKy = scope.ServiceProvider.GetRequiredService<DangKyService>();
-                    var ketQua = dangKy.DangKyAsync(new YeuCauDangKy
+                    var ketQua = dangKy.DangKyAsync(new DangKyRequest
                     {
                         SoDienThoai = soDienThoaiQuanLy,
                         HoTen = hoTenQuanLy,

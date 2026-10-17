@@ -24,8 +24,6 @@ public sealed class NhaKhoaDbContext(DbContextOptions<NhaKhoaDbContext> options)
     public DbSet<BacSi> BacSis => Set<BacSi>();
     public DbSet<DichVu> DichVus => Set<DichVu>();
     public DbSet<Phong> Phongs => Set<Phong>();
-    public DbSet<ThietBi> ThietBis => Set<ThietBi>();
-    public DbSet<LichLamViecBacSi> LichLamViecBacSis => Set<LichLamViecBacSi>();
     public DbSet<LichHen> LichHens => Set<LichHen>();
     public DbSet<ChiTietLichHen> ChiTietLichHens => Set<ChiTietLichHen>();
     public DbSet<HoSoKham> HoSoKhams => Set<HoSoKham>();
@@ -35,8 +33,6 @@ public sealed class NhaKhoaDbContext(DbContextOptions<NhaKhoaDbContext> options)
     public DbSet<HoaDon> HoaDons => Set<HoaDon>();
     public DbSet<ChiTietHoaDon> ChiTietHoaDons => Set<ChiTietHoaDon>();
     public DbSet<ThanhToan> ThanhToans => Set<ThanhToan>();
-    public DbSet<BaoTri> BaoTris => Set<BaoTri>();
-    public DbSet<ThucHienBaoTri> ThucHienBaoTris => Set<ThucHienBaoTri>();
     public DbSet<ChamCong> ChamCongs => Set<ChamCong>();
     public DbSet<LichSuChinhSuaChamCong> LichSuChinhSuaChamCongs => Set<LichSuChinhSuaChamCong>();
 

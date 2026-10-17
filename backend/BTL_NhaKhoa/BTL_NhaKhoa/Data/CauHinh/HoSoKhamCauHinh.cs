@@ -19,6 +19,7 @@ public sealed class HoSoKhamCauHinh : IEntityTypeConfiguration<HoSoKham>
         entity.Property(x => x.ChanDoan).HasColumnType("text");
         entity.Property(x => x.TomTatChoKhach).HasColumnType("text");
         entity.Property(x => x.GhiChuNoiBo).HasColumnType("text");
+        entity.Property(x => x.ChotLuc).HasColumnType("datetime");
         CauHinhChung.CauHinhNgayTaoCapNhat(entity);
         entity.HasIndex(x => x.MaLichHen).IsUnique();
         entity.HasIndex(x => new { x.MaKhachHang, x.NgayKham });

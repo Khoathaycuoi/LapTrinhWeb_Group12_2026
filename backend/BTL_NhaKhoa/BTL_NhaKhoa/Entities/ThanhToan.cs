@@ -10,7 +10,10 @@ public sealed class ThanhToan
     public string TrangThai { get; set; } = "DA_XAC_NHAN";
     public DateTime ThoiDiemThanhToan { get; set; }
     public string? LyDoHuy { get; set; }
+    public ulong? NguoiHuyTaiKhoanId { get; set; }
+    public DateTime? HuyLuc { get; set; }
     public string? GhiChu { get; set; }
     public HoaDon HoaDon { get; set; } = null!;
     public TaiKhoan NguoiXacNhanTaiKhoan { get; set; } = null!;
+    public TaiKhoan? NguoiHuyTaiKhoan { get; set; }
 }

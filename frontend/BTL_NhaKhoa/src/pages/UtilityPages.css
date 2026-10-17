@@ -1,0 +1,4 @@
+.loading-screen, .auth-error { display: grid; place-content: center; min-height: 100vh; padding: 24px; color: var(--color-muted); text-align: center; }
+.loading-screen p { margin: 0; font-size: clamp(15px, 1.7vw, 18px); font-weight: 600; line-height: 1.5; }
+.auth-error h1 { color: var(--color-text); font: 700 24px Manrope, sans-serif; }
+.auth-error p { margin: 0 0 20px; }

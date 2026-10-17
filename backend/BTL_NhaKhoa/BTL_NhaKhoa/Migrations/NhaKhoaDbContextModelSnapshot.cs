@@ -64,63 +64,6 @@ namespace BTL_NhaKhoa.Migrations
                     b.ToTable("bac_si", (string)null);
                 });
 
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.BaoTri", b =>
-                {
-                    b.Property<ulong>("MaBaoTri")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_bao_tri");
-
-                    b.Property<decimal?>("ChiPhi")
-                        .HasPrecision(15, 2)
-                        .HasColumnType("decimal(15,2)")
-                        .HasColumnName("chi_phi");
-
-                    b.Property<DateTime>("NgayBao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("ngay_bao")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime?>("NgayHoanTat")
-                        .HasColumnType("datetime")
-                        .HasColumnName("ngay_hoan_tat");
-
-                    b.Property<ulong?>("NguoiBaoTaiKhoanId")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("nguoi_bao_tai_khoan_id");
-
-                    b.Property<ulong?>("NguoiXuLyTaiKhoanId")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("nguoi_xu_ly_tai_khoan_id");
-
-                    b.Property<string>("NoiDung")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("noi_dung");
-
-                    b.Property<string>("TrangThai")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("MOI_TIEP_NHAN")
-                        .HasColumnName("trang_thai");
-
-                    b.HasKey("MaBaoTri");
-
-                    b.HasIndex("NguoiBaoTaiKhoanId");
-
-                    b.HasIndex("NguoiXuLyTaiKhoanId");
-
-                    b.ToTable("bao_tri", null, t =>
-                        {
-                            t.HasCheckConstraint("check_bao_tri_chi_phi", "chi_phi IS NULL OR chi_phi >= 0");
-
-                            t.HasCheckConstraint("check_bao_tri_trang_thai", "trang_thai IN ('MOI_TIEP_NHAN', 'DANG_XU_LY', 'DA_HOAN_TAT', 'DA_HUY')");
-                        });
-                });
-
             modelBuilder.Entity("BTL_NhaKhoa.Entities.ChamCong", b =>
                 {
                     b.Property<ulong>("MaChamCong")
@@ -132,23 +75,42 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("duyet_luc");
 
-                    b.Property<string>("GhiChu")
-                        .HasColumnType("text")
-                        .HasColumnName("ghi_chu");
-
-                    b.Property<DateTime?>("GioRa")
+                    b.Property<DateTime?>("GioRaChieu")
                         .HasColumnType("datetime")
-                        .HasColumnName("gio_ra");
+                        .HasColumnName("gio_ra_chieu");
 
-                    b.Property<DateTime?>("GioVao")
+                    b.Property<DateTime?>("GioRaSang")
                         .HasColumnType("datetime")
-                        .HasColumnName("gio_vao");
+                        .HasColumnName("gio_ra_sang");
+
+                    b.Property<DateTime?>("GioVaoChieu")
+                        .HasColumnType("datetime")
+                        .HasColumnName("gio_vao_chieu");
+
+                    b.Property<DateTime?>("GioVaoSang")
+                        .HasColumnType("datetime")
+                        .HasColumnName("gio_vao_sang");
+
+                    b.Property<string>("LyDoChieu")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ly_do_chieu");
+
+                    b.Property<string>("LyDoSang")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ly_do_sang");
+
+                    b.Property<string>("LyDoTuChoi")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ly_do_tu_choi");
 
                     b.Property<ulong>("MaNhanVien")
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_nhan_vien");
 
-                    b.Property<DateOnly>("NgayChamCong")
+                    b.Property<DateTime>("NgayChamCong")
                         .HasColumnType("date")
                         .HasColumnName("ngay_cham_cong");
 
@@ -156,31 +118,43 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("nguoi_duyet_tai_khoan_id");
 
-                    b.Property<ushort>("SoPhutTre")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("smallint unsigned")
-                        .HasDefaultValue((ushort)0)
-                        .HasColumnName("so_phut_tre");
+                    b.Property<ulong?>("NguoiTuChoiTaiKhoanId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("nguoi_tu_choi_tai_khoan_id");
 
-                    b.Property<string>("TrangThai")
+                    b.Property<string>("TinhTrangChieu")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)")
-                        .HasDefaultValue("DI_LAM")
-                        .HasColumnName("trang_thai");
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)")
+                        .HasDefaultValue("CHUA_XAC_DINH")
+                        .HasColumnName("tinh_trang_chieu");
+
+                    b.Property<string>("TinhTrangSang")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)")
+                        .HasDefaultValue("CHUA_XAC_DINH")
+                        .HasColumnName("tinh_trang_sang");
 
                     b.Property<string>("TrangThaiDuyet")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("CHO_DUYET")
+                        .HasDefaultValue("CHUA_HOAN_TAT")
                         .HasColumnName("trang_thai_duyet");
+
+                    b.Property<DateTime?>("TuChoiLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("tu_choi_luc");
 
                     b.HasKey("MaChamCong");
 
                     b.HasIndex("NguoiDuyetTaiKhoanId");
+
+                    b.HasIndex("NguoiTuChoiTaiKhoanId");
 
                     b.HasIndex("MaNhanVien", "NgayChamCong")
                         .IsUnique();
@@ -189,11 +163,15 @@ namespace BTL_NhaKhoa.Migrations
 
                     b.ToTable("cham_cong", null, t =>
                         {
-                            t.HasCheckConstraint("check_cham_cong_duyet", "trang_thai_duyet IN ('CHO_DUYET', 'DA_DUYET', 'TU_CHOI')");
+                            t.HasCheckConstraint("check_cham_cong_duyet", "trang_thai_duyet IN ('CHUA_HOAN_TAT', 'CHO_DUYET', 'DA_DUYET', 'TU_CHOI')");
 
-                            t.HasCheckConstraint("check_cham_cong_gio", "gio_vao IS NULL OR gio_ra IS NULL OR gio_ra >= gio_vao");
+                            t.HasCheckConstraint("check_cham_cong_gio_chieu", "gio_vao_chieu IS NULL OR gio_ra_chieu IS NULL OR gio_ra_chieu >= gio_vao_chieu");
 
-                            t.HasCheckConstraint("check_cham_cong_trang_thai", "trang_thai IN ('DI_LAM', 'NGHI_PHEP', 'NGHI_KHONG_PHEP')");
+                            t.HasCheckConstraint("check_cham_cong_gio_sang", "gio_vao_sang IS NULL OR gio_ra_sang IS NULL OR gio_ra_sang >= gio_vao_sang");
+
+                            t.HasCheckConstraint("check_cham_cong_tinh_trang_chieu", "tinh_trang_chieu IN ('CHUA_XAC_DINH', 'LAM_VIEC', 'NGHI_PHEP', 'VANG_KHONG_PHEP')");
+
+                            t.HasCheckConstraint("check_cham_cong_tinh_trang_sang", "tinh_trang_sang IN ('CHUA_XAC_DINH', 'LAM_VIEC', 'NGHI_PHEP', 'VANG_KHONG_PHEP')");
                         });
                 });
 
@@ -374,7 +352,7 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("varchar(150)")
                         .HasColumnName("ho_ten");
 
-                    b.Property<DateOnly?>("NgaySinh")
+                    b.Property<DateTime?>("NgaySinh")
                         .HasColumnType("date")
                         .HasColumnName("ngay_sinh");
 
@@ -569,6 +547,10 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("text")
                         .HasColumnName("chan_doan");
 
+                    b.Property<DateTime?>("ChotLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("chot_luc");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
@@ -597,7 +579,7 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnName("ngay_kham")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<DateOnly?>("NgayTaiKham")
+                    b.Property<DateTime?>("NgayTaiKham")
                         .HasColumnType("date")
                         .HasColumnName("ngay_tai_kham");
 
@@ -707,7 +689,7 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_con_nguoi");
 
-                    b.Property<DateOnly>("NgayDangKy")
+                    b.Property<DateTime>("NgayDangKy")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("date")
                         .HasColumnName("ngay_dang_ky")
@@ -738,19 +720,47 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_lich_hen");
 
+                    b.Property<DateTime?>("BatDauKhamLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("bat_dau_kham_luc");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<DateTime?>("DenLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("den_luc");
+
                     b.Property<string>("GhiChu")
                         .HasColumnType("text")
                         .HasColumnName("ghi_chu");
 
+                    b.Property<string>("GhiChuKhongDen")
+                        .HasColumnType("text")
+                        .HasColumnName("ghi_chu_khong_den");
+
+                    b.Property<DateTime?>("HoanThanhLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("hoan_thanh_luc");
+
+                    b.Property<DateTime?>("HuyLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("huy_luc");
+
+                    b.Property<DateTime?>("KhongDenLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("khong_den_luc");
+
                     b.Property<string>("LyDoHuy")
                         .HasColumnType("text")
                         .HasColumnName("ly_do_huy");
+
+                    b.Property<string>("LyDoTuChoi")
+                        .HasColumnType("text")
+                        .HasColumnName("ly_do_tu_choi");
 
                     b.Property<ulong?>("MaBacSi")
                         .HasColumnType("bigint unsigned")
@@ -764,9 +774,21 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_phong");
 
+                    b.Property<ulong?>("NguoiDanhDauKhongDenTaiKhoanId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("nguoi_danh_dau_khong_den_tai_khoan_id");
+
+                    b.Property<ulong?>("NguoiHuyTaiKhoanId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("nguoi_huy_tai_khoan_id");
+
                     b.Property<ulong>("NguoiTaoTaiKhoanId")
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("nguoi_tao_tai_khoan_id");
+
+                    b.Property<ulong?>("NguoiTiepNhanTaiKhoanId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("nguoi_tiep_nhan_tai_khoan_id");
 
                     b.Property<ulong?>("NguoiXacNhanTaiKhoanId")
                         .HasColumnType("bigint unsigned")
@@ -788,6 +810,10 @@ namespace BTL_NhaKhoa.Migrations
                         .HasDefaultValue("CHO_XAC_NHAN")
                         .HasColumnName("trang_thai");
 
+                    b.Property<DateTime?>("TuChoiLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("tu_choi_luc");
+
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime")
@@ -800,7 +826,13 @@ namespace BTL_NhaKhoa.Migrations
 
                     b.HasKey("MaLichHen");
 
+                    b.HasIndex("NguoiDanhDauKhongDenTaiKhoanId");
+
+                    b.HasIndex("NguoiHuyTaiKhoanId");
+
                     b.HasIndex("NguoiTaoTaiKhoanId");
+
+                    b.HasIndex("NguoiTiepNhanTaiKhoanId");
 
                     b.HasIndex("NguoiXacNhanTaiKhoanId");
 
@@ -816,62 +848,7 @@ namespace BTL_NhaKhoa.Migrations
                         {
                             t.HasCheckConstraint("check_lich_hen_thoi_luong", "thoi_luong_du_kien_phut > 0");
 
-                            t.HasCheckConstraint("check_lich_hen_trang_thai", "trang_thai IN ('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DANG_KHAM', 'DA_HOAN_THANH', 'DA_HUY', 'KHONG_DEN')");
-                        });
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.LichLamViecBacSi", b =>
-                {
-                    b.Property<ulong>("MaLichLamViec")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_lich_lam_viec");
-
-                    b.Property<TimeOnly>("GioBatDau")
-                        .HasColumnType("time")
-                        .HasColumnName("gio_bat_dau");
-
-                    b.Property<TimeOnly>("GioKetThuc")
-                        .HasColumnType("time")
-                        .HasColumnName("gio_ket_thuc");
-
-                    b.Property<ulong>("MaBacSi")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_bac_si");
-
-                    b.Property<DateOnly?>("NgayHieuLucDen")
-                        .HasColumnType("date")
-                        .HasColumnName("ngay_hieu_luc_den");
-
-                    b.Property<DateOnly>("NgayHieuLucTu")
-                        .HasColumnType("date")
-                        .HasColumnName("ngay_hieu_luc_tu");
-
-                    b.Property<byte>("ThuTrongTuan")
-                        .HasColumnType("tinyint unsigned")
-                        .HasColumnName("thu_trong_tuan");
-
-                    b.Property<string>("TrangThai")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("HOAT_DONG")
-                        .HasColumnName("trang_thai");
-
-                    b.HasKey("MaLichLamViec");
-
-                    b.HasIndex("MaBacSi", "ThuTrongTuan", "NgayHieuLucTu", "NgayHieuLucDen");
-
-                    b.ToTable("lich_lam_viec_bac_si", null, t =>
-                        {
-                            t.HasCheckConstraint("check_lich_lam_viec_gio", "gio_bat_dau < gio_ket_thuc");
-
-                            t.HasCheckConstraint("check_lich_lam_viec_ngay", "ngay_hieu_luc_den IS NULL OR ngay_hieu_luc_den >= ngay_hieu_luc_tu");
-
-                            t.HasCheckConstraint("check_lich_lam_viec_thu", "thu_trong_tuan BETWEEN 1 AND 7");
-
-                            t.HasCheckConstraint("check_lich_lam_viec_trang_thai", "trang_thai IN ('HOAT_DONG', 'NGUNG_HOAT_DONG')");
+                            t.HasCheckConstraint("check_lich_hen_trang_thai", "trang_thai IN ('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM', 'DA_HOAN_THANH', 'DA_HUY', 'KHONG_DEN', 'TU_CHOI')");
                         });
                 });
 
@@ -881,6 +858,14 @@ namespace BTL_NhaKhoa.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_lich_su");
+
+                    b.Property<string>("Buoi")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasDefaultValue("CA_NGAY")
+                        .HasColumnName("buoi");
 
                     b.Property<DateTime?>("GioRaCu")
                         .HasColumnType("datetime")
@@ -918,6 +903,16 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnName("thoi_diem_sua")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<string>("TinhTrangCu")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)")
+                        .HasColumnName("tinh_trang_cu");
+
+                    b.Property<string>("TinhTrangMoi")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)")
+                        .HasColumnName("tinh_trang_moi");
+
                     b.HasKey("MaLichSu");
 
                     b.HasIndex("NguoiSuaTaiKhoanId");
@@ -944,7 +939,7 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_con_nguoi");
 
-                    b.Property<DateOnly?>("NgayVaoLam")
+                    b.Property<DateTime?>("NgayVaoLam")
                         .HasColumnType("date")
                         .HasColumnName("ngay_vao_lam");
 
@@ -1085,6 +1080,10 @@ namespace BTL_NhaKhoa.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("ghi_chu");
 
+                    b.Property<DateTime?>("HuyLuc")
+                        .HasColumnType("datetime")
+                        .HasColumnName("huy_luc");
+
                     b.Property<string>("LyDoHuy")
                         .HasColumnType("text")
                         .HasColumnName("ly_do_huy");
@@ -1092,6 +1091,10 @@ namespace BTL_NhaKhoa.Migrations
                     b.Property<ulong>("MaHoaDon")
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("ma_hoa_don");
+
+                    b.Property<ulong?>("NguoiHuyTaiKhoanId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("nguoi_huy_tai_khoan_id");
 
                     b.Property<ulong>("NguoiXacNhanTaiKhoanId")
                         .HasColumnType("bigint unsigned")
@@ -1126,6 +1129,8 @@ namespace BTL_NhaKhoa.Migrations
 
                     b.HasIndex("MaHoaDon");
 
+                    b.HasIndex("NguoiHuyTaiKhoanId");
+
                     b.HasIndex("NguoiXacNhanTaiKhoanId");
 
                     b.ToTable("thanh_toan", null, t =>
@@ -1136,83 +1141,6 @@ namespace BTL_NhaKhoa.Migrations
 
                             t.HasCheckConstraint("check_thanh_toan_trang_thai", "trang_thai IN ('DA_XAC_NHAN', 'DA_HUY')");
                         });
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.ThietBi", b =>
-                {
-                    b.Property<ulong>("MaThietBi")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_thiet_bi");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("LoaiThietBi")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("loai_thiet_bi");
-
-                    b.Property<ulong?>("MaPhong")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_phong");
-
-                    b.Property<DateOnly?>("NgayMua")
-                        .HasColumnType("date")
-                        .HasColumnName("ngay_mua");
-
-                    b.Property<string>("TenThietBi")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
-                        .HasColumnName("ten_thiet_bi");
-
-                    b.Property<string>("TinhTrang")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("HOAT_DONG")
-                        .HasColumnName("tinh_trang");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
-
-                    b.HasKey("MaThietBi");
-
-                    b.HasIndex("MaPhong");
-
-                    b.ToTable("thiet_bi", null, t =>
-                        {
-                            t.HasCheckConstraint("check_thiet_bi_tinh_trang", "tinh_trang IN ('HOAT_DONG', 'HONG', 'DANG_BAO_TRI', 'NGUNG_SU_DUNG')");
-                        });
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.ThucHienBaoTri", b =>
-                {
-                    b.Property<ulong>("MaBaoTri")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_bao_tri");
-
-                    b.Property<ulong>("MaThietBi")
-                        .HasColumnType("bigint unsigned")
-                        .HasColumnName("ma_thiet_bi");
-
-                    b.Property<string>("GhiChu")
-                        .HasColumnType("text")
-                        .HasColumnName("ghi_chu");
-
-                    b.HasKey("MaBaoTri", "MaThietBi");
-
-                    b.HasIndex("MaThietBi");
-
-                    b.ToTable("thuc_hien_bao_tri", (string)null);
                 });
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.VaiTro", b =>
@@ -1269,23 +1197,6 @@ namespace BTL_NhaKhoa.Migrations
                     b.Navigation("NhanVien");
                 });
 
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.BaoTri", b =>
-                {
-                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiBaoTaiKhoan")
-                        .WithMany("BaoTriDaBao")
-                        .HasForeignKey("NguoiBaoTaiKhoanId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiXuLyTaiKhoan")
-                        .WithMany("BaoTriDaXuLy")
-                        .HasForeignKey("NguoiXuLyTaiKhoanId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("NguoiBaoTaiKhoan");
-
-                    b.Navigation("NguoiXuLyTaiKhoan");
-                });
-
             modelBuilder.Entity("BTL_NhaKhoa.Entities.ChamCong", b =>
                 {
                     b.HasOne("BTL_NhaKhoa.Entities.NhanVien", "NhanVien")
@@ -1299,7 +1210,14 @@ namespace BTL_NhaKhoa.Migrations
                         .HasForeignKey("NguoiDuyetTaiKhoanId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiTuChoiTaiKhoan")
+                        .WithMany("ChamCongDaTuChoi")
+                        .HasForeignKey("NguoiTuChoiTaiKhoanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("NguoiDuyetTaiKhoan");
+
+                    b.Navigation("NguoiTuChoiTaiKhoan");
 
                     b.Navigation("NhanVien");
                 });
@@ -1464,11 +1382,26 @@ namespace BTL_NhaKhoa.Migrations
                         .HasForeignKey("MaPhong")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiDanhDauKhongDenTaiKhoan")
+                        .WithMany("LichHenDaDanhDauKhongDen")
+                        .HasForeignKey("NguoiDanhDauKhongDenTaiKhoanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiHuyTaiKhoan")
+                        .WithMany("LichHenDaHuy")
+                        .HasForeignKey("NguoiHuyTaiKhoanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiTaoTaiKhoan")
                         .WithMany("LichHenDaTao")
                         .HasForeignKey("NguoiTaoTaiKhoanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiTiepNhanTaiKhoan")
+                        .WithMany("LichHenDaTiepNhan")
+                        .HasForeignKey("NguoiTiepNhanTaiKhoanId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiXacNhanTaiKhoan")
                         .WithMany("LichHenDaXacNhan")
@@ -1479,22 +1412,17 @@ namespace BTL_NhaKhoa.Migrations
 
                     b.Navigation("KhachHang");
 
+                    b.Navigation("NguoiDanhDauKhongDenTaiKhoan");
+
+                    b.Navigation("NguoiHuyTaiKhoan");
+
                     b.Navigation("NguoiTaoTaiKhoan");
+
+                    b.Navigation("NguoiTiepNhanTaiKhoan");
 
                     b.Navigation("NguoiXacNhanTaiKhoan");
 
                     b.Navigation("Phong");
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.LichLamViecBacSi", b =>
-                {
-                    b.HasOne("BTL_NhaKhoa.Entities.BacSi", "BacSi")
-                        .WithMany("LichLamViecs")
-                        .HasForeignKey("MaBacSi")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BacSi");
                 });
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.LichSuChinhSuaChamCong", b =>
@@ -1554,6 +1482,11 @@ namespace BTL_NhaKhoa.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiHuyTaiKhoan")
+                        .WithMany("ThanhToanDaHuy")
+                        .HasForeignKey("NguoiHuyTaiKhoanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BTL_NhaKhoa.Entities.TaiKhoan", "NguoiXacNhanTaiKhoan")
                         .WithMany("ThanhToanDaXacNhan")
                         .HasForeignKey("NguoiXacNhanTaiKhoanId")
@@ -1562,36 +1495,9 @@ namespace BTL_NhaKhoa.Migrations
 
                     b.Navigation("HoaDon");
 
+                    b.Navigation("NguoiHuyTaiKhoan");
+
                     b.Navigation("NguoiXacNhanTaiKhoan");
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.ThietBi", b =>
-                {
-                    b.HasOne("BTL_NhaKhoa.Entities.Phong", "Phong")
-                        .WithMany("ThietBis")
-                        .HasForeignKey("MaPhong")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Phong");
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.ThucHienBaoTri", b =>
-                {
-                    b.HasOne("BTL_NhaKhoa.Entities.BaoTri", "BaoTri")
-                        .WithMany("ThucHienBaoTris")
-                        .HasForeignKey("MaBaoTri")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BTL_NhaKhoa.Entities.ThietBi", "ThietBi")
-                        .WithMany("ThucHienBaoTris")
-                        .HasForeignKey("MaThietBi")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BaoTri");
-
-                    b.Navigation("ThietBi");
                 });
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.BacSi", b =>
@@ -1599,13 +1505,6 @@ namespace BTL_NhaKhoa.Migrations
                     b.Navigation("HoSoKhams");
 
                     b.Navigation("LichHens");
-
-                    b.Navigation("LichLamViecs");
-                });
-
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.BaoTri", b =>
-                {
-                    b.Navigation("ThucHienBaoTris");
                 });
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.ChamCong", b =>
@@ -1684,32 +1583,31 @@ namespace BTL_NhaKhoa.Migrations
             modelBuilder.Entity("BTL_NhaKhoa.Entities.Phong", b =>
                 {
                     b.Navigation("LichHens");
-
-                    b.Navigation("ThietBis");
                 });
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.TaiKhoan", b =>
                 {
-                    b.Navigation("BaoTriDaBao");
-
-                    b.Navigation("BaoTriDaXuLy");
-
                     b.Navigation("ChamCongDaDuyet");
+
+                    b.Navigation("ChamCongDaTuChoi");
 
                     b.Navigation("HoaDonDaLap");
 
+                    b.Navigation("LichHenDaDanhDauKhongDen");
+
+                    b.Navigation("LichHenDaHuy");
+
                     b.Navigation("LichHenDaTao");
+
+                    b.Navigation("LichHenDaTiepNhan");
 
                     b.Navigation("LichHenDaXacNhan");
 
                     b.Navigation("LichSuDaSua");
 
-                    b.Navigation("ThanhToanDaXacNhan");
-                });
+                    b.Navigation("ThanhToanDaHuy");
 
-            modelBuilder.Entity("BTL_NhaKhoa.Entities.ThietBi", b =>
-                {
-                    b.Navigation("ThucHienBaoTris");
+                    b.Navigation("ThanhToanDaXacNhan");
                 });
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.VaiTro", b =>

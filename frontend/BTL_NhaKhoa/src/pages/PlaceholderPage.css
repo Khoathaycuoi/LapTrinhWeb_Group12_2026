@@ -1,0 +1,11 @@
+.welcome-card, .placeholder-card { border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-card); }
+.welcome-card { display: flex; align-items: flex-start; gap: 17px; padding: 27px; background: linear-gradient(115deg, #fff 40%, #F6F7FF); }
+.welcome-icon { display: grid; flex: 0 0 44px; place-items: center; height: 44px; border-radius: 13px; background: #EEF0FB; color: var(--color-secondary); font-size: 23px; }
+.welcome-card h2, .placeholder-card h2 { margin: 2px 0 8px; color: var(--color-text); font: 700 16px/1.4 Manrope, sans-serif; }
+.welcome-card p, .placeholder-card p { max-width: 580px; margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.7; }
+.placeholder-card { display: grid; justify-items: center; padding: 70px 24px; text-align: center; }
+.placeholder-mark { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 17px; border-radius: 17px; background: #EFF1FB; color: var(--color-secondary); font-size: 28px; }
+
+@media (max-width: 700px) {
+  .welcome-card { gap: 12px; padding: 20px 17px; }
+}

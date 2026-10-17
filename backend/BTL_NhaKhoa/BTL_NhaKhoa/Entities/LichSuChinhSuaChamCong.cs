@@ -5,6 +5,9 @@ public sealed class LichSuChinhSuaChamCong
     public ulong MaLichSu { get; set; }
     public ulong MaChamCong { get; set; }
     public ulong NguoiSuaTaiKhoanId { get; set; }
+    public string Buoi { get; set; } = "CA_NGAY";
+    public string? TinhTrangCu { get; set; }
+    public string? TinhTrangMoi { get; set; }
     public DateTime? GioVaoCu { get; set; }
     public DateTime? GioRaCu { get; set; }
     public DateTime? GioVaoMoi { get; set; }

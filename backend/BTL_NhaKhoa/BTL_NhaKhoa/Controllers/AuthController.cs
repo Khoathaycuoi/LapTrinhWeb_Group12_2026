@@ -1,18 +1,23 @@
 using BTL_NhaKhoa.DTOs;
+using BTL_NhaKhoa.Data;
 using BTL_NhaKhoa.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BTL_NhaKhoa.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(DangNhapService dangNhapService, DangKyService dangKyService) : ControllerBase
+public sealed class AuthController(
+    DangNhapService dangNhapService,
+    DangKyService dangKyService,
+    NhaKhoaDbContext db) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register/khach-hang")]
-    public async Task<IActionResult> DangKyKhachHang([FromBody] YeuCauDangKyKhachHang yeuCau)
+    public async Task<IActionResult> DangKyKhachHang([FromBody] DangKyKhachHangRequest yeuCau)
     {
         return await DangKy(yeuCau, "KHACH_HANG", "Đăng ký Khách hàng thành công!");
     }
@@ -20,28 +25,28 @@ public sealed class AuthController(DangNhapService dangNhapService, DangKyServic
     [Authorize(Policy = "QuanLy")]
     [HttpPost("register/le-tan")]
     [HttpPost("register/nhan-vien")]
-    public async Task<IActionResult> DangKyLeTan([FromBody] YeuCauDangKy yeuCau)
+    public async Task<IActionResult> DangKyLeTan([FromBody] DangKyRequest yeuCau)
     {
         return await DangKy(yeuCau, "LE_TAN", "Đăng ký Lễ tân thành công!");
     }
 
     [Authorize(Policy = "QuanLy")]
     [HttpPost("register/bac-si")]
-    public async Task<IActionResult> DangKyBacSi([FromBody] YeuCauDangKyBacSi yeuCau)
+    public async Task<IActionResult> DangKyBacSi([FromBody] DangKyBacSiRequest yeuCau)
     {
         return await DangKy(yeuCau, "BAC_SI", "Đăng ký Bác sĩ thành công!");
     }
 
     [Authorize(Policy = "QuanLy")]
     [HttpPost("register/quan-ly")]
-    public async Task<IActionResult> DangKyQuanLy([FromBody] YeuCauDangKy yeuCau)
+    public async Task<IActionResult> DangKyQuanLy([FromBody] DangKyRequest yeuCau)
     {
         return await DangKy(yeuCau, "QUAN_LY", "Đăng ký Quản lý thành công!");
     }
 
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<IActionResult> DangNhap([FromBody] YeuCauDangNhap yeuCau)
+    public async Task<IActionResult> DangNhap([FromBody] DangNhapRequest yeuCau)
     {
         var token = await dangNhapService.DangNhapAsync(yeuCau.SoDienThoai, yeuCau.MatKhau);
         return token == null
@@ -50,17 +55,32 @@ public sealed class AuthController(DangNhapService dangNhapService, DangKyServic
     }
 
     [HttpGet("me")]
-    public IActionResult ThongTinDangNhap()
+    public async Task<IActionResult> ThongTinDangNhap()
     {
+        if (!ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out var maTaiKhoan))
+        {
+            return Unauthorized();
+        }
+
+        var ten = await db.TaiKhoans.AsNoTracking()
+            .Where(x => x.MaTaiKhoan == maTaiKhoan)
+            .Select(x => x.ConNguoi.HoTen)
+            .FirstOrDefaultAsync();
+        if (ten == null)
+        {
+            return Unauthorized();
+        }
+
         return Ok(new
         {
-            MaTaiKhoan = User.FindFirstValue("ma_tai_khoan"),
+            MaTaiKhoan = maTaiKhoan.ToString(),
             SoDienThoai = User.FindFirstValue("sub"),
-            VaiTro = User.FindFirstValue("vai_tro")
+            VaiTro = User.FindFirstValue("vai_tro"),
+            Ten = ten
         });
     }
 
-    private async Task<IActionResult> DangKy(YeuCauDangKy yeuCau, string maVaiTro, string thongBao)
+    private async Task<IActionResult> DangKy(DangKyRequest yeuCau, string maVaiTro, string thongBao)
     {
         var ketQua = await dangKyService.DangKyAsync(yeuCau, maVaiTro);
         if (ketQua.Loi == null)
