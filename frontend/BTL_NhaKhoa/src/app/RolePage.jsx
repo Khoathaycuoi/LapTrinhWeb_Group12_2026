@@ -1,6 +1,7 @@
 import CustomerDashboard from '../features/dashboard/CustomerDashboard'
 import MyAppointments from '../features/appointments/MyAppointments'
 import BookingPage from '../features/appointments/BookingPage'
+import ReceptionAppointments from '../features/appointments/ReceptionAppointments'
 import PlaceholderPage from '../pages/PlaceholderPage'
 
 export default function RolePage({ session, routePath, query, navigationState, onNavigate }) {
@@ -17,6 +18,10 @@ export default function RolePage({ session, routePath, query, navigationState, o
 
   if (session.role === 'KHACH_HANG' && routePath === '/khach-hang/dat-lich') {
     return <BookingPage token={session.token} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'LE_TAN' && routePath === '/le-tan/lich-hen') {
+    return <ReceptionAppointments token={session.token} />
   }
 
   return <PlaceholderPage role={session.role} path={routePath} />

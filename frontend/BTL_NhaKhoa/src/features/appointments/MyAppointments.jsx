@@ -88,6 +88,9 @@ function CancelDialog({ appointment, reason, error, busy, onReasonChange, onCanc
 function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
   const services = appointment.dichVusDuKien ?? []
   const cancellableStatus = ['Chờ xác nhận', 'Đã xác nhận'].includes(appointment.trangThai)
+  const hasDetails = Boolean(appointment.maPhong || appointment.lyDoHuy || appointment.lyDoTuChoi ||
+    (appointment.ghi_chu && !appointment.lyDoHuy) || services.length)
+  const estimatedTotal = services.reduce((sum, service) => sum + Number(service.donGiaTaiThoiDiemDat || 0), 0)
 
   return <article className="appointment-card">
     <div className="appointment-card-top">
@@ -100,22 +103,20 @@ function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
       <div><span>Thời lượng dự kiến</span><strong>{appointment.thoiLuongDuKienPhut} phút</strong></div>
     </div>
     <div className="appointment-card-actions">
-      <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Xem chi tiết'}</button>
+      {hasDetails && <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Chi tiết dịch vụ và lịch'}</button>}
       {canCancel(appointment) && <button type="button" className="appointment-cancel-button" onClick={onCancel}>Hủy lịch</button>}
       {cancellableStatus && !canCancel(appointment) && <span className="appointment-cancel-note">{appointment.trangThai === 'Chờ xác nhận'
         ? 'Lịch chờ đã qua giờ hẹn và không thể hủy.'
         : 'Lịch đã xác nhận không thể tự hủy trong vòng 12 giờ trước giờ hẹn. Vui lòng liên hệ Lễ tân.'}</span>}
     </div>
-    {expanded && <div className="appointment-details">
-      <dl>
-        <div><dt>Mã lịch hẹn</dt><dd>{appointment.maLichHen}</dd></div>
-        <div><dt>Ngày giờ hẹn</dt><dd>{formatAppointmentDate(appointment.ngayHen, appointment.gioHen)}</dd></div>
-        <div><dt>Phòng</dt><dd>{appointment.maPhong || 'Chưa phân phòng'}</dd></div>
-        {appointment.ghi_chu && <div><dt>Ghi chú</dt><dd className="appointment-note">{appointment.ghi_chu}</dd></div>}
+    {expanded && hasDetails && <div className="appointment-details">
+      {(appointment.maPhong || appointment.lyDoHuy || appointment.lyDoTuChoi || (appointment.ghi_chu && !appointment.lyDoHuy)) && <dl>
+        {appointment.maPhong && <div><dt>Phòng khám</dt><dd>{appointment.maPhong}</dd></div>}
+        {appointment.ghi_chu && !appointment.lyDoHuy && <div><dt>Ghi chú</dt><dd className="appointment-note">{appointment.ghi_chu}</dd></div>}
         {appointment.lyDoHuy && <div><dt>Lý do hủy</dt><dd className="appointment-note">{appointment.lyDoHuy}</dd></div>}
         {appointment.lyDoTuChoi && <div><dt>Lý do từ chối</dt><dd className="appointment-note">{appointment.lyDoTuChoi}</dd></div>}
-      </dl>
-      {services.length > 0 && <div className="appointment-services"><h3>Dịch vụ dự kiến khi đặt</h3><ul>{services.map((service) => <li key={service.maDichVu}><span>{service.tenDichVu}</span><span>{moneyFormatter.format(service.donGiaTaiThoiDiemDat)}</span></li>)}</ul></div>}
+      </dl>}
+      {services.length > 0 && <div className="appointment-services"><h3>Chi phí dự kiến khi đặt</h3><ul>{services.map((service) => <li key={service.maDichVu}><span>{service.tenDichVu} · {service.thoiLuongTaiThoiDiemDatPhut} phút</span><span>{moneyFormatter.format(service.donGiaTaiThoiDiemDat)}</span></li>)}</ul><div className="appointment-estimated-total"><span>Tổng dự kiến</span><strong>{moneyFormatter.format(estimatedTotal)}</strong></div><p>Hóa đơn thực tế chỉ tính các dịch vụ đã thực hiện.</p></div>}
     </div>}
   </article>
 }

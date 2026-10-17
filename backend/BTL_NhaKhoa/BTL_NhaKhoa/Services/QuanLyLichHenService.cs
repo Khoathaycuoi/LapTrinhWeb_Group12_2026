@@ -26,6 +26,9 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
     public static bool TrangThaiHopLe(string? trangThai) =>
         string.IsNullOrWhiteSpace(trangThai) || ChuanHoaTrangThai(trangThai) != null;
 
+    public static bool NhomHopLe(string? nhom) =>
+        string.IsNullOrWhiteSpace(nhom) || nhom is "all" or "upcoming" or "active" or "finished";
+
     public async Task<KetQuaLichHen> DatAsync(DatLichRequest yeuCau, ulong maTaiKhoan)
     {
         var batDau = yeuCau.NgayHen!.Value.ToDateTime(yeuCau.GioHen!.Value);
@@ -107,6 +110,10 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
             return new KetQuaLichHen("Lịch hẹn phải nằm trọn trong ca 07:00–11:30 hoặc 14:00–17:30.");
         }
         await using var giaoDich = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        if (await KhachHangBanAsync(maKhachHang, batDau, tongPhut, tinhLichCho: true))
+        {
+            return new KetQuaLichHen("Khách hàng đã có lịch hẹn trùng thời gian này. Vui lòng chọn giờ khác.");
+        }
         if (maBacSi.HasValue && await BacSiBanAsync(maBacSi.Value, batDau, tongPhut))
         {
             return new KetQuaLichHen("Bác sĩ đã có lịch bận trong khoảng thời gian này.");
@@ -135,7 +142,7 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         db.LichHens.Add(lichHen);
         if (xacNhanNgay)
         {
-            await TuChoiLichTrungAsync(maBacSi!.Value, batDau, tongPhut, null);
+            await TuChoiLichTrungAsync(maBacSi!.Value, maKhachHang, batDau, tongPhut, null);
         }
         await db.SaveChangesAsync();
         await giaoDich.CommitAsync();
@@ -145,11 +152,84 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
     public async Task<IReadOnlyList<LichHenResponse>> LayDanhSachAsync(ulong maTaiKhoan,
         string? trangThai = null, DateOnly? ngayHen = null, string? maKhachHang = null,
         string? tenKhachHang = null, string? soDienThoaiKhachHang = null,
-        string? maBacSi = null, string? tenBacSi = null, string? soDienThoaiBacSi = null)
+        string? maBacSi = null, string? tenBacSi = null, string? soDienThoaiBacSi = null,
+        string? nhom = null)
+    {
+        var (query, vaiTro) = await TaoTruyVanDanhSachAsync(maTaiKhoan, trangThai, ngayHen,
+            maKhachHang, tenKhachHang, soDienThoaiKhachHang, maBacSi, tenBacSi,
+            soDienThoaiBacSi, nhom);
+        if (vaiTro == null) return [];
+
+        List<LichHen> danhSach;
+        if (vaiTro == "LE_TAN")
+        {
+            var hienTai = DateTime.Now;
+            var lichHen = await query.ToListAsync();
+            danhSach = lichHen.Where(x => x.ThoiGianBatDau >= hienTai)
+                .OrderBy(x => x.ThoiGianBatDau).ThenBy(x => x.MaLichHen)
+                .Concat(lichHen.Where(x => x.ThoiGianBatDau < hienTai)
+                    .OrderByDescending(x => x.ThoiGianBatDau).ThenByDescending(x => x.MaLichHen))
+                .ToList();
+        }
+        else
+        {
+            danhSach = await query.OrderByDescending(x => x.ThoiGianBatDau)
+                .ThenByDescending(x => x.MaLichHen).ToListAsync();
+        }
+        return danhSach.Select(TaoResponse).ToList();
+    }
+
+    public async Task<DanhSachLichHenPhanTrangResponse> LayTrangAsync(ulong maTaiKhoan,
+        int page, int pageSize, string? trangThai = null, DateOnly? ngayHen = null,
+        string? maKhachHang = null, string? tenKhachHang = null,
+        string? soDienThoaiKhachHang = null, string? maBacSi = null,
+        string? tenBacSi = null, string? soDienThoaiBacSi = null, string? nhom = null)
+    {
+        var (query, vaiTro) = await TaoTruyVanDanhSachAsync(maTaiKhoan, trangThai, ngayHen,
+            maKhachHang, tenKhachHang, soDienThoaiKhachHang, maBacSi, tenBacSi,
+            soDienThoaiBacSi, nhom);
+        if (vaiTro == null) return new DanhSachLichHenPhanTrangResponse([], 0, page, pageSize);
+
+        var totalItems = await query.CountAsync();
+        var offset = (page - 1) * pageSize;
+        if (offset >= totalItems)
+            return new DanhSachLichHenPhanTrangResponse([], totalItems, page, pageSize);
+
+        List<LichHen> danhSach;
+        if (vaiTro == "LE_TAN")
+        {
+            var hienTai = DateTime.Now;
+            var soLichSapToi = await query.CountAsync(x => x.ThoiGianBatDau >= hienTai);
+            var lichSapToi = offset < soLichSapToi
+                ? await query.Where(x => x.ThoiGianBatDau >= hienTai)
+                    .OrderBy(x => x.ThoiGianBatDau).ThenBy(x => x.MaLichHen)
+                    .Skip(offset).Take(pageSize).ToListAsync()
+                : [];
+            var conLai = pageSize - lichSapToi.Count;
+            var lichDaQua = conLai > 0
+                ? await query.Where(x => x.ThoiGianBatDau < hienTai)
+                    .OrderByDescending(x => x.ThoiGianBatDau).ThenByDescending(x => x.MaLichHen)
+                    .Skip(Math.Max(0, offset - soLichSapToi)).Take(conLai).ToListAsync()
+                : [];
+            danhSach = [.. lichSapToi, .. lichDaQua];
+        }
+        else
+        {
+            danhSach = await query.OrderByDescending(x => x.ThoiGianBatDau)
+                .ThenByDescending(x => x.MaLichHen)
+                .Skip(offset).Take(pageSize).ToListAsync();
+        }
+        return new DanhSachLichHenPhanTrangResponse(
+            danhSach.Select(TaoResponse).ToList(), totalItems, page, pageSize);
+    }
+
+    private async Task<(IQueryable<LichHen> Query, string? VaiTro)> TaoTruyVanDanhSachAsync(
+        ulong maTaiKhoan, string? trangThai, DateOnly? ngayHen, string? maKhachHang,
+        string? tenKhachHang, string? soDienThoaiKhachHang, string? maBacSi,
+        string? tenBacSi, string? soDienThoaiBacSi, string? nhom)
     {
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
-        if (taiKhoan == null) return [];
 
         var query = db.LichHens.AsNoTracking()
             .Include(x => x.KhachHang).ThenInclude(x => x.ConNguoi)
@@ -160,6 +240,8 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
             .Include(x => x.ChiTietLichHens).ThenInclude(x => x.DichVuThucHien)
             .AsSplitQuery()
             .AsQueryable();
+
+        if (taiKhoan == null) return (query.Where(x => false), null);
 
         if (taiKhoan.MaVaiTro == "KHACH_HANG")
         {
@@ -178,7 +260,7 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         }
         else if (taiKhoan.MaVaiTro is not ("QUAN_LY" or "LE_TAN"))
         {
-            return [];
+            return (query.Where(x => false), null);
         }
 
         if (!string.IsNullOrWhiteSpace(trangThai))
@@ -186,6 +268,18 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
             var maTrangThai = ChuanHoaTrangThai(trangThai);
             query = query.Where(x => x.TrangThai == maTrangThai);
         }
+        var hienTai = DateTime.Now;
+        query = nhom switch
+        {
+            "upcoming" => query.Where(x =>
+                (x.TrangThai == "CHO_XAC_NHAN" || x.TrangThai == "DA_XAC_NHAN") &&
+                x.ThoiGianBatDau >= hienTai),
+            "active" => query.Where(x => x.TrangThai == "DA_DEN" || x.TrangThai == "DANG_KHAM"),
+            "finished" => query.Where(x => x.TrangThai == "DA_HOAN_THANH" ||
+                x.TrangThai == "DA_HUY" || x.TrangThai == "KHONG_DEN" ||
+                x.TrangThai == "TU_CHOI" || x.TrangThai == "HET_HAN"),
+            _ => query
+        };
         if (ngayHen.HasValue)
         {
             var dauNgay = ngayHen.Value.ToDateTime(TimeOnly.MinValue);
@@ -219,12 +313,11 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
             query = query.Where(x => x.BacSi != null && x.BacSi.NhanVien.ConNguoi.SoDienThoai.Contains(soDienThoaiBacSi.Trim()));
         }
 
-        var danhSach = await query.OrderByDescending(x => x.ThoiGianBatDau).ToListAsync();
-        return danhSach.Select(TaoResponse).ToList();
+        return (query, taiKhoan.MaVaiTro);
     }
 
     public async Task<KetQuaLichHen> XacNhanAsync(string maLichHen, ulong maTaiKhoan,
-        string? maPhongDuocChon = null)
+        string? maPhongDuocChon = null, string? maBacSiDuocChon = null)
     {
         if (!ThuDocMa(maLichHen, "LH_", out var id)) return new KetQuaLichHen("Mã lịch hẹn không hợp lệ.");
         await using var giaoDich = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
@@ -248,16 +341,32 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         {
             return new KetQuaLichHen("Bạn không có quyền xác nhận lịch.", KhongCoQuyen: true);
         }
-        if (lichHen.MaBacSi.HasValue && await BacSiBanAsync(lichHen.MaBacSi.Value,
+        var maBacSi = lichHen.MaBacSi;
+        if (maBacSiDuocChon != null)
+        {
+            if (taiKhoan.MaVaiTro is not ("QUAN_LY" or "LE_TAN"))
+                return new KetQuaLichHen("Bạn không có quyền gán bác sĩ.", KhongCoQuyen: true);
+            if (maBacSi.HasValue)
+                return new KetQuaLichHen("Lịch đã có bác sĩ. Vui lòng tải lại danh sách lịch hẹn.");
+            if (!ThuDocMa(maBacSiDuocChon, "BS_", out var idBacSi))
+                return new KetQuaLichHen("Mã bác sĩ không hợp lệ.");
+            maBacSi = idBacSi;
+        }
+        if (await KhachHangBanAsync(lichHen.MaKhachHang, lichHen.ThoiGianBatDau,
+            lichHen.ThoiLuongDuKienPhut, boQuaLichHen: lichHen.MaLichHen))
+        {
+            return new KetQuaLichHen("Khách hàng đã có lịch được xác nhận trùng thời gian này. Không thể xác nhận thêm lịch.");
+        }
+        if (maBacSi.HasValue && await BacSiBanAsync(maBacSi.Value,
             lichHen.ThoiGianBatDau, lichHen.ThoiLuongDuKienPhut, lichHen.MaLichHen))
         {
             return new KetQuaLichHen("Bác sĩ đã có lịch bận trong khoảng thời gian này.");
         }
-        if (!lichHen.MaBacSi.HasValue)
+        if (!maBacSi.HasValue)
         {
             return new KetQuaLichHen("Cần gán bác sĩ trước khi xác nhận lịch hẹn.");
         }
-        if (!await BacSiTonTaiAsync(lichHen.MaBacSi.Value))
+        if (!await BacSiTonTaiAsync(maBacSi.Value))
         {
             return new KetQuaLichHen("Bác sĩ đã ngừng hoạt động.");
         }
@@ -284,11 +393,12 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         if (lichHen.ThoiGianBatDau <= DateTime.Now)
             return new KetQuaLichHen("Lịch chờ xác nhận đã quá giờ hẹn. Vui lòng tạo lịch mới.");
 
+        lichHen.MaBacSi = maBacSi;
         lichHen.TrangThai = "DA_XAC_NHAN";
         lichHen.MaPhong = maPhong;
         lichHen.NguoiXacNhanTaiKhoanId = maTaiKhoan;
         lichHen.XacNhanLuc = DateTime.Now;
-        await TuChoiLichTrungAsync(lichHen.MaBacSi.Value, lichHen.ThoiGianBatDau,
+        await TuChoiLichTrungAsync(maBacSi.Value, lichHen.MaKhachHang, lichHen.ThoiGianBatDau,
             lichHen.ThoiLuongDuKienPhut, lichHen.MaLichHen);
         await db.SaveChangesAsync();
         await giaoDich.CommitAsync();
@@ -458,10 +568,25 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
     }
 
     public async Task<IReadOnlyList<TimeOnly>> LayCaTrongAsync(ulong maBacSi, DateOnly ngay,
-        int thoiLuongPhut = 30)
+        int thoiLuongPhut = 30, ulong? maTaiKhoanKhachHang = null)
     {
         var dauNgay = ngay.ToDateTime(TimeOnly.MinValue);
         var cuoiNgay = dauNgay.AddDays(1);
+        var maKhachHang = maTaiKhoanKhachHang.HasValue
+            ? await db.KhachHangs.AsNoTracking()
+                .Where(x => x.ConNguoi.TaiKhoan != null &&
+                    x.ConNguoi.TaiKhoan.MaTaiKhoan == maTaiKhoanKhachHang.Value)
+                .Select(x => (ulong?)x.MaKhachHang).FirstOrDefaultAsync()
+            : null;
+        var lichCuaKhach = maKhachHang.HasValue
+            ? await db.LichHens.AsNoTracking()
+                .Where(x => x.MaKhachHang == maKhachHang.Value &&
+                    x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < cuoiNgay &&
+                    (x.TrangThai == "CHO_XAC_NHAN" || x.TrangThai == "DA_XAC_NHAN" ||
+                        x.TrangThai == "DA_DEN" || x.TrangThai == "DANG_KHAM"))
+                .Select(x => new { x.ThoiGianBatDau, x.ThoiLuongDuKienPhut, x.TrangThai, x.DenLuc })
+                .ToListAsync()
+            : null;
         var lichDaDat = await db.LichHens.AsNoTracking()
             .Where(x => x.MaBacSi == maBacSi && x.ThoiGianBatDau >= dauNgay &&
                 x.ThoiGianBatDau < cuoiNgay &&
@@ -478,6 +603,12 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
                 if (ketThuc > ngay.ToDateTime(gioKetThuc)) continue;
                 if (thoiDiem < DateTime.Now) continue;
                 if (lichDaDat.Any(x =>
+                {
+                    var khoang = KhoangChiemCho(x.ThoiGianBatDau, x.ThoiLuongDuKienPhut,
+                        x.TrangThai, x.DenLuc);
+                    return GiaoNhau(thoiDiem, ketThuc, khoang.BatDau, khoang.KetThuc);
+                })) continue;
+                if (lichCuaKhach != null && lichCuaKhach.Any(x =>
                 {
                     var khoang = KhoangChiemCho(x.ThoiGianBatDau, x.ThoiLuongDuKienPhut,
                         x.TrangThai, x.DenLuc);
@@ -501,6 +632,27 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
                 (x.TrangThai == "DA_XAC_NHAN" || x.TrangThai == "DA_DEN" || x.TrangThai == "DANG_KHAM") &&
                 (!boQuaLichHen.HasValue || x.MaLichHen != boQuaLichHen.Value))
             .Select(x => new { x.ThoiGianBatDau, x.ThoiLuongDuKienPhut, x.TrangThai, x.DenLuc }).ToListAsync();
+        return lichTrongNgay.Any(x =>
+        {
+            var khoang = KhoangChiemCho(x.ThoiGianBatDau, x.ThoiLuongDuKienPhut,
+                x.TrangThai, x.DenLuc);
+            return GiaoNhau(batDau, batDau.AddMinutes(soPhut), khoang.BatDau, khoang.KetThuc);
+        });
+    }
+
+    private async Task<bool> KhachHangBanAsync(ulong maKhachHang, DateTime batDau, int soPhut,
+        bool tinhLichCho = false, ulong? boQuaLichHen = null)
+    {
+        var dauNgay = batDau.Date;
+        var cuoiNgay = dauNgay.AddDays(1);
+        var lichTrongNgay = await db.LichHens.AsNoTracking()
+            .Where(x => x.MaKhachHang == maKhachHang &&
+                x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < cuoiNgay &&
+                (!boQuaLichHen.HasValue || x.MaLichHen != boQuaLichHen.Value) &&
+                (x.TrangThai == "DA_XAC_NHAN" || x.TrangThai == "DA_DEN" ||
+                    x.TrangThai == "DANG_KHAM" || (tinhLichCho && x.TrangThai == "CHO_XAC_NHAN")))
+            .Select(x => new { x.ThoiGianBatDau, x.ThoiLuongDuKienPhut, x.TrangThai, x.DenLuc })
+            .ToListAsync();
         return lichTrongNgay.Any(x =>
         {
             var khoang = KhoangChiemCho(x.ThoiGianBatDau, x.ThoiLuongDuKienPhut,
@@ -558,13 +710,14 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         })).ToList();
     }
 
-    private async Task TuChoiLichTrungAsync(ulong maBacSi, DateTime batDau,
+    private async Task TuChoiLichTrungAsync(ulong maBacSi, ulong maKhachHang, DateTime batDau,
         int thoiLuongPhut, ulong? boQuaLichHen)
     {
         var dauNgay = batDau.Date;
         var cuoiNgay = dauNgay.AddDays(1);
         var lichCho = await db.LichHens
-            .Where(x => x.MaBacSi == maBacSi && x.TrangThai == "CHO_XAC_NHAN" &&
+            .Where(x => (x.MaBacSi == maBacSi || x.MaKhachHang == maKhachHang) &&
+                x.TrangThai == "CHO_XAC_NHAN" &&
                 x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < cuoiNgay &&
                 (!boQuaLichHen.HasValue || x.MaLichHen != boQuaLichHen.Value))
             .ToListAsync();
@@ -572,7 +725,9 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
             x.ThoiGianBatDau, x.ThoiGianBatDau.AddMinutes(x.ThoiLuongDuKienPhut))))
         {
             lich.TrangThai = "TU_CHOI";
-            lich.LyDoTuChoi = "Ca của bác sĩ đã được xác nhận cho lịch hẹn khác.";
+            lich.LyDoTuChoi = lich.MaKhachHang == maKhachHang
+                ? "Khách hàng đã có lịch khác được xác nhận vào thời gian này."
+                : "Ca của bác sĩ đã được xác nhận cho lịch hẹn khác.";
             lich.TuChoiLuc = DateTime.Now;
         }
     }
