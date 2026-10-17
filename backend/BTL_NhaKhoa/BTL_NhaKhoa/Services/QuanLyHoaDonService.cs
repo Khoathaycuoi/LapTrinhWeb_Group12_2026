@@ -57,10 +57,31 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
     public async Task<IReadOnlyList<HoaDonResponse>> LayDanhSachAsync(
         ulong maTaiKhoan, string? maKhachHang, bool conNo = false)
     {
+        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang, conNo);
+        var hoaDons = await query.OrderByDescending(x => x.NgayLap)
+            .ThenByDescending(x => x.MaHoaDon).ToListAsync();
+        return hoaDons.Select(TaoResponse).ToList();
+    }
+
+    public async Task<DanhSachPhanTrangResponse<HoaDonResponse>> LayTrangAsync(
+        ulong maTaiKhoan, string? maKhachHang, bool conNo, int page, int pageSize)
+    {
+        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang, conNo);
+        var totalItems = await query.CountAsync();
+        var hoaDons = await query.OrderByDescending(x => x.NgayLap)
+            .ThenByDescending(x => x.MaHoaDon)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<HoaDonResponse>(
+            hoaDons.Select(TaoResponse).ToList(), totalItems, page, pageSize);
+    }
+
+    private async Task<IQueryable<HoaDon>> TaoTruyVanDanhSachAsync(
+        ulong maTaiKhoan, string? maKhachHang, bool conNo)
+    {
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
-        if (taiKhoan == null) return [];
         var query = TruyVanHoaDon();
+        if (taiKhoan == null) return query.Where(x => false);
         if (taiKhoan.MaVaiTro == "KHACH_HANG")
             query = query.Where(x => x.HoSoKham.KhachHang.MaConNguoi == taiKhoan.MaConNguoi);
         else if (taiKhoan.MaVaiTro is "LE_TAN" or "QUAN_LY")
@@ -68,18 +89,17 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
             if (!string.IsNullOrWhiteSpace(maKhachHang))
             {
                 if (!QuanLyLichHenService.ThuDocMa(maKhachHang, "KH_", out var idKhachHang))
-                    return [];
+                    return query.Where(x => false);
                 query = query.Where(x => x.HoSoKham.MaKhachHang == idKhachHang);
             }
         }
-        else return [];
+        else return query.Where(x => false);
 
         if (conNo)
             query = query.Where(x => x.TrangThai == "CHUA_THANH_TOAN" ||
                 x.TrangThai == "THANH_TOAN_MOT_PHAN");
 
-        var hoaDons = await query.OrderByDescending(x => x.NgayLap).ToListAsync();
-        return hoaDons.Select(TaoResponse).ToList();
+        return query;
     }
 
     public async Task<(KetQuaHoaDon KetQua, HoaDonResponse? DuLieu)> LayChiTietAsync(

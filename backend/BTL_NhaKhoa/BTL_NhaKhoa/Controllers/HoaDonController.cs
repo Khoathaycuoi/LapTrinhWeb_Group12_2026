@@ -23,9 +23,15 @@ public sealed class HoaDonController(QuanLyHoaDonService quanLyHoaDonService) : 
     [HttpGet]
     [Authorize(Roles = "KHACH_HANG,LE_TAN,QUAN_LY")]
     public async Task<IActionResult> LayDanhSach([FromQuery] string? maKhachHang,
-        [FromQuery] bool conNo = false)
+        [FromQuery] bool conNo = false, [FromQuery] PhanTrangRequest? phanTrang = null)
     {
         if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyHoaDonService.LayTrangAsync(maTaiKhoan, maKhachHang,
+                conNo, phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyHoaDonService.LayDanhSachAsync(maTaiKhoan, maKhachHang, conNo));
     }
 

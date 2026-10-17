@@ -23,8 +23,14 @@ public sealed class DichVuController(QuanLyDichVuService quanLyDichVuService) : 
     }
 
     [HttpGet("all")]
-    public async Task<IActionResult> LayTatCa()
+    public async Task<IActionResult> LayTatCa([FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyDichVuService.LayTrangTatCaAsync(
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         var danhSach = await quanLyDichVuService.LayTatCaAsync();
         return danhSach.Count == 0 ? NotFound("Không tìm thấy danh sách dịch vụ") : Ok(danhSach);
     }
@@ -59,7 +65,8 @@ public sealed class DichVuController(QuanLyDichVuService quanLyDichVuService) : 
     public async Task<IActionResult> TimKiem(
         [FromQuery] string? ten, [FromQuery] string? tenDichVu,
         [FromQuery] string? status, [FromQuery] string? trangThai,
-        [FromQuery] decimal? min, [FromQuery] decimal? max)
+        [FromQuery] decimal? min, [FromQuery] decimal? max,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
         var trangThaiCanTim = !string.IsNullOrWhiteSpace(status) ? status : trangThai;
         if (!QuanLyDichVuService.TrangThaiHopLe(trangThaiCanTim))
@@ -69,6 +76,13 @@ public sealed class DichVuController(QuanLyDichVuService quanLyDichVuService) : 
         if (min < 0 || max < 0 || (min.HasValue && max.HasValue && min > max))
         {
             return BadRequest("Khoảng đơn giá không hợp lệ.");
+        }
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyDichVuService.TimKiemTrangAsync(
+                !string.IsNullOrWhiteSpace(ten) ? ten : tenDichVu, trangThaiCanTim,
+                min, max, phanTrang.SoTrang, phanTrang.KichThuocTrang));
         }
         return Ok(await quanLyDichVuService.TimKiemAsync(
             !string.IsNullOrWhiteSpace(ten) ? ten : tenDichVu, trangThaiCanTim, min, max));

@@ -15,84 +15,168 @@ public sealed class NguoiDungController(
 {
     [HttpGet("bac-si")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayBacSi([FromQuery] string? keyword)
+    public async Task<IActionResult> LayBacSi([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("bac-si", null, keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("bac-si", null, keyword));
     }
 
     [HttpGet("bac-si/hoat-dong")]
-    public async Task<IActionResult> LayBacSiHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayBacSiHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("bac-si", "HOAT_DONG", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("bac-si", "HOAT_DONG", keyword));
     }
 
     [HttpGet("bac-si/khong-hoat-dong")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayBacSiKhongHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayBacSiKhongHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("bac-si", "VO_HIEU_HOA", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("bac-si", "VO_HIEU_HOA", keyword));
     }
 
     [HttpGet("nhan-vien")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayNhanVien([FromQuery] string? keyword)
+    public async Task<IActionResult> LayNhanVien([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("nhan-vien", null, keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("nhan-vien", null, keyword));
     }
 
     [HttpGet("nhan-vien/hoat-dong")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayNhanVienHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayNhanVienHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("nhan-vien", "HOAT_DONG", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("nhan-vien", "HOAT_DONG", keyword));
     }
 
     [HttpGet("nhan-vien/khong-hoat-dong")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayNhanVienKhongHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayNhanVienKhongHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("nhan-vien", "VO_HIEU_HOA", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("nhan-vien", "VO_HIEU_HOA", keyword));
     }
 
     [HttpGet("quan-ly")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayQuanLy([FromQuery] string? keyword)
+    public async Task<IActionResult> LayQuanLy([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("quan-ly", null, keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("quan-ly", null, keyword));
     }
 
     [HttpGet("quan-ly/hoat-dong")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayQuanLyHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayQuanLyHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("quan-ly", "HOAT_DONG", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("quan-ly", "HOAT_DONG", keyword));
     }
 
     [HttpGet("quan-ly/khong-hoat-dong")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayQuanLyKhongHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayQuanLyKhongHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("quan-ly", "VO_HIEU_HOA", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("quan-ly", "VO_HIEU_HOA", keyword));
     }
 
     [HttpGet("khach-hang")]
     [Authorize(Roles = "QUAN_LY,LE_TAN")]
-    public async Task<IActionResult> LayKhachHang([FromQuery] string? keyword)
+    public async Task<IActionResult> LayKhachHang([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("khach-hang", null, keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("khach-hang", null, keyword));
     }
 
     [HttpGet("khach-hang/hoat-dong")]
     [Authorize(Roles = "QUAN_LY,LE_TAN")]
-    public async Task<IActionResult> LayKhachHangHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayKhachHangHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("khach-hang", "HOAT_DONG", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("khach-hang", "HOAT_DONG", keyword));
     }
 
     [HttpGet("khach-hang/khong-hoat-dong")]
     [Authorize(Roles = "QUAN_LY")]
-    public async Task<IActionResult> LayKhachHangKhongHoatDong([FromQuery] string? keyword)
+    public async Task<IActionResult> LayKhachHangKhongHoatDong([FromQuery] string? keyword,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyNguoiDungService.LayTrangAsync("khach-hang", "VO_HIEU_HOA", keyword,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyNguoiDungService.LayDanhSachAsync("khach-hang", "VO_HIEU_HOA", keyword));
     }
 

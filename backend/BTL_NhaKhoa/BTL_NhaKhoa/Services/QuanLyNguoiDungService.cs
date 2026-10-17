@@ -40,6 +40,48 @@ public sealed class QuanLyNguoiDungService(NhaKhoaDbContext db)
         return ketQua.ToList();
     }
 
+    public async Task<DanhSachPhanTrangResponse<DanhSachNguoiDungResponse>> LayTrangAsync(
+        string loaiNguoiDung, string? trangThai, string? keyword, int page, int pageSize)
+    {
+        var query = TruyVanTaiKhoan().AsNoTracking();
+        query = loaiNguoiDung switch
+        {
+            "bac-si" => query.Where(x => x.MaVaiTro == "BAC_SI" &&
+                x.ConNguoi.NhanVien != null && x.ConNguoi.NhanVien.BacSi != null),
+            "nhan-vien" => query.Where(x => x.MaVaiTro == "LE_TAN" && x.ConNguoi.NhanVien != null),
+            "quan-ly" => query.Where(x => x.MaVaiTro == "QUAN_LY" && x.ConNguoi.NhanVien != null),
+            "khach-hang" => query.Where(x => x.MaVaiTro == "KHACH_HANG" && x.ConNguoi.KhachHang != null),
+            _ => throw new ArgumentOutOfRangeException(nameof(loaiNguoiDung))
+        };
+        if (trangThai != null) query = query.Where(x => x.TrangThai == trangThai);
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var tuKhoa = keyword.Trim();
+            var tienTo = loaiNguoiDung switch
+            {
+                "bac-si" => "BS_", "nhan-vien" => "NV_", "quan-ly" => "QL_", _ => "KH_"
+            };
+            var phanSo = tuKhoa.StartsWith(tienTo, StringComparison.OrdinalIgnoreCase)
+                ? tuKhoa[3..] : tuKhoa;
+            var coMa = ulong.TryParse(phanSo, out var maHoSo) && maHoSo > 0;
+            query = query.Where(x => x.ConNguoi.HoTen.Contains(tuKhoa) ||
+                x.ConNguoi.SoDienThoai.Contains(tuKhoa) ||
+                (coMa && ((loaiNguoiDung == "khach-hang" &&
+                    x.ConNguoi.KhachHang!.MaKhachHang == maHoSo) ||
+                    (loaiNguoiDung == "bac-si" &&
+                    x.ConNguoi.NhanVien!.BacSi!.MaBacSi == maHoSo) ||
+                    ((loaiNguoiDung == "nhan-vien" || loaiNguoiDung == "quan-ly") &&
+                    x.ConNguoi.NhanVien!.MaNhanVien == maHoSo))));
+        }
+        var totalItems = await query.CountAsync();
+        var taiKhoans = await query.OrderBy(x => x.MaTaiKhoan)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = taiKhoans.Select(TaoDanhSachResponse)
+            .Where(x => x != null).Select(x => x!).ToList();
+        return new DanhSachPhanTrangResponse<DanhSachNguoiDungResponse>(
+            items, totalItems, page, pageSize);
+    }
+
     public async Task<ThongTinCaNhanResponse?> LayChiTietAsync(string maHoSo)
     {
         if (!ThuDocMaHoSo(maHoSo, out var loai, out var id))

@@ -216,6 +216,38 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
         }).ToList();
     }
 
+    public async Task<DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>> LayTrangCuaToiAsync(
+        ulong maTaiKhoan, int page, int pageSize)
+    {
+        var taiKhoan = await db.TaiKhoans.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
+        if (taiKhoan == null)
+            return new DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>([], 0, page, pageSize);
+        var query = db.HoSoKhams.AsNoTracking();
+        if (taiKhoan.MaVaiTro == "BAC_SI")
+            query = query.Where(x => x.BacSi.NhanVien.MaConNguoi == taiKhoan.MaConNguoi);
+        else if (taiKhoan.MaVaiTro == "KHACH_HANG")
+            query = query.Where(x => x.KhachHang.MaConNguoi == taiKhoan.MaConNguoi &&
+                x.ChotLuc != null);
+        else
+            return new DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>([], 0, page, pageSize);
+
+        var totalItems = await query.CountAsync();
+        var hoSos = await query.OrderByDescending(x => x.NgayKham)
+            .ThenByDescending(x => x.MaHoSoKham)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = hoSos.Select(x => new TomTatHoSoKhamResponse
+        {
+            MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
+            NgayKham = x.NgayKham,
+            MaBacSi = TaoMa("BS_", x.MaBacSi),
+            TomTat = x.TomTatChoKhach ?? string.Empty,
+            ChotLuc = x.ChotLuc
+        }).ToList();
+        return new DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>(
+            items, totalItems, page, pageSize);
+    }
+
     private async Task<(KetQuaKhamBenh KetQua, HoSoKham? HoSo)> LayHoSoDangSuaAsync(
         string maHoSoKham, ulong maTaiKhoan)
     {

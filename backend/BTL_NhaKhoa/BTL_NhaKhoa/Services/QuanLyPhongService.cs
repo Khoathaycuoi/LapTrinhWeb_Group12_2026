@@ -19,15 +19,29 @@ public sealed class QuanLyPhongService(NhaKhoaDbContext db)
         return (null, $"PH_{phong.MaPhong:D4}");
     }
 
-    public async Task<object> LayDanhSachAsync()
+    public async Task<IReadOnlyList<DanhSachPhongResponse>> LayDanhSachAsync()
     {
         var phongs = await db.Phongs.AsNoTracking()
             .OrderBy(x => x.MaPhong).ToListAsync();
-        return phongs.Select(x => new
-        {
-            MaPhong = $"PH_{x.MaPhong:D4}", x.TenPhong, x.TrangThai
-        }).ToList();
+        return phongs.Select(TaoPhongResponse).ToList();
     }
+
+    public async Task<DanhSachPhanTrangResponse<DanhSachPhongResponse>> LayTrangAsync(int page, int pageSize)
+    {
+        var query = db.Phongs.AsNoTracking();
+        var totalItems = await query.CountAsync();
+        var phongs = await query.OrderBy(x => x.MaPhong)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<DanhSachPhongResponse>(
+            phongs.Select(TaoPhongResponse).ToList(), totalItems, page, pageSize);
+    }
+
+    private static DanhSachPhongResponse TaoPhongResponse(Phong phong) => new()
+    {
+        MaPhong = $"PH_{phong.MaPhong:D4}",
+        TenPhong = phong.TenPhong,
+        TrangThai = phong.TrangThai
+    };
 
     public async Task<(string? Loi, bool KhongTimThay, IReadOnlyList<LichSuPhongResponse>? DuLieu)>
         LayLichSuAsync(string maPhong, DateOnly? tuNgay, DateOnly? denNgay)
@@ -57,8 +71,45 @@ public sealed class QuanLyPhongService(NhaKhoaDbContext db)
             .Include(x => x.BacSi).ThenInclude(x => x!.NhanVien).ThenInclude(x => x.ConNguoi)
             .Include(x => x.NguoiHuyTaiKhoan).ThenInclude(x => x!.ConNguoi)
             .OrderByDescending(x => x.ThoiGianBatDau)
+            .ThenByDescending(x => x.MaLichHen)
             .ToListAsync();
-        return (null, false, lichHens.Select(x => new LichSuPhongResponse
+        return (null, false, lichHens.Select(x => TaoLichSuResponse(x, id)).ToList());
+    }
+
+    public async Task<(string? Loi, bool KhongTimThay,
+        DanhSachPhanTrangResponse<LichSuPhongResponse>? DuLieu)> LayTrangLichSuAsync(
+        string maPhong, DateOnly? tuNgay, DateOnly? denNgay, int page, int pageSize)
+    {
+        if (!QuanLyLichHenService.ThuDocMa(maPhong, "PH_", out var id))
+            return ("Mã phòng không hợp lệ.", false, null);
+        if (tuNgay.HasValue && denNgay.HasValue && tuNgay > denNgay)
+            return ("Từ ngày không được sau đến ngày.", false, null);
+        if (!await db.Phongs.AnyAsync(x => x.MaPhong == id))
+            return ("Không tìm thấy phòng.", true, null);
+
+        var query = db.LichHens.AsNoTracking().Where(x => x.MaPhong == id);
+        if (tuNgay.HasValue)
+        {
+            var batDau = tuNgay.Value.ToDateTime(TimeOnly.MinValue);
+            query = query.Where(x => x.ThoiGianBatDau >= batDau);
+        }
+        if (denNgay.HasValue)
+        {
+            var ketThuc = denNgay.Value.ToDateTime(TimeOnly.MaxValue);
+            query = query.Where(x => x.ThoiGianBatDau <= ketThuc);
+        }
+        var totalItems = await query.CountAsync();
+        var lichHens = await query
+            .Include(x => x.KhachHang).ThenInclude(x => x.ConNguoi)
+            .Include(x => x.BacSi).ThenInclude(x => x!.NhanVien).ThenInclude(x => x.ConNguoi)
+            .Include(x => x.NguoiHuyTaiKhoan).ThenInclude(x => x!.ConNguoi)
+            .OrderByDescending(x => x.ThoiGianBatDau).ThenByDescending(x => x.MaLichHen)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return (null, false, new DanhSachPhanTrangResponse<LichSuPhongResponse>(
+            lichHens.Select(x => TaoLichSuResponse(x, id)).ToList(), totalItems, page, pageSize));
+    }
+
+    private static LichSuPhongResponse TaoLichSuResponse(LichHen x, ulong id) => new()
         {
             MaLichHen = $"LH_{x.MaLichHen:D4}",
             MaPhong = $"PH_{id:D4}",
@@ -75,8 +126,7 @@ public sealed class QuanLyPhongService(NhaKhoaDbContext db)
             NguoiHuy = x.NguoiHuyTaiKhoan?.ConNguoi.HoTen,
             KhongDenLuc = x.KhongDenLuc,
             GhiChuKhongDen = x.GhiChuKhongDen
-        }).ToList());
-    }
+        };
 
     public async Task<string?> DoiTrangThaiAsync(string maPhong, string trangThai)
     {
