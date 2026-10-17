@@ -1,0 +1,10 @@
+.brand-name {
+  white-space: nowrap;
+}
+
+.user-role {
+  max-width: clamp(90px, 15vw, 220px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

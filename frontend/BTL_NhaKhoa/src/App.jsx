@@ -1,122 +1,75 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import AppShell from './components/AppShell'
+import AuthScreen from './components/AuthScreen'
+import ConfirmDialog from './components/ConfirmDialog'
+import { AuthProvider } from './features/auth/AuthContext'
+import { useAuth } from './features/auth/useAuth'
+import { roleHome, roleNavigation, roles } from './app/roles'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function PageContent({ role, path }) {
+  const key = path.split('/').filter(Boolean).at(-1)
+  const navItem = roleNavigation[role].find(([, route]) => route === key)
+  const known = Boolean(navItem)
+  const label = navItem?.[0] ?? key.replaceAll('-', ' ')
+  return <>
+    <div className="page-heading"><div><h1>{label === 'overview' ? 'Tổng quan' : label}</h1><p className="page-description">Chào mừng bạn đến với Nha Khoa G12.</p></div></div>
+    {key === 'overview' ? <section className="welcome-card">
+      <div className="welcome-icon">✧</div><div><h2>Chào mừng đến với Nha Khoa G12</h2>
+        <p>Các thông tin tổng quan sẽ được cập nhật tại đây.</p></div>
+    </section> : <section className="placeholder-card"><div className="placeholder-mark">◌</div><h2>{known ? 'Tính năng đang được hoàn thiện' : 'Không tìm thấy trang'}</h2><p>{known ? 'Mục này chưa thể sử dụng. Vui lòng quay lại sau.' : 'Đường dẫn bạn mở không thuộc khu vực này.'}</p></section>}
+  </>
 }
 
-export default App
+function UnsupportedRole({ logout, navigate }) {
+  const [confirmLogout, setConfirmLogout] = useState(false)
+  return <div className="auth-error">
+    <h1>Vai trò chưa được hỗ trợ</h1>
+    <p>Tài khoản hiện tại không có vai trò thuộc hệ thống.</p>
+    <button className="primary-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button>
+    {confirmLogout && <ConfirmDialog title="Xác nhận đăng xuất" message="Bạn có chắc muốn kết thúc phiên đăng nhập hiện tại?" confirmLabel="Đăng xuất" onCancel={() => setConfirmLogout(false)} onConfirm={() => { logout(); navigate('/dang-nhap', true) }} />}
+  </div>
+}
+
+function AppContent() {
+  const { session, ready, login, logout } = useAuth()
+  const [path, setPath] = useState(window.location.pathname)
+
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  function navigate(nextPath, replace = false) {
+    if (replace) window.history.replaceState({}, '', nextPath)
+    else window.history.pushState({}, '', nextPath)
+    setPath(nextPath)
+  }
+
+  const currentPath = session
+    ? path.startsWith(`${roles[session.role]?.base}/`) ? path : roleHome(session.role)
+    : path === '/dang-ky' ? path : '/dang-nhap'
+
+  useEffect(() => {
+    if (ready && window.location.pathname !== currentPath) {
+      window.history.replaceState({}, '', currentPath)
+    }
+  }, [ready, currentPath])
+
+  if (!ready) return <div className="loading-screen"><span className="loading-mark">✦</span><p>Đang kiểm tra phiên đăng nhập…</p></div>
+  if (!session) return <AuthScreen mode={currentPath === '/dang-ky' ? 'register' : 'login'} onModeChange={(mode) => navigate(mode === 'register' ? '/dang-ky' : '/dang-nhap')} onLogin={async (phone, password) => {
+    const authenticated = await login(phone, password)
+    navigate(roleHome(authenticated.role), true)
+  }} />
+
+  const allowed = roles[session.role]
+  if (!allowed) return <UnsupportedRole logout={logout} navigate={navigate} />
+  return <AppShell role={session.role} name={session.name} path={currentPath} onNavigate={navigate} onLogout={() => { logout(); navigate('/dang-nhap', true) }}>
+    <PageContent role={session.role} path={currentPath} />
+  </AppShell>
+}
+
+export default function App() {
+  return <AuthProvider><AppContent /></AuthProvider>
+}

@@ -1,14 +1,19 @@
 using BTL_NhaKhoa.DTOs;
+using BTL_NhaKhoa.Data;
 using BTL_NhaKhoa.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BTL_NhaKhoa.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(DangNhapService dangNhapService, DangKyService dangKyService) : ControllerBase
+public sealed class AuthController(
+    DangNhapService dangNhapService,
+    DangKyService dangKyService,
+    NhaKhoaDbContext db) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register/khach-hang")]
@@ -50,13 +55,28 @@ public sealed class AuthController(DangNhapService dangNhapService, DangKyServic
     }
 
     [HttpGet("me")]
-    public IActionResult ThongTinDangNhap()
+    public async Task<IActionResult> ThongTinDangNhap()
     {
+        if (!ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out var maTaiKhoan))
+        {
+            return Unauthorized();
+        }
+
+        var ten = await db.TaiKhoans.AsNoTracking()
+            .Where(x => x.MaTaiKhoan == maTaiKhoan)
+            .Select(x => x.ConNguoi.HoTen)
+            .FirstOrDefaultAsync();
+        if (ten == null)
+        {
+            return Unauthorized();
+        }
+
         return Ok(new
         {
-            MaTaiKhoan = User.FindFirstValue("ma_tai_khoan"),
+            MaTaiKhoan = maTaiKhoan.ToString(),
             SoDienThoai = User.FindFirstValue("sub"),
-            VaiTro = User.FindFirstValue("vai_tro")
+            VaiTro = User.FindFirstValue("vai_tro"),
+            Ten = ten
         });
     }
 
