@@ -41,6 +41,10 @@ public sealed class HuyLichHenService(NhaKhoaDbContext db)
         }
 
         var lucHuy = DateTime.Now;
+        if (lichHen.TrangThai == "CHO_XAC_NHAN" && lichHen.ThoiGianBatDau <= lucHuy)
+        {
+            return new KetQuaHuyLich("Lịch chờ xác nhận đã quá giờ hẹn và không thể hủy.");
+        }
         string tenVaiTro;
         switch (taiKhoan.MaVaiTro)
         {
@@ -50,9 +54,10 @@ public sealed class HuyLichHenService(NhaKhoaDbContext db)
                 {
                     return new KetQuaHuyLich("Bạn không có quyền hủy lịch hẹn của người khác.", KhongCoQuyen: true);
                 }
-                if (lichHen.ThoiGianBatDau - lucHuy < TimeSpan.FromHours(12))
+                if (lichHen.TrangThai == "DA_XAC_NHAN" &&
+                    lichHen.ThoiGianBatDau - lucHuy < TimeSpan.FromHours(12))
                 {
-                    return new KetQuaHuyLich("Chỉ được hủy trực tuyến trước giờ hẹn ít nhất 12 tiếng. Vui lòng liên hệ Lễ tân để được hỗ trợ.");
+                    return new KetQuaHuyLich("Lịch đã xác nhận chỉ được tự hủy trước giờ hẹn ít nhất 12 tiếng. Vui lòng liên hệ Lễ tân để được hỗ trợ.");
                 }
                 tenVaiTro = "Khách hàng";
                 break;

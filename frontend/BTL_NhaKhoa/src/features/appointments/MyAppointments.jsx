@@ -12,7 +12,7 @@ const groups = [
 
 const upcomingStatuses = ['Chờ xác nhận', 'Đã xác nhận']
 const activeStatuses = ['Đã đến', 'Đang khám']
-const finishedStatuses = ['Đã hoàn thành', 'Đã hủy', 'Không đến', 'Từ chối']
+const finishedStatuses = ['Đã hoàn thành', 'Đã hủy', 'Không đến', 'Từ chối', 'Hết hạn']
 const groupStatuses = {
   upcoming: upcomingStatuses,
   active: activeStatuses,
@@ -28,6 +28,7 @@ const statusTones = {
   'Đã hủy': 'muted',
   'Không đến': 'error',
   'Từ chối': 'error',
+  'Hết hạn': 'muted',
 }
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'full' })
@@ -43,7 +44,11 @@ function formatAppointmentDate(date, time) {
 function canCancel(appointment) {
   if (!upcomingStatuses.includes(appointment.trangThai)) return false
   const start = new Date(`${appointment.ngayHen}T${appointment.gioHen}`)
-  return !Number.isNaN(start.getTime()) && start.getTime() - Date.now() >= 12 * 60 * 60 * 1000
+  if (Number.isNaN(start.getTime())) return false
+  const timeLeft = start.getTime() - Date.now()
+  return appointment.trangThai === 'Chờ xác nhận'
+    ? timeLeft > 0
+    : timeLeft >= 12 * 60 * 60 * 1000
 }
 
 function inGroup(appointment, group) {
@@ -66,7 +71,9 @@ function CancelDialog({ appointment, reason, error, busy, onReasonChange, onCanc
   return <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onCancel() }}>
     <form className="confirm-dialog appointment-cancel-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-appointment-title" onSubmit={onConfirm}>
       <h2 id="cancel-appointment-title">Hủy lịch hẹn {appointment.maLichHen}?</h2>
-      <p>Lịch sẽ được hủy sau khi bạn xác nhận. Khách hàng chỉ được hủy trước giờ hẹn ít nhất 12 tiếng.</p>
+      <p>{appointment.trangThai === 'Chờ xác nhận'
+        ? 'Lịch chờ xác nhận có thể hủy trước giờ hẹn.'
+        : 'Lịch đã xác nhận chỉ có thể tự hủy trước giờ hẹn ít nhất 12 tiếng.'}</p>
       <label htmlFor="cancel-reason">Lý do hủy <span aria-hidden="true">*</span></label>
       <textarea id="cancel-reason" autoFocus required maxLength={2000} rows={3} value={reason} onChange={(event) => onReasonChange(event.target.value)} placeholder="Nhập lý do hủy lịch hẹn" />
       {error && <div className="alert alert-error" role="alert">{error}</div>}
@@ -95,7 +102,9 @@ function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
     <div className="appointment-card-actions">
       <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Xem chi tiết'}</button>
       {canCancel(appointment) && <button type="button" className="appointment-cancel-button" onClick={onCancel}>Hủy lịch</button>}
-      {cancellableStatus && !canCancel(appointment) && <span className="appointment-cancel-note">Không thể tự hủy trong vòng 12 giờ trước giờ hẹn. Vui lòng liên hệ Lễ tân.</span>}
+      {cancellableStatus && !canCancel(appointment) && <span className="appointment-cancel-note">{appointment.trangThai === 'Chờ xác nhận'
+        ? 'Lịch chờ đã qua giờ hẹn và không thể hủy.'
+        : 'Lịch đã xác nhận không thể tự hủy trong vòng 12 giờ trước giờ hẹn. Vui lòng liên hệ Lễ tân.'}</span>}
     </div>
     {expanded && <div className="appointment-details">
       <dl>
@@ -111,9 +120,9 @@ function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
   </article>
 }
 
-export default function MyAppointments({ token, groupParam, onGroupChange }) {
+export default function MyAppointments({ token, groupParam, statusParam, arrivalNotice, onGroupChange }) {
   const group = groups.some(([, value]) => value === groupParam) ? groupParam : 'all'
-  const [specificStatus, setSpecificStatus] = useState('')
+  const [specificStatus, setSpecificStatus] = useState(statusParam ?? '')
   const [date, setDate] = useState('')
   const [reload, setReload] = useState(0)
   const [state, setState] = useState({ status: 'loading', items: [], error: '' })
@@ -122,7 +131,7 @@ export default function MyAppointments({ token, groupParam, onGroupChange }) {
   const [cancelReason, setCancelReason] = useState('')
   const [cancelError, setCancelError] = useState('')
   const [cancelling, setCancelling] = useState(false)
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(arrivalNotice ?? '')
 
   useEffect(() => {
     const controller = new AbortController()

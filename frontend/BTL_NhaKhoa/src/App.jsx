@@ -21,9 +21,9 @@ function AppContent() {
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
-  function navigate(nextPath, replace = false) {
-    if (replace) window.history.replaceState({}, '', nextPath)
-    else window.history.pushState({}, '', nextPath)
+  function navigate(nextPath, replace = false, navigationState = {}) {
+    if (replace) window.history.replaceState(navigationState, '', nextPath)
+    else window.history.pushState(navigationState, '', nextPath)
     setPath(nextPath)
   }
 
@@ -62,7 +62,7 @@ function AppContent() {
   if (!roles[session.role]) return <UnsupportedRolePage onLogout={signOut} />
 
   return <AppShell role={session.role} name={session.name} path={routePath} onNavigate={navigate} onLogout={signOut}>
-    <RolePage session={session} routePath={routePath} query={query} onNavigate={navigate} />
+    <RolePage session={session} routePath={routePath} query={query} navigationState={window.history.state} onNavigate={navigate} />
   </AppShell>
 }
 

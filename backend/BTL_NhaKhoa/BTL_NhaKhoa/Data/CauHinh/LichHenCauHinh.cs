@@ -11,7 +11,7 @@ public sealed class LichHenCauHinh : IEntityTypeConfiguration<LichHen>
         entity.ToTable("lich_hen", table =>
         {
             table.HasCheckConstraint("check_lich_hen_thoi_luong", "thoi_luong_du_kien_phut > 0");
-            table.HasCheckConstraint("check_lich_hen_trang_thai", "trang_thai IN ('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM', 'DA_HOAN_THANH', 'DA_HUY', 'KHONG_DEN', 'TU_CHOI')");
+            table.HasCheckConstraint("check_lich_hen_trang_thai", "trang_thai IN ('CHO_XAC_NHAN', 'HET_HAN', 'DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM', 'DA_HOAN_THANH', 'DA_HUY', 'KHONG_DEN', 'TU_CHOI')");
         });
         entity.HasKey(x => x.MaLichHen);
         entity.Property(x => x.MaLichHen).HasColumnType("bigint unsigned").ValueGeneratedOnAdd();

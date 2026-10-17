@@ -10,6 +10,7 @@ const moneyFormatter = new Intl.NumberFormat('vi-VN', {
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' })
 const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
+const confirmedAppointmentsPath = `/khach-hang/lich-hen?${new URLSearchParams({ nhom: 'upcoming', trangThai: 'Đã xác nhận' })}`
 
 function formatMoney(value) {
   return typeof value === 'number' ? moneyFormatter.format(value) : '—'
@@ -22,14 +23,14 @@ function formatDate(value, withTime = false) {
   return (withTime ? dateTimeFormatter : dateFormatter).format(date)
 }
 
-function appointmentStatus(status) {
-  if (status === 'CHO_XAC_NHAN') return ['Chờ xác nhận', 'pending']
-  if (status === 'DA_XAC_NHAN') return ['Đã xác nhận', 'confirmed']
-  return [status || 'Chưa rõ', 'neutral']
-}
+function CardLink({ href, className, label, onNavigate, children }) {
+  function handleClick(event) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    onNavigate(href)
+  }
 
-function SectionLink({ children, onClick }) {
-  return <button type="button" className="dashboard-section-link" onClick={onClick}>{children} <span aria-hidden="true">→</span></button>
+  return <a href={href} className={`dashboard-card-link ${className}`} aria-label={label} onClick={handleClick}>{children}</a>
 }
 
 export default function CustomerDashboard({ token, onNavigate }) {
@@ -61,7 +62,6 @@ export default function CustomerDashboard({ token, onNavigate }) {
   const appointment = data?.lichSapToiGanNhat
   const exam = data?.lanKhamGanNhat
   const invoices = data?.hoaDonConNoGanNhat ?? []
-  const [statusLabel, statusTone] = appointmentStatus(appointment?.trangThai)
 
   return <div className="customer-dashboard">
     <div className="page-heading">
@@ -78,44 +78,44 @@ export default function CustomerDashboard({ token, onNavigate }) {
 
     {state.status === 'success' && data && <>
       <div className="dashboard-metrics">
-        <button type="button" className="dashboard-metric" onClick={() => onNavigate('/khach-hang/lich-hen?nhom=upcoming')}>
+        <CardLink href={confirmedAppointmentsPath} className="dashboard-metric" label="Xem lịch hẹn sắp tới" onNavigate={onNavigate}>
           <span className="dashboard-metric-label">Lịch hẹn sắp tới</span>
           <strong>{data.soLichSapToi}</strong>
-          <span className="dashboard-metric-caption">Xem lịch hẹn <span aria-hidden="true">→</span></span>
-        </button>
-        <button type="button" className="dashboard-metric" onClick={() => onNavigate('/khach-hang/hoa-don')}>
+          <span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+        </CardLink>
+        <CardLink href="/khach-hang/hoa-don" className="dashboard-metric" label="Xem hóa đơn còn nợ" onNavigate={onNavigate}>
           <span className="dashboard-metric-label">Hóa đơn còn nợ</span>
           <strong>{data.soHoaDonConNo}</strong>
           <span className="dashboard-metric-caption">Tổng còn nợ: {formatMoney(data.tongCongNo)}</span>
-        </button>
+          <span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+        </CardLink>
       </div>
 
       <div className="dashboard-panels">
-        <section className="dashboard-panel">
-          <div className="dashboard-panel-heading"><h2>Lịch hẹn gần nhất</h2><SectionLink onClick={() => onNavigate('/khach-hang/lich-hen?nhom=upcoming')}>Xem lịch hẹn</SectionLink></div>
+        <CardLink href={confirmedAppointmentsPath} className="dashboard-panel" label="Mở danh sách lịch hẹn" onNavigate={onNavigate}>
+          <div className="dashboard-panel-heading"><h2>Lịch hẹn gần nhất</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
           {appointment ? <div className="dashboard-appointment">
-            <span className={`dashboard-status dashboard-status-${statusTone}`}>{statusLabel}</span>
             <strong>{formatDate(appointment.thoiGianBatDau, true)}</strong>
             <span>Mã lịch hẹn: {appointment.maLichHen}</span>
             <span>{appointment.tenBacSi ? `Bác sĩ: ${appointment.tenBacSi}` : 'Chưa phân công bác sĩ'}</span>
           </div> : <p className="dashboard-empty">Bạn chưa có lịch hẹn sắp tới.</p>}
-        </section>
+        </CardLink>
 
-        <section className="dashboard-panel">
-          <div className="dashboard-panel-heading"><h2>Hóa đơn còn nợ</h2><SectionLink onClick={() => onNavigate('/khach-hang/hoa-don')}>Xem hóa đơn</SectionLink></div>
+        <CardLink href="/khach-hang/hoa-don" className="dashboard-panel" label="Mở danh sách hóa đơn" onNavigate={onNavigate}>
+          <div className="dashboard-panel-heading"><h2>Hóa đơn còn nợ</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
           {invoices.length > 0 ? <ul className="dashboard-invoices">{invoices.map((invoice) => <li key={invoice.maHoaDon}>
             <div><strong>{invoice.maHoaDon}</strong><span>Lập ngày {formatDate(invoice.ngayLap)}</span></div>
             <div><strong>{formatMoney(invoice.conNo)}</strong><span>Còn nợ</span></div>
           </li>)}</ul> : <p className="dashboard-empty">Bạn không có hóa đơn còn nợ.</p>}
-        </section>
+        </CardLink>
 
-        <section className="dashboard-panel dashboard-exam-panel">
-          <div className="dashboard-panel-heading"><h2>Lần khám gần nhất</h2><SectionLink onClick={() => onNavigate('/khach-hang/lich-su-kham')}>Xem lịch sử khám</SectionLink></div>
+        <CardLink href="/khach-hang/lich-su-kham" className="dashboard-panel dashboard-exam-panel" label="Mở lịch sử khám" onNavigate={onNavigate}>
+          <div className="dashboard-panel-heading"><h2>Lần khám gần nhất</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
           {exam ? <div className="dashboard-exam">
             <div className="dashboard-exam-meta"><strong>{formatDate(exam.ngayKham)}</strong><span>Mã hồ sơ: {exam.maHoSoKham}</span></div>
             <p>{exam.tomTat || 'Chưa có tóm tắt lần khám.'}</p>
           </div> : <p className="dashboard-empty">Bạn chưa có lần khám đã chốt.</p>}
-        </section>
+        </CardLink>
       </div>
     </>}
   </div>
