@@ -97,7 +97,7 @@ function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
         {invoice.conNo > 0 && invoice.trangThai !== 'DA_HUY' && (paymentFormOpen
           ? <InvoicePaymentForm invoice={invoice} error={paymentError} onErrorDismiss={() => setPaymentError('')}
               onReview={setPaymentDraft} onCancel={() => { setPaymentFormOpen(false); setPaymentError('') }} />
-          : <button type="button" className="primary-button invoice-payment-open" onClick={() => { setPaymentError(''); setPaymentFormOpen(true) }}>Ghi nhận thanh toán</button>)}
+          : <button type="button" className="primary-button invoice-payment-open" onClick={() => { setPaymentError(''); setPaymentFormOpen(true) }}>Thanh toán</button>)}
         <h3>Khoản thu</h3>
         {invoice.thanhToans?.length ? <ul className="invoice-detail-payments">{invoice.thanhToans.map((payment) => <li key={payment.maThanhToan}>
           <div><strong>{payment.maThanhToan} · {moneyFormatter.format(payment.soTien)}</strong><span>{methodLabels[payment.phuongThuc] || payment.phuongThuc} · {formatDate(payment.thoiDiemThanhToan)}</span></div>

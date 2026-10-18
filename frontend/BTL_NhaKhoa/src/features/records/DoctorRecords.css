@@ -1,0 +1,55 @@
+.doctor-records { max-width: 1180px; }
+.doctor-record-tabs { display: inline-flex; gap: 4px; margin-bottom: 17px; padding: 4px; border: 1px solid var(--color-border); border-radius: 10px; background: #fff; }
+.doctor-record-tabs button { padding: 9px 14px; border: 0; border-radius: 7px; background: transparent; color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.doctor-record-tabs button.active { background: #E9EDFA; color: var(--color-primary-dark); }
+.doctor-record-count { color: var(--color-muted); font-size: 12px; }
+.doctor-record-list { display: grid; gap: 14px; }
+.doctor-record-list article, .doctor-record-feedback, .doctor-record-section, .doctor-record-summary, .doctor-record-footer { border: 1px solid var(--color-border); border-radius: 15px; background: #fff; }
+.doctor-record-list article { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 21px 24px; }
+.doctor-record-list small { color: var(--color-primary); font-size: 11px; font-weight: 700; }
+.doctor-record-list h2 { margin: 5px 0; font-size: 17px; }
+.doctor-record-list p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.doctor-record-list-actions { display: flex; align-items: center; gap: 14px; }
+.doctor-record-state { color: #A76B17; background: #FFF2DE; border-radius: 20px; padding: 6px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.doctor-record-state.finalized { color: #287A54; background: #E7F7EE; }
+.doctor-record-feedback { padding: 24px; color: var(--color-muted); font-size: 13px; }
+.doctor-record-detail { display: grid; gap: 16px; }
+.doctor-record-detail .page-heading { margin-bottom: 0; }
+.doctor-back-link { justify-self: start; padding: 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer; }
+.doctor-record-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 20px 24px; }
+.doctor-record-summary div { display: grid; gap: 6px; }
+.doctor-record-summary span { color: var(--color-muted); font-size: 11px; }
+.doctor-record-summary strong { color: var(--color-text); font-size: 13px; }
+.doctor-record-section { padding: 24px; }
+.doctor-record-section h2 { margin: 0 0 17px; font-size: 17px; }
+.doctor-record-section h3 { margin: 0 0 13px; font-size: 14px; }
+.doctor-record-section p { color: var(--color-muted); font-size: 12px; line-height: 1.6; }
+.doctor-record-section-heading, .doctor-prescription-heading, .doctor-medicine-heading { display: flex; justify-content: space-between; gap: 15px; align-items: baseline; }
+.doctor-record-section-heading span { color: #287A54; font-size: 12px; font-weight: 700; }
+.doctor-record-history { white-space: pre-wrap; }
+.doctor-record-form, .doctor-medicine-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.doctor-record-form label, .doctor-prescription-form label { display: grid; gap: 7px; color: var(--color-text); font-size: 12px; font-weight: 700; }
+.doctor-record-form input, .doctor-record-form textarea, .doctor-prescription-form input, .doctor-prescription-form textarea, .doctor-service-action input { box-sizing: border-box; width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 9px; background: #fff; color: var(--color-text); font: inherit; font-size: 12px; }
+.doctor-record-form textarea, .doctor-prescription-form textarea { resize: vertical; }
+.doctor-record-form :disabled { background: #F7F9FD; }
+.doctor-record-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.doctor-service-list, .doctor-prescription-list { display: grid; gap: 12px; }
+.doctor-service-row, .doctor-prescription-list article { border-top: 1px solid var(--color-border); padding-top: 14px; }
+.doctor-service-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.doctor-service-row > div:first-child { display: grid; gap: 5px; }
+.doctor-service-row strong, .doctor-prescription-list strong { font-size: 13px; }
+.doctor-service-row span, .doctor-service-row small, .doctor-prescription-list span, .doctor-prescription-list small { display: block; color: var(--color-muted); font-size: 11px; }
+.doctor-service-action { display: flex; align-items: end; gap: 9px; }
+.doctor-service-action label { display: grid; gap: 5px; color: var(--color-muted); font-size: 11px; }
+.doctor-service-action input { width: 90px; }
+.doctor-text-danger { border: 0; background: none; color: var(--color-error); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.doctor-prescription-list ul { display: grid; gap: 9px; margin: 12px 0 0; padding-left: 20px; }
+.doctor-prescription-list li { line-height: 1.6; }
+.doctor-prescription-form { display: grid; gap: 16px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.doctor-medicine-form { padding: 16px; border: 1px solid var(--color-border); border-radius: 10px; }
+.doctor-medicine-heading, .doctor-wide-field { grid-column: 1 / -1; }
+.doctor-add-medicine { justify-self: start; border: 0; background: none; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.doctor-prescription-form > .primary-button { justify-self: end; }
+.doctor-record-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 22px; }
+.doctor-record-footer span { color: var(--color-muted); font-size: 12px; }
+@media (max-width: 680px) { .doctor-record-list article, .doctor-record-footer, .doctor-service-row { align-items: stretch; flex-direction: column; } .doctor-record-list-actions { justify-content: space-between; } .doctor-record-summary, .doctor-record-form, .doctor-medicine-form { grid-template-columns: 1fr; } .doctor-medicine-heading, .doctor-wide-field { grid-column: auto; } .doctor-record-section { padding: 18px; } }

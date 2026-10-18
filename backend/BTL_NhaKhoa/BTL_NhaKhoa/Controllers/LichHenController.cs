@@ -100,6 +100,15 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
         return ketQua.Loi != null ? Loi(ketQua) : Content("Xác nhận lịch hẹn thành công!", "text/plain");
     }
 
+    [HttpPut("tu-choi/{maLichHen}")]
+    [Authorize(Roles = "BAC_SI")]
+    public async Task<IActionResult> TuChoi(string maLichHen, [FromBody] TuChoiLichHenRequest yeuCau)
+    {
+        if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        var ketQua = await quanLyLichHenService.TuChoiAsync(maLichHen, yeuCau.LyDo, maTaiKhoan);
+        return ketQua.Loi != null ? Loi(ketQua) : NoContent();
+    }
+
     [HttpPut("gan-bac-si-va-xac-nhan/{maLichHen}")]
     [Authorize(Roles = "LE_TAN,QUAN_LY")]
     public async Task<IActionResult> GanBacSiVaXacNhan(string maLichHen,
