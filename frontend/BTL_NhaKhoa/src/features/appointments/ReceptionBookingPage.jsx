@@ -4,7 +4,7 @@ import { receptionCustomersApi } from '../customers/receptionCustomersApi'
 import BookingPage from './BookingPage'
 import './ReceptionBookingPage.css'
 
-export default function ReceptionBookingPage({ token, query = '', onNavigate }) {
+export default function ReceptionBookingPage({ token, query = '', onNavigate, staffBasePath = '/le-tan' }) {
   const [customerId, setCustomerId] = useState(() => new URLSearchParams(query).get('maKhachHang') || '')
   const [customer, setCustomer] = useState(null)
   const [customerError, setCustomerError] = useState('')
@@ -54,12 +54,12 @@ export default function ReceptionBookingPage({ token, query = '', onNavigate }) 
     return () => controller.abort()
   }, [token, customerId, keyword, page, reload])
 
-  function chooseCustomer(id) { onNavigate(`/le-tan/dat-lich?maKhachHang=${encodeURIComponent(id)}`) }
+  function chooseCustomer(id) { onNavigate(`${staffBasePath}/dat-lich?maKhachHang=${encodeURIComponent(id)}`) }
 
   return <div className="reception-booking">
-    {customerId && !customer && <div className="booking-feedback" role={customerError ? 'alert' : 'status'}>{customerError || 'Đang tải khách hàng…'}<button type="button" className="secondary-button" onClick={() => onNavigate('/le-tan/dat-lich')}>Chọn khách khác</button></div>}
-    {customer && <><div className="reception-booking-customer"><strong>Khách hàng: {customer.ten}</strong><span>{customer.id} · {customer.sdt}</span><button type="button" className="secondary-button" onClick={() => onNavigate('/le-tan/dat-lich')}>Chọn khách khác</button></div>
-      <BookingPage key={customer.id} token={token} onNavigate={onNavigate} mode="reception" customerId={customer.id} customerName={customer.ten} />
+    {customerId && !customer && <div className="booking-feedback" role={customerError ? 'alert' : 'status'}>{customerError || 'Đang tải khách hàng…'}<button type="button" className="secondary-button" onClick={() => onNavigate(`${staffBasePath}/dat-lich`)}>Chọn khách khác</button></div>}
+    {customer && <><div className="reception-booking-customer"><strong>Khách hàng: {customer.ten}</strong><span>{customer.id} · {customer.sdt}</span><button type="button" className="secondary-button" onClick={() => onNavigate(`${staffBasePath}/dat-lich`)}>Chọn khách khác</button></div>
+      <BookingPage key={customer.id} token={token} onNavigate={onNavigate} mode="reception" customerId={customer.id} customerName={customer.ten} staffBasePath={staffBasePath} />
     </>}
     {!customerId && <><div className="page-heading"><div><h1>Đặt lịch tại quầy</h1><p className="page-description">Chọn khách hàng trước khi chọn dịch vụ và giờ khám.</p></div></div>
       <form className="reception-booking-search" onSubmit={(event) => { event.preventDefault(); setKeyword(searchInput.trim()); setPage(1) }}>

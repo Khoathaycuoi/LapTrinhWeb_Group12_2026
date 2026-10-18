@@ -83,7 +83,7 @@ export default function CustomerDashboard({ token, onNavigate }) {
           <strong>{data.soLichSapToi}</strong>
           <span className="dashboard-card-arrow" aria-hidden="true">↗</span>
         </CardLink>
-        <CardLink href="/khach-hang/hoa-don" className="dashboard-metric" label="Xem hóa đơn còn nợ" onNavigate={onNavigate}>
+        <CardLink href="/khach-hang/hoa-don?conNo=true" className="dashboard-metric" label="Xem hóa đơn còn nợ" onNavigate={onNavigate}>
           <span className="dashboard-metric-label">Hóa đơn còn nợ</span>
           <strong>{data.soHoaDonConNo}</strong>
           <span className="dashboard-metric-caption">Tổng còn nợ: {formatMoney(data.tongCongNo)}</span>
@@ -101,7 +101,7 @@ export default function CustomerDashboard({ token, onNavigate }) {
           </div> : <p className="dashboard-empty">Bạn chưa có lịch hẹn sắp tới.</p>}
         </CardLink>
 
-        <CardLink href="/khach-hang/hoa-don" className="dashboard-panel" label="Mở danh sách hóa đơn" onNavigate={onNavigate}>
+        <CardLink href="/khach-hang/hoa-don?conNo=true" className="dashboard-panel" label="Mở danh sách hóa đơn còn nợ" onNavigate={onNavigate}>
           <div className="dashboard-panel-heading"><h2>Hóa đơn còn nợ</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
           {invoices.length > 0 ? <ul className="dashboard-invoices">{invoices.map((invoice) => <li key={invoice.maHoaDon}>
             <div><strong>{invoice.maHoaDon}</strong><span>Lập ngày {formatDate(invoice.ngayLap)}</span></div>

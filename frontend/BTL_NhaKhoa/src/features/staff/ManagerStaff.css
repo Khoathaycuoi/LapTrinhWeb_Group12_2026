@@ -1,0 +1,38 @@
+.manager-staff { max-width: 1180px; }
+.manager-staff-heading, .manager-staff-create-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.manager-staff-tabs { display: inline-flex; gap: 4px; margin: 0 0 20px; padding: 4px; border: 1px solid var(--color-border); border-radius: 10px; background: #fff; }
+.manager-staff-tabs button { min-height: 38px; padding: 0 15px; border: 0; border-radius: 7px; background: none; color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.manager-staff-tabs button.active, .manager-staff-tabs button:hover { background: #E9EDFA; color: var(--color-primary-dark); }
+.manager-staff-create, .manager-staff-feedback, .manager-staff-list article { border: 1px solid var(--color-border); border-radius: 14px; background: #fff; }
+.manager-staff-create { margin-bottom: 22px; padding: 22px; }
+.manager-staff-create-heading { margin-bottom: 18px; }
+.manager-staff-create-heading h2 { margin: 0; color: var(--color-text); font-size: 18px; }
+.manager-staff-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.manager-staff-form label, .manager-staff-search label { display: grid; gap: 6px; color: var(--color-text); font-size: 12px; font-weight: 700; }
+.manager-staff-form input, .manager-staff-form select, .manager-staff-search input { box-sizing: border-box; width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; color: var(--color-text); font: inherit; font-weight: 400; }
+.manager-staff-form .primary-button { justify-self: start; }
+.manager-staff-error { grid-column: 1 / -1; margin: 0; color: var(--color-error); font-size: 12px; }
+.manager-staff-status .manager-staff-error { margin: -8px 0 14px; color: var(--color-error); }
+.manager-staff-search { display: flex; align-items: end; flex-wrap: wrap; gap: 9px; margin-bottom: 17px; }
+.manager-staff-search label { width: min(100%, 330px); }
+.manager-staff-clear { min-height: 42px; border: 0; background: none; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.manager-staff-feedback { padding: 20px; color: var(--color-muted); font-size: 12px; }
+.manager-staff-feedback p { margin: 0 0 12px; }
+.manager-staff-count { margin: 0 0 10px; color: var(--color-muted); font-size: 12px; }
+.manager-staff-list { display: grid; gap: 11px; }
+.manager-staff-list article { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 17px 20px; }
+.manager-staff-list article span { color: var(--color-primary); font-size: 11px; font-weight: 700; }
+.manager-staff-list h2 { margin: 5px 0; color: var(--color-text); font-size: 16px; }
+.manager-staff-list p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.manager-staff-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.manager-staff-detail { width: min(100%, 520px); text-align: left; }
+.manager-staff-detail dl { display: grid; grid-template-columns: 130px 1fr; gap: 12px; margin: 22px 0 0; font-size: 12px; }
+.manager-staff-detail dt { color: var(--color-muted); }
+.manager-staff-detail dd { margin: 0; color: var(--color-text); font-weight: 700; overflow-wrap: anywhere; }
+@media (max-width: 620px) {
+  .manager-staff-heading, .manager-staff-list article { align-items: stretch; flex-direction: column; }
+  .manager-staff-form { grid-template-columns: 1fr; }
+  .manager-staff-tabs { display: flex; }
+  .manager-staff-tabs button { flex: 1; }
+  .manager-staff-detail dl { grid-template-columns: 110px 1fr; }
+}

@@ -1,0 +1,14 @@
+.doctor-dashboard { max-width: 1180px; }
+.doctor-dashboard-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.doctor-dashboard-metrics .dashboard-metric { min-height: 118px; }
+.doctor-dashboard-schedule ul { display: grid; margin: 0; padding: 0; list-style: none; }
+.doctor-dashboard-schedule li { border-bottom: 1px solid var(--color-border); }
+.doctor-dashboard-schedule li:last-child { border-bottom: 0; }
+.doctor-dashboard-appointment { display: flex; gap: 16px; align-items: baseline; padding: 12px 0; }
+.doctor-dashboard-appointment > span:nth-child(2) { display: grid; flex: 1; gap: 4px; }
+.doctor-dashboard-time { min-width: 47px; color: var(--color-primary); font-size: 12px; font-weight: 700; }
+.doctor-dashboard-schedule strong { font-size: 13px; }
+.doctor-dashboard-schedule small { color: var(--color-muted); font-size: 11px; }
+@media (max-width: 1000px) { .doctor-dashboard-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .doctor-dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 440px) { .doctor-dashboard-metrics { grid-template-columns: 1fr; } }

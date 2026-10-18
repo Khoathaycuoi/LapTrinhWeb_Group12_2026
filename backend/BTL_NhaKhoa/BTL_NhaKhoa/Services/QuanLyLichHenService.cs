@@ -408,6 +408,35 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         return new KetQuaLichHen();
     }
 
+    public async Task<KetQuaLichHen> TuChoiAsync(string maLichHen, string lyDo, ulong maTaiKhoan)
+    {
+        if (!ThuDocMa(maLichHen, "LH_", out var id))
+            return new KetQuaLichHen("Mã lịch hẹn không hợp lệ.");
+        if (string.IsNullOrWhiteSpace(lyDo))
+            return new KetQuaLichHen("Vui lòng nhập lý do từ chối.");
+        if (lyDo.Trim().Length > 500)
+            return new KetQuaLichHen("Lý do từ chối không được quá 500 ký tự.");
+
+        await using var giaoDich = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        var lichHen = await db.LichHens.FirstOrDefaultAsync(x => x.MaLichHen == id);
+        if (lichHen == null)
+            return new KetQuaLichHen("Không tìm thấy lịch hẹn.", KhongTimThay: true);
+        var taiKhoan = await db.TaiKhoans.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan && x.MaVaiTro == "BAC_SI");
+        if (taiKhoan == null || !lichHen.MaBacSi.HasValue || !await db.BacSis.AnyAsync(x =>
+            x.MaBacSi == lichHen.MaBacSi.Value && x.NhanVien.MaConNguoi == taiKhoan.MaConNguoi))
+            return new KetQuaLichHen("Bạn chỉ được từ chối lịch của chính mình.", KhongCoQuyen: true);
+        if (lichHen.TrangThai != "CHO_XAC_NHAN" || lichHen.ThoiGianBatDau <= DateTime.Now)
+            return new KetQuaLichHen("Chỉ từ chối được lịch đang chờ và chưa đến giờ hẹn.");
+
+        lichHen.TrangThai = "TU_CHOI";
+        lichHen.LyDoTuChoi = lyDo.Trim();
+        lichHen.TuChoiLuc = DateTime.Now;
+        await db.SaveChangesAsync();
+        await giaoDich.CommitAsync();
+        return new KetQuaLichHen();
+    }
+
     public async Task<KetQuaLichHen> TiepNhanAsync(string maLichHen, ulong maTaiKhoan)
     {
         if (!ThuDocMa(maLichHen, "LH_", out var id))

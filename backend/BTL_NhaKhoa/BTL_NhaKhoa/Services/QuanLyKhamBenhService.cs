@@ -189,12 +189,26 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
         return (new KetQuaKhamBenh("Bạn không có quyền xem hồ sơ này.", KhongCoQuyen: true), null);
     }
 
+    public async Task<(KetQuaKhamBenh KetQua, HoSoKhamResponse? HoSo)> LayTheoLichAsync(
+        string maLichHen, ulong maTaiKhoan)
+    {
+        if (!QuanLyLichHenService.ThuDocMa(maLichHen, "LH_", out var id))
+            return (new KetQuaKhamBenh("Mã lịch hẹn không hợp lệ."), null);
+        var maHoSoKham = await db.HoSoKhams.AsNoTracking()
+            .Where(x => x.MaLichHen == id)
+            .Select(x => (ulong?)x.MaHoSoKham).FirstOrDefaultAsync();
+        if (!maHoSoKham.HasValue)
+            return (new KetQuaKhamBenh("Lịch hẹn chưa có hồ sơ khám.", KhongTimThay: true), null);
+        return await LayChiTietAsync(TaoMa("HSK_", maHoSoKham.Value), maTaiKhoan);
+    }
+
     public async Task<IReadOnlyList<TomTatHoSoKhamResponse>> LayCuaToiAsync(ulong maTaiKhoan)
     {
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
         if (taiKhoan == null) return [];
-        var query = db.HoSoKhams.AsNoTracking();
+        IQueryable<HoSoKham> query = db.HoSoKhams.AsNoTracking()
+            .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi);
         if (taiKhoan.MaVaiTro == "BAC_SI")
         {
             query = query.Where(x => x.BacSi.NhanVien.MaConNguoi == taiKhoan.MaConNguoi);
@@ -211,21 +225,28 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
             MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
             NgayKham = x.NgayKham,
             MaBacSi = TaoMa("BS_", x.MaBacSi),
+            TenBacSi = x.BacSi.NhanVien.ConNguoi.HoTen,
             TomTat = x.TomTatChoKhach ?? string.Empty,
             ChotLuc = x.ChotLuc
         }).ToList();
     }
 
     public async Task<DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>> LayTrangCuaToiAsync(
-        ulong maTaiKhoan, int page, int pageSize)
+        ulong maTaiKhoan, int page, int pageSize, bool chuaChot = false)
     {
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
         if (taiKhoan == null)
             return new DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>([], 0, page, pageSize);
-        var query = db.HoSoKhams.AsNoTracking();
+        IQueryable<HoSoKham> query = db.HoSoKhams.AsNoTracking()
+            .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi);
         if (taiKhoan.MaVaiTro == "BAC_SI")
+        {
             query = query.Where(x => x.BacSi.NhanVien.MaConNguoi == taiKhoan.MaConNguoi);
+            if (chuaChot)
+                query = query.Where(x => x.ChotLuc == null && x.LichHen != null &&
+                    x.LichHen.TrangThai == "DANG_KHAM");
+        }
         else if (taiKhoan.MaVaiTro == "KHACH_HANG")
             query = query.Where(x => x.KhachHang.MaConNguoi == taiKhoan.MaConNguoi &&
                 x.ChotLuc != null);
@@ -241,6 +262,7 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
             MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
             NgayKham = x.NgayKham,
             MaBacSi = TaoMa("BS_", x.MaBacSi),
+            TenBacSi = x.BacSi.NhanVien.ConNguoi.HoTen,
             TomTat = x.TomTatChoKhach ?? string.Empty,
             ChotLuc = x.ChotLuc
         }).ToList();
@@ -274,7 +296,9 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
     }
 
     private IQueryable<HoSoKham> TaoTruyVanHoSo() => db.HoSoKhams.AsNoTracking()
+        .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi)
         .Include(x => x.DichVuThucHiens)
+        .Include(x => x.LichHen).ThenInclude(x => x!.ChiTietLichHens).ThenInclude(x => x.DichVu)
         .Include(x => x.DonThuocs).ThenInclude(x => x.ChiTietDonThuocs)
         .AsSplitQuery();
 
@@ -282,15 +306,25 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
     {
         MaHoSoKham = TaoMa("HSK_", hoSo.MaHoSoKham),
         MaLichHen = hoSo.MaLichHen.HasValue ? TaoMa("LH_", hoSo.MaLichHen.Value) : null,
+        TrangThaiLichHen = hoSo.LichHen?.TrangThai,
         NgayKham = hoSo.NgayKham,
         MaKhachHang = TaoMa("KH_", hoSo.MaKhachHang),
         MaBacSi = TaoMa("BS_", hoSo.MaBacSi),
+        TenBacSi = hoSo.BacSi.NhanVien.ConNguoi.HoTen,
         TrieuChung = hoSo.TrieuChung,
         ChanDoan = hoSo.ChanDoan,
         TomTatChoKhach = hoSo.TomTatChoKhach,
         GhiChuNoiBo = laBacSi ? hoSo.GhiChuNoiBo : null,
         NgayTaiKham = hoSo.NgayTaiKham,
         ChotLuc = hoSo.ChotLuc,
+        DichVusDuKien = hoSo.LichHen?.ChiTietLichHens.Select(x => new ChiTietLichHenResponse
+        {
+            MaDichVu = TaoMa("DV_", x.MaDichVu),
+            TenDichVu = x.DichVu.TenDichVu,
+            DonGiaTaiThoiDiemDat = x.DonGiaTaiThoiDiemDat,
+            ThoiLuongTaiThoiDiemDatPhut = x.ThoiLuongTaiThoiDiemDatPhut,
+            DaThucHien = hoSo.DichVuThucHiens.Any(d => d.MaDichVu == x.MaDichVu)
+        }).ToList() ?? [],
         DichVuThucHiens = hoSo.DichVuThucHiens.Select(x => new DichVuThucHienResponse
         {
             MaDichVuThucHien = TaoMa("DVTH_", x.MaDichVuThucHien),

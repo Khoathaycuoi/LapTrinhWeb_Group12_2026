@@ -13,14 +13,15 @@ public sealed class HoSoKhamController(QuanLyKhamBenhService quanLyKhamBenhServi
 {
     [HttpGet("cua-toi")]
     [Authorize(Roles = "BAC_SI,KHACH_HANG")]
-    public async Task<IActionResult> LayCuaToi([FromQuery] PhanTrangRequest? phanTrang = null)
+    public async Task<IActionResult> LayCuaToi([FromQuery] PhanTrangRequest? phanTrang = null,
+        [FromQuery] bool chuaChot = false)
     {
         if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
         if (phanTrang?.CoPhanTrang == true)
         {
             if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
             return Ok(await quanLyKhamBenhService.LayTrangCuaToiAsync(maTaiKhoan,
-                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+                phanTrang.SoTrang, phanTrang.KichThuocTrang, chuaChot));
         }
         return Ok(await quanLyKhamBenhService.LayCuaToiAsync(maTaiKhoan));
     }
@@ -31,6 +32,15 @@ public sealed class HoSoKhamController(QuanLyKhamBenhService quanLyKhamBenhServi
     {
         if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
         var (ketQua, hoSo) = await quanLyKhamBenhService.LayChiTietAsync(maHoSoKham, maTaiKhoan);
+        return ketQua.Loi != null ? Loi(ketQua) : Ok(hoSo);
+    }
+
+    [HttpGet("theo-lich/{maLichHen}")]
+    [Authorize(Roles = "BAC_SI")]
+    public async Task<IActionResult> LayTheoLich(string maLichHen)
+    {
+        if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        var (ketQua, hoSo) = await quanLyKhamBenhService.LayTheoLichAsync(maLichHen, maTaiKhoan);
         return ketQua.Loi != null ? Loi(ketQua) : Ok(hoSo);
     }
 

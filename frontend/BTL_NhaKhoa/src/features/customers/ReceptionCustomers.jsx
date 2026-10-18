@@ -7,7 +7,8 @@ import './ReceptionCustomers.css'
 
 const emptyForm = { ten: '', sdt: '', matKhau: '', gioiTinh: '', ngaySinh: '', diaChi: '' }
 
-export default function ReceptionCustomers({ token, onNavigate }) {
+export default function ReceptionCustomers({ token, onNavigate, managerMode = false }) {
+  const staffBasePath = managerMode ? '/quan-ly' : '/le-tan'
   const [keywordInput, setKeywordInput] = useState('')
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
@@ -22,6 +23,32 @@ export default function ReceptionCustomers({ token, onNavigate }) {
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
   const [notice, setNotice] = useState('')
+  const [statusTarget, setStatusTarget] = useState(null)
+  const [statusBusy, setStatusBusy] = useState(false)
+  const [statusError, setStatusError] = useState('')
+
+  useEffect(() => {
+    if (!statusTarget) return undefined
+    function onKeyDown(event) { if (event.key === 'Escape' && !statusBusy) setStatusTarget(null) }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [statusTarget, statusBusy])
+
+  async function changeStatus() {
+    if (!statusTarget || statusBusy) return
+    setStatusBusy(true)
+    setStatusError('')
+    try {
+      await receptionCustomersApi.setActive(token, statusTarget.customer.sdt, statusTarget.active)
+      setStatusTarget(null)
+      setReload((value) => value + 1)
+      setNotice(`${statusTarget.active ? 'Đã khôi phục' : 'Đã vô hiệu hóa'} tài khoản ${statusTarget.customer.ten}.`)
+    } catch (error) {
+      setStatusError(error.status === 400 || error.status === 0 ? error.message : 'Chưa cập nhật được trạng thái tài khoản. Vui lòng thử lại.')
+    } finally {
+      setStatusBusy(false)
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -89,7 +116,7 @@ export default function ReceptionCustomers({ token, onNavigate }) {
   }
 
   return <div className="reception-customers">
-    <div className="page-heading reception-customers-heading"><div><h1>Khách hàng</h1><p className="page-description">Tra cứu thông tin liên hệ và đặt lịch cho khách tại quầy.</p></div><button type="button" className="primary-button" onClick={() => setShowCreate(true)}>Tạo khách hàng</button></div>
+    <div className="page-heading reception-customers-heading"><div><h1>Khách hàng</h1><p className="page-description">Tra cứu thông tin liên hệ và đặt lịch cho khách hàng.</p></div><button type="button" className="primary-button" onClick={() => setShowCreate(true)}>Tạo khách hàng</button></div>
     {showCreate && <section className="customer-create-panel"><div className="customer-panel-heading"><h2>Tạo tài khoản Khách hàng</h2><button type="button" className="secondary-button" onClick={() => { setShowCreate(false); setFormError('') }}>Đóng</button></div>
       <p>Khách hàng cần biết và giữ mật khẩu đăng nhập của mình.</p>
       <form onSubmit={reviewCreate} className="customer-create-form">
@@ -116,7 +143,10 @@ export default function ReceptionCustomers({ token, onNavigate }) {
       <div className="customer-list">{list.items.map((customer) => <article key={customer.id}>
         <div><span>{customer.id}</span><h2>{customer.ten}</h2><p>{customer.sdt} · {customer.trangThai}</p></div>
         <div className="customer-actions"><button type="button" className="secondary-button" onClick={() => setDetailId(customer.id)}>Chi tiết</button>
-          {customer.trangThai === 'Hoạt động' && <button type="button" className="primary-button" onClick={() => onNavigate(`/le-tan/dat-lich?maKhachHang=${encodeURIComponent(customer.id)}`)}>Đặt lịch</button>}</div>
+          {customer.trangThai === 'Hoạt động' && <button type="button" className="primary-button" onClick={() => onNavigate(`${staffBasePath}/dat-lich?maKhachHang=${encodeURIComponent(customer.id)}`)}>Đặt lịch</button>}
+          {managerMode && <button type="button" className="secondary-button" onClick={() => { setStatusTarget({ customer, active: customer.trangThai !== 'Hoạt động' }); setStatusError('') }}>
+            {customer.trangThai === 'Hoạt động' ? 'Vô hiệu hóa' : 'Khôi phục'}
+          </button>}</div>
       </article>)}</div>
       <ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} />
     </>}
@@ -128,6 +158,15 @@ export default function ReceptionCustomers({ token, onNavigate }) {
     </section></div>}
     {confirmCreate && <ConfirmDialog title="Tạo tài khoản Khách hàng?" message={`Tạo tài khoản cho ${form.ten} với số ${form.sdt}?`}
       confirmLabel={busy ? 'Đang tạo…' : 'Tạo tài khoản'} busy={busy} onConfirm={createCustomer} onCancel={() => setConfirmCreate(false)} />}
+    {statusTarget && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !statusBusy) setStatusTarget(null) }}>
+      <section className="confirm-dialog customer-status-dialog" role="alertdialog" aria-modal="true" aria-labelledby="customer-status-title">
+        <h2 id="customer-status-title">{statusTarget.active ? 'Khôi phục' : 'Vô hiệu hóa'} tài khoản?</h2>
+        <p>{statusTarget.customer.ten} · {statusTarget.customer.sdt}</p>
+        {statusError && <p className="customer-form-error" role="alert">{statusError}</p>}
+        <div className="confirm-actions"><button type="button" className="secondary-button" disabled={statusBusy} onClick={() => setStatusTarget(null)}>Quay lại</button>
+          <button type="button" className="primary-button" disabled={statusBusy} onClick={changeStatus}>{statusBusy ? 'Đang cập nhật…' : 'Xác nhận'}</button></div>
+      </section>
+    </div>}
     <ToastNotice message={notice} onDismiss={() => setNotice('')} />
   </div>
 }

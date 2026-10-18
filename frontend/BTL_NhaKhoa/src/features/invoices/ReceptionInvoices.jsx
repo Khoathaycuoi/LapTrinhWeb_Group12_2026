@@ -31,13 +31,17 @@ function paymentFilterFromQuery(query) {
   return 'all'
 }
 
-function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
+function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded, onPaymentCancelled, managerMode }) {
   const [reload, setReload] = useState(0)
   const [state, setState] = useState({ status: 'loading', data: null, error: '' })
   const [paymentFormOpen, setPaymentFormOpen] = useState(false)
   const [paymentDraft, setPaymentDraft] = useState(null)
   const [paymentBusy, setPaymentBusy] = useState(false)
   const [paymentError, setPaymentError] = useState('')
+  const [cancelTarget, setCancelTarget] = useState(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelError, setCancelError] = useState('')
+  const [cancelBusy, setCancelBusy] = useState(false)
   const paymentPendingRef = useRef(false)
 
   useEffect(() => {
@@ -56,10 +60,31 @@ function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
   }, [token, invoiceId, reload])
 
   useEffect(() => {
-    function onKeyDown(event) { if (event.key === 'Escape' && !paymentDraft && !paymentBusy) onClose() }
+    function onKeyDown(event) { if (event.key === 'Escape' && !paymentDraft && !paymentBusy && !cancelTarget) onClose() }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose, paymentDraft, paymentBusy])
+  }, [onClose, paymentDraft, paymentBusy, cancelTarget])
+
+  async function cancelPayment(event) {
+    event.preventDefault()
+    if (!cancelTarget || !cancelReason.trim() || cancelBusy) return
+    setCancelBusy(true)
+    setCancelError('')
+    try {
+      await invoicesApi.cancelPayment(token, invoiceId, cancelTarget.maThanhToan, cancelReason.trim())
+      const paymentId = cancelTarget.maThanhToan
+      setCancelTarget(null)
+      setCancelReason('')
+      setState({ status: 'loading', data: null, error: '' })
+      setReload((value) => value + 1)
+      onPaymentCancelled(paymentId)
+    } catch (error) {
+      setCancelError(error.status === 400 || error.status === 0
+        ? error.message : 'Chưa hủy được khoản thu. Vui lòng thử lại.')
+    } finally {
+      setCancelBusy(false)
+    }
+  }
 
   async function recordPayment() {
     if (!paymentDraft || paymentPendingRef.current) return
@@ -84,9 +109,9 @@ function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
   }
 
   const invoice = state.data
-  return <><div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !paymentBusy && !paymentDraft) onClose() }}>
+  return <><div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !paymentBusy && !paymentDraft && !cancelTarget) onClose() }}>
     <section className="confirm-dialog invoice-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="invoice-detail-title">
-      <div className="invoice-detail-heading"><div><h2 id="invoice-detail-title">Hóa đơn {invoiceId}</h2><p>Chi tiết dịch vụ và các khoản đã thu</p></div><button type="button" aria-label="Đóng chi tiết hóa đơn" disabled={paymentBusy || Boolean(paymentDraft)} onClick={onClose}>×</button></div>
+      <div className="invoice-detail-heading"><div><h2 id="invoice-detail-title">Hóa đơn {invoiceId}</h2><p>Chi tiết dịch vụ và các khoản đã thu</p></div><button type="button" aria-label="Đóng chi tiết hóa đơn" disabled={paymentBusy || Boolean(paymentDraft) || Boolean(cancelTarget)} onClick={onClose}>×</button></div>
       {state.status === 'loading' && <p className="invoice-detail-feedback" role="status">Đang tải chi tiết hóa đơn…</p>}
       {state.status === 'error' && <div className="invoice-detail-feedback" role="alert"><p>{state.error}</p><button type="button" className="secondary-button" onClick={() => { setState({ status: 'loading', data: null, error: '' }); setReload((value) => value + 1) }}>Thử lại</button></div>}
       {state.status === 'success' && invoice && <>
@@ -97,12 +122,14 @@ function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
         {invoice.conNo > 0 && invoice.trangThai !== 'DA_HUY' && (paymentFormOpen
           ? <InvoicePaymentForm invoice={invoice} error={paymentError} onErrorDismiss={() => setPaymentError('')}
               onReview={setPaymentDraft} onCancel={() => { setPaymentFormOpen(false); setPaymentError('') }} />
-          : <button type="button" className="primary-button invoice-payment-open" onClick={() => { setPaymentError(''); setPaymentFormOpen(true) }}>Ghi nhận thanh toán</button>)}
+          : <button type="button" className="primary-button invoice-payment-open" onClick={() => { setPaymentError(''); setPaymentFormOpen(true) }}>Thanh toán</button>)}
         <h3>Khoản thu</h3>
         {invoice.thanhToans?.length ? <ul className="invoice-detail-payments">{invoice.thanhToans.map((payment) => <li key={payment.maThanhToan}>
           <div><strong>{payment.maThanhToan} · {moneyFormatter.format(payment.soTien)}</strong><span>{methodLabels[payment.phuongThuc] || payment.phuongThuc} · {formatDate(payment.thoiDiemThanhToan)}</span></div>
           <span className={payment.trangThai === 'DA_HUY' ? 'invoice-payment-cancelled' : 'invoice-payment-confirmed'}>{payment.trangThai === 'DA_HUY' ? 'Đã hủy' : 'Đã xác nhận'}</span>
           {payment.trangThai === 'DA_HUY' && payment.lyDoHuy && <small>Lý do hủy: {payment.lyDoHuy}</small>}
+          {payment.trangThai === 'DA_HUY' && payment.nguoiHuy && <small>Người hủy: {payment.nguoiHuy}{payment.huyLuc ? ` · ${formatDate(payment.huyLuc)}` : ''}</small>}
+          {managerMode && payment.trangThai === 'DA_XAC_NHAN' && <button type="button" className="invoice-cancel-payment" onClick={() => { setCancelTarget(payment); setCancelReason(''); setCancelError('') }}>Hủy khoản thu</button>}
         </li>)}</ul> : <p className="invoice-detail-empty">Chưa ghi nhận khoản thu nào.</p>}
       </>}
     </section>
@@ -110,10 +137,22 @@ function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
     {paymentDraft && <ConfirmDialog title="Xác nhận khoản thu?"
       message={`Đã nhận ${moneyFormatter.format(paymentDraft.soTien)} bằng ${methodLabels[paymentDraft.phuongThuc]?.toLocaleLowerCase('vi-VN') || paymentDraft.phuongThuc} cho hóa đơn ${invoiceId}?`}
       confirmLabel="Ghi nhận" busy={paymentBusy} onConfirm={recordPayment} onCancel={() => setPaymentDraft(null)} />}
+    {cancelTarget && <div className="dialog-backdrop invoice-cancel-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !cancelBusy) setCancelTarget(null) }}>
+      <form className="confirm-dialog invoice-cancel-dialog" role="dialog" aria-modal="true" aria-labelledby="invoice-cancel-title" onSubmit={cancelPayment}>
+        <h2 id="invoice-cancel-title">Hủy khoản thu {cancelTarget.maThanhToan}?</h2>
+        <p>Khoản thu {moneyFormatter.format(cancelTarget.soTien)} sẽ không còn tính vào số tiền đã thanh toán của hóa đơn {invoiceId}.</p>
+        <label htmlFor="invoice-cancel-reason">Lý do hủy</label>
+        <textarea id="invoice-cancel-reason" autoFocus required maxLength={2000} rows={3} value={cancelReason}
+          onChange={(event) => setCancelReason(event.target.value)} placeholder="Ví dụ: ghi nhận nhầm khoản thu" />
+        {cancelError && <p className="invoice-filter-error" role="alert">{cancelError}</p>}
+        <div className="confirm-actions"><button type="button" className="secondary-button" disabled={cancelBusy} onClick={() => setCancelTarget(null)}>Quay lại</button>
+          <button type="submit" className="primary-button" disabled={cancelBusy || !cancelReason.trim()}>{cancelBusy ? 'Đang hủy…' : 'Xác nhận hủy'}</button></div>
+      </form>
+    </div>}
   </>
 }
 
-export default function ReceptionInvoices({ token, query = '', onNavigate }) {
+export default function ReceptionInvoices({ token, query = '', onNavigate, managerMode = false }) {
   const [paymentFilter, setPaymentFilter] = useState(() => paymentFilterFromQuery(query))
   const [customerInput, setCustomerInput] = useState('')
   const [customerId, setCustomerId] = useState('')
@@ -127,6 +166,7 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
   const [selectedId, setSelectedId] = useState(null)
   const [showCreation, setShowCreation] = useState(false)
   const [notice, setNotice] = useState('')
+  const basePath = managerMode ? '/quan-ly/hoa-don' : '/le-tan/hoa-don'
 
   useEffect(() => { setPaymentFilter(paymentFilterFromQuery(query)); setPage(1) }, [query])
 
@@ -155,10 +195,10 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
   function selectPaymentFilter(value) {
     setPage(1)
     setPaymentFilter(value)
-    const path = value === 'unpaid' ? '/le-tan/hoa-don?conNo=true'
-      : value === 'paid' ? '/le-tan/hoa-don?trangThai=DA_THANH_TOAN'
-        : '/le-tan/hoa-don'
-    if (`/le-tan/hoa-don${query ? `?${query}` : ''}` !== path) onNavigate(path, true)
+    const path = value === 'unpaid' ? `${basePath}?conNo=true`
+      : value === 'paid' ? `${basePath}?trangThai=DA_THANH_TOAN`
+        : basePath
+    if (`${basePath}${query ? `?${query}` : ''}` !== path) onNavigate(path, true)
   }
 
   function applyFilters(event) {
@@ -182,7 +222,7 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
     setDateRange({ fromDate: '', toDate: '' })
     setFilterError('')
     setPage(1)
-    if (query) onNavigate('/le-tan/hoa-don', true)
+    if (query) onNavigate(basePath, true)
   }
 
   return <div className="reception-invoices">
@@ -226,7 +266,9 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
       <ListPagination page={page} pageSize={pageSize} totalItems={state.totalItems} onPageChange={setPage} />
     </>}
     {selectedId && <InvoiceDetails key={selectedId} token={token} invoiceId={selectedId}
-      onClose={() => setSelectedId(null)} onPaymentRecorded={(invoiceId) => { refresh(); setNotice(`Đã ghi nhận thanh toán cho hóa đơn ${invoiceId}.`) }} />}
+      managerMode={managerMode} onClose={() => setSelectedId(null)}
+      onPaymentRecorded={(invoiceId) => { refresh(); setNotice(`Đã ghi nhận thanh toán cho hóa đơn ${invoiceId}.`) }}
+      onPaymentCancelled={(paymentId) => { refresh(); setNotice(`Đã hủy khoản thu ${paymentId}.`) }} />}
     <ToastNotice message={notice} onDismiss={() => setNotice('')} />
   </div>
 }

@@ -12,4 +12,8 @@ export const receptionCustomersApi = {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
+  setActive: (token, phone, active) => request(`/api/users/${encodeURIComponent(phone)}/${active ? 'khoi-phuc' : 'xoa'}`, {
+    token,
+    method: 'PUT',
+  }),
 }

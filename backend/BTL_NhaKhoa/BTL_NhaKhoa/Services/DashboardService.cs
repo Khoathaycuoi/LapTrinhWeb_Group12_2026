@@ -201,6 +201,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
                 x.MaHoSoKham,
                 x.NgayKham,
                 x.MaBacSi,
+                TenBacSi = x.BacSi.NhanVien.ConNguoi.HoTen,
                 x.TomTatChoKhach,
                 x.ChotLuc
             }).FirstOrDefaultAsync();
@@ -227,6 +228,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
                 MaHoSoKham = TaoMa("HSK_", lanKhamGanNhat.MaHoSoKham),
                 NgayKham = lanKhamGanNhat.NgayKham,
                 MaBacSi = TaoMa("BS_", lanKhamGanNhat.MaBacSi),
+                TenBacSi = lanKhamGanNhat.TenBacSi,
                 TomTat = lanKhamGanNhat.TomTatChoKhach ?? string.Empty,
                 ChotLuc = lanKhamGanNhat.ChotLuc
             }

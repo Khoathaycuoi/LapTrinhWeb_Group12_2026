@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { receptionAppointmentsApi } from './receptionAppointmentsApi'
 import ReceptionCancelDialog from './ReceptionCancelDialog'
 import ReceptionActionDialog from './ReceptionActionDialog'
+import AppointmentDetails from './AppointmentDetails'
 import ListPagination from '../../components/ListPagination'
 import ToastNotice from '../../components/ToastNotice'
 import '../../components/ConfirmDialog.css'
@@ -31,6 +32,17 @@ function isPastDay(appointment) {
   const now = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   return appointment.ngayHen < today
+}
+
+function isToday(appointment) {
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return appointment.ngayHen === today
+}
+
+function canMarkNoShow(appointment) {
+  const start = new Date(`${appointment.ngayHen}T${appointment.gioHen || '00:00:00'}`)
+  return !Number.isNaN(start.getTime()) && Date.now() >= start.getTime() + 30 * 60 * 1000
 }
 
 function ConfirmationDialog({ appointment, doctors, token, onClose, onRetryDoctors, onConfirmed }) {
@@ -138,8 +150,11 @@ function ConfirmationDialog({ appointment, doctors, token, onClose, onRetryDocto
   </div>
 }
 
-export default function ReceptionAppointments({ token, query = '', arrivalNotice }) {
-  const [tab, setTab] = useState(() => new URLSearchParams(query).has('ngayHen') ? 'all' : 'pending')
+export default function ReceptionAppointments({ token, query = '', arrivalNotice, defaultTab = 'pending', description = 'Theo dõi yêu cầu đặt lịch và xác nhận lịch chờ cho khách hàng.', managerMode = false }) {
+  const [tab, setTab] = useState(() => {
+    const params = new URLSearchParams(query)
+    return params.get('tab') === 'pending' ? 'pending' : params.has('ngayHen') ? 'all' : defaultTab
+  })
   const [date, setDate] = useState(() => new URLSearchParams(query).get('ngayHen') || '')
   const [trackedOnly, setTrackedOnly] = useState(() => new URLSearchParams(query).get('nhom') === 'tracked')
   const [customerInput, setCustomerInput] = useState('')
@@ -152,17 +167,19 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
   const [selected, setSelected] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [noShowTarget, setNoShowTarget] = useState(null)
+  const [receiveTarget, setReceiveTarget] = useState(null)
   const [notice, setNotice] = useState('')
+  const [expandedId, setExpandedId] = useState(null)
 
   useEffect(() => { if (arrivalNotice) setNotice(arrivalNotice) }, [arrivalNotice])
 
   useEffect(() => {
     const params = new URLSearchParams(query)
-    setTab(params.has('ngayHen') ? 'all' : 'pending')
+    setTab(params.get('tab') === 'pending' ? 'pending' : params.has('ngayHen') ? 'all' : defaultTab)
     setDate(params.get('ngayHen') || '')
     setTrackedOnly(params.get('nhom') === 'tracked')
     setPage(1)
-  }, [query])
+  }, [query, defaultTab])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -208,7 +225,7 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
   const items = list.items
 
   return <div className="reception-appointments">
-    <div className="page-heading"><div><h1>Lịch hẹn</h1><p className="page-description">Theo dõi yêu cầu đặt lịch và xác nhận lịch chờ cho khách hàng.</p></div></div>
+    <div className="page-heading"><div><h1>Lịch hẹn</h1><p className="page-description">{description}</p></div></div>
     <ToastNotice message={notice} onDismiss={() => setNotice('')} />
     <div className="reception-filters">
       <div className="reception-tabs" role="group" aria-label="Nhóm lịch hẹn">
@@ -227,7 +244,13 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
     {list.status === 'error' && <div className="reception-feedback" role="alert"><strong>Không tải được lịch hẹn.</strong><p>{list.error}</p><button type="button" className="primary-button" onClick={refresh}>Thử lại</button></div>}
     {list.status === 'success' && <>
       <div className="reception-count">{list.totalItems} lịch hẹn {tab === 'pending' ? 'đang chờ xác nhận' : 'phù hợp'}</div>
-      {items.length ? <div className="reception-list">{items.map((appointment) => <article className="reception-card" key={appointment.maLichHen}>
+      {items.length ? <div className="reception-list">{items.map((appointment) => {
+        const pending = appointment.trangThai === 'Chờ xác nhận'
+        const confirmed = appointment.trangThai === 'Đã xác nhận'
+        const canCancel = (pending || confirmed) && isFuture(appointment)
+        const canReceive = managerMode && confirmed && isToday(appointment)
+        const canNoShow = confirmed && (managerMode ? canMarkNoShow(appointment) : isPastDay(appointment))
+        return <article className="reception-card" key={appointment.maLichHen}>
         <div className="reception-card-heading"><div><span className="reception-code">{appointment.maLichHen}</span><h2>{appointmentTime(appointment)}</h2></div><span className={`reception-status reception-status-${statusTones[appointment.trangThai] || 'muted'}`}>{appointment.trangThai}</span></div>
         <div className="reception-card-info">
           <div><span>Khách hàng</span><strong>{appointment.tenKH || appointment.maKH}</strong></div>
@@ -235,14 +258,18 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
           <div><span>Dịch vụ dự kiến</span><strong>{appointment.dichVusDuKien?.map((item) => item.tenDichVu).join(', ') || 'Chưa có thông tin'}</strong></div>
           <div><span>Thời lượng</span><strong>{appointment.thoiLuongDuKienPhut} phút</strong></div>
         </div>
-        {((appointment.trangThai === 'Chờ xác nhận' && isFuture(appointment)) ||
-          (appointment.trangThai === 'Đã xác nhận' && (isFuture(appointment) || isPastDay(appointment)))) && <div className="reception-card-actions">
-          {isPastDay(appointment)
-            ? <button type="button" className="reception-cancel-button" onClick={() => setNoShowTarget(appointment)}>Đánh dấu không đến</button>
-            : <button type="button" className="reception-cancel-button" onClick={() => setCancelTarget(appointment)}>Hủy lịch</button>}
-          {appointment.trangThai === 'Chờ xác nhận' && <button type="button" className="primary-button" onClick={() => setSelected(appointment)}>Xác nhận</button>}
-        </div>}
-      </article>)}</div> : <div className="reception-feedback">Chưa có lịch hẹn nào phù hợp.</div>}
+        <div className="reception-card-actions">
+          <button type="button" className="reception-details-button" aria-expanded={expandedId === appointment.maLichHen}
+            onClick={() => setExpandedId(expandedId === appointment.maLichHen ? null : appointment.maLichHen)}>
+            {expandedId === appointment.maLichHen ? 'Thu gọn' : 'Xem chi tiết'}
+          </button>
+          {canCancel && <button type="button" className="reception-cancel-button" onClick={() => setCancelTarget(appointment)}>Hủy lịch</button>}
+          {canNoShow && <button type="button" className="reception-cancel-button" onClick={() => setNoShowTarget(appointment)}>Đánh dấu không đến</button>}
+          {canReceive && <button type="button" className="secondary-button" onClick={() => setReceiveTarget(appointment)}>Tiếp nhận</button>}
+          {pending && isFuture(appointment) && <button type="button" className="primary-button" onClick={() => setSelected(appointment)}>Xác nhận</button>}
+        </div>
+        {expandedId === appointment.maLichHen && <AppointmentDetails appointment={appointment} id={`reception-details-${appointment.maLichHen}`} />}
+      </article> })}</div> : <div className="reception-feedback">Chưa có lịch hẹn nào phù hợp.</div>}
       <ListPagination page={page} pageSize={pageSize} totalItems={list.totalItems} onPageChange={setPage} />
     </>}
     {selected && <ConfirmationDialog key={selected.maLichHen} appointment={selected} doctors={doctors} token={token}
@@ -253,5 +280,7 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
       onCancelled={(id) => { setCancelTarget(null); setNotice(`Đã hủy lịch hẹn ${id}.`); refresh() }} />}
     {noShowTarget && <ReceptionActionDialog appointment={noShowTarget} action="no-show" token={token}
       onClose={() => setNoShowTarget(null)} onDone={(id) => { setNoShowTarget(null); setNotice(`Đã đánh dấu Không đến cho lịch ${id}.`); refresh() }} />}
+    {receiveTarget && <ReceptionActionDialog appointment={receiveTarget} action="receive" token={token}
+      onClose={() => setReceiveTarget(null)} onDone={(id) => { setReceiveTarget(null); setNotice(`Đã tiếp nhận lịch ${id}.`); refresh() }} />}
   </div>
 }
