@@ -11,6 +11,16 @@ export default function LoginPage({ onLogin, onNavigateRegister, onNoticeDismiss
   async function submit(event) {
     event.preventDefault()
     setError('')
+    if (!phone.trim()) {
+      setError('Vui lòng nhập số điện thoại.')
+      event.currentTarget.elements.namedItem('phone')?.focus()
+      return
+    }
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu.')
+      event.currentTarget.elements.namedItem('password')?.focus()
+      return
+    }
     setBusy(true)
     try {
       await onLogin(phone, password)
@@ -25,9 +35,9 @@ export default function LoginPage({ onLogin, onNavigateRegister, onNoticeDismiss
     <div className="auth-heading"><p className="eyebrow">XIN CHÀO</p><h2>Đăng nhập</h2><p>Đăng nhập để tiếp tục vào hệ thống.</p></div>
     {error && <div className="alert alert-error" role="alert">{error}</div>}
     <ToastNotice message={notice} onDismiss={onNoticeDismiss} />
-    <form onSubmit={submit} className="auth-form">
-      <label>Số điện thoại<input autoComplete="username" inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Ví dụ: 0912345678" required /></label>
-      <label>Mật khẩu<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Nhập mật khẩu" required /></label>
+    <form onSubmit={submit} className="auth-form" noValidate>
+      <label>Số điện thoại<input name="phone" autoComplete="username" inputMode="tel" value={phone} onChange={(event) => { setPhone(event.target.value); setError('') }} placeholder="Ví dụ: 0912345678" required /></label>
+      <label>Mật khẩu<input name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError('') }} placeholder="Nhập mật khẩu" required /></label>
       <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : 'Đăng nhập'}</button>
     </form>
     <p className="auth-switch">Chưa có tài khoản? <button type="button" className="text-button" onClick={onNavigateRegister}>Đăng ký Khách hàng</button></p>

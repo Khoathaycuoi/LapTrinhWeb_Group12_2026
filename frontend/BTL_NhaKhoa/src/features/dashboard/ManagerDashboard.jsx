@@ -25,12 +25,20 @@ function formatShortDate(value) {
   return Number.isNaN(date.getTime()) ? '—' : shortDateFormatter.format(date)
 }
 
-function Metric({ label, value, description, money = false }) {
-  return <div className="dashboard-metric manager-dashboard-metric">
+function Metric({ label, value, description, money = false, href, onNavigate }) {
+  const content = <>
     <span className="dashboard-metric-label">{label}</span>
     <strong>{money ? moneyFormatter.format(value) : numberFormatter.format(value)}</strong>
     <span className="manager-dashboard-caption">{description}</span>
-  </div>
+    {href && <span className="dashboard-card-arrow" aria-hidden="true">↗</span>}
+  </>
+  if (!href) return <div className="dashboard-metric manager-dashboard-metric">{content}</div>
+  return <a href={href} className="dashboard-card-link dashboard-metric manager-dashboard-metric"
+    onClick={(event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      event.preventDefault()
+      onNavigate(href)
+    }}>{content}</a>
 }
 
 function RevenueChart({ weeks }) {
@@ -62,7 +70,7 @@ function AppointmentChart({ statuses }) {
   </section>
 }
 
-export default function ManagerDashboard({ token }) {
+export default function ManagerDashboard({ token, onNavigate }) {
   const [reload, setReload] = useState(0)
   const [state, setState] = useState({ status: 'loading', data: null, error: '' })
 
@@ -100,10 +108,13 @@ export default function ManagerDashboard({ token }) {
     </div>}
     {data && <>
       <div className="manager-dashboard-metrics">
-        <Metric label="Lịch hôm nay" value={data.soLichHomNay} description="Lịch đang được theo dõi" />
-        <Metric label="Chờ xác nhận" value={data.soLichChoXacNhan} description="Lịch chưa đến giờ hẹn" />
+        <Metric label="Lịch hôm nay" value={data.soLichHomNay} description="Lịch đang được theo dõi"
+          href={data.ngay ? `/quan-ly/lich-hen?${new URLSearchParams({ ngayHen: data.ngay, nhom: 'tracked' })}` : '/quan-ly/lich-hen'} onNavigate={onNavigate} />
+        <Metric label="Chờ xác nhận" value={data.soLichChoXacNhan} description="Lịch chưa đến giờ hẹn"
+          href="/quan-ly/lich-hen?tab=pending" onNavigate={onNavigate} />
         <Metric label="Đã thu trong tháng" value={data.doanhThuThang} description="Khoản thu đã xác nhận" money />
-        <Metric label="Tổng còn nợ" value={data.tongCongNo} description="Số tiền chưa thanh toán" money />
+        <Metric label="Tổng còn nợ" value={data.tongCongNo} description="Số tiền chưa thanh toán" money
+          href="/quan-ly/hoa-don?conNo=true" onNavigate={onNavigate} />
       </div>
       <div className="manager-dashboard-panels">
         <RevenueChart weeks={data.doanhThuBonTuan} />

@@ -27,6 +27,9 @@
 .doctor-appointment-reason { color: var(--color-muted); font-size: 12px; }
 .doctor-appointment-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--color-border); }
 .doctor-appointment-actions .primary-button, .doctor-reject-button { min-height: 39px; font-size: 12px; }
+.doctor-details-button { margin-right: auto; padding: 0 4px; border: 0; background: none; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.doctor-details-button:hover { text-decoration: underline; }
+.doctor-details-button:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
 .doctor-reject-button { padding: 0 14px; border: 1px solid #ECC9CE; border-radius: 9px; background: #FFF8F8; color: var(--color-error); font: inherit; font-weight: 700; cursor: pointer; }
 .doctor-decision-dialog { text-align: left; }
 .doctor-decision-dialog h2, .doctor-decision-dialog > p { text-align: center; }

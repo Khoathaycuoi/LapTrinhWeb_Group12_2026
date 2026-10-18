@@ -102,6 +102,13 @@
 .invoice-detail-payments small { flex: 1 0 100%; }
 .invoice-detail-payments .invoice-payment-confirmed { color: #287A54; }
 .invoice-detail-payments .invoice-payment-cancelled { color: var(--color-error); }
+.invoice-cancel-payment { margin-left: auto; padding: 0; border: 0; background: none; color: var(--color-error); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.invoice-cancel-payment:hover { text-decoration: underline; }
+.invoice-cancel-backdrop { z-index: 11; }
+.invoice-cancel-dialog { text-align: left; }
+.invoice-cancel-dialog label { display: grid; gap: 7px; margin: 0 0 8px; color: var(--color-text); font-size: 12px; font-weight: 700; }
+.invoice-cancel-dialog textarea { box-sizing: border-box; display: block; width: 100%; padding: 11px; border: 1px solid var(--color-border); border-radius: 9px; color: var(--color-text); font: inherit; font-size: 12px; resize: vertical; }
+.invoice-cancel-dialog .confirm-actions { justify-content: flex-end; margin-top: 18px; }
 .invoice-detail-empty { margin: 0 0 8px; }
 
 @media (max-width: 620px) {

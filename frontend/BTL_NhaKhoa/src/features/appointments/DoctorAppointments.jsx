@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import ListPagination from '../../components/ListPagination'
 import ToastNotice from '../../components/ToastNotice'
+import AppointmentDetails from './AppointmentDetails'
 import { doctorAppointmentsApi } from './doctorAppointmentsApi'
 import './DoctorAppointments.css'
 
@@ -106,6 +107,7 @@ export default function DoctorAppointments({ token, query = '', navigationState,
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState('')
   const [notice, setNotice] = useState(navigationState?.notice || '')
+  const [expandedId, setExpandedId] = useState(null)
 
   useEffect(() => {
     const nextTab = new URLSearchParams(query).get('nhom')
@@ -169,13 +171,19 @@ export default function DoctorAppointments({ token, query = '', navigationState,
       <div className="doctor-appointment-list">{list.items.map((item) => <article key={item.maLichHen} className="doctor-appointment-card">
         <div className="doctor-appointment-heading"><div><small>{item.maLichHen}</small><h2>{appointmentDate(item)}</h2></div><span className={`doctor-status doctor-status-${statusTones[item.trangThai] || 'muted'}`}>{item.trangThai}</span></div>
         <div className="doctor-appointment-meta"><div><span>Khách hàng</span><strong>{item.tenKH || item.maKH}</strong><small>{item.maKH}</small></div><div><span>Dịch vụ dự kiến</span><strong>{item.dichVusDuKien?.map((service) => service.tenDichVu).join(', ') || 'Chưa có thông tin'}</strong></div><div><span>Phòng</span><strong>{item.maPhong || 'Chưa phân phòng'}</strong></div><div><span>Thời lượng</span><strong>{item.thoiLuongDuKienPhut} phút</strong></div></div>
-        {item.lyDoTuChoi && <p className="doctor-appointment-reason">Lý do từ chối: {item.lyDoTuChoi}</p>}
-        {((item.trangThai === 'Chờ xác nhận' && isFuture(item)) || (item.trangThai === 'Đã xác nhận' && isFuture(item)) || item.trangThai === 'Đã đến' || item.trangThai === 'Đang khám') && <div className="doctor-appointment-actions">
+        <div className="doctor-appointment-actions">
+          <button type="button" className="doctor-details-button" aria-expanded={expandedId === item.maLichHen}
+            onClick={() => setExpandedId(expandedId === item.maLichHen ? null : item.maLichHen)}>
+            {expandedId === item.maLichHen ? 'Thu gọn' : 'Xem chi tiết'}
+          </button>
+          {((item.trangThai === 'Chờ xác nhận' && isFuture(item)) || (item.trangThai === 'Đã xác nhận' && isFuture(item)) || item.trangThai === 'Đã đến' || item.trangThai === 'Đang khám') && <>
           {item.trangThai === 'Chờ xác nhận' && <><button type="button" className="doctor-reject-button" onClick={() => setDecision({ type: 'reject', item })}>Từ chối</button><button type="button" className="primary-button" onClick={() => setDecision({ type: 'confirm', item })}>Xác nhận</button></>}
           {item.trangThai === 'Đã xác nhận' && <button type="button" className="doctor-reject-button" onClick={() => setDecision({ type: 'cancel', item })}>Hủy lịch</button>}
           {item.trangThai === 'Đã đến' && <button type="button" className="primary-button" onClick={() => setStartTarget(item)}>Bắt đầu khám</button>}
           {item.trangThai === 'Đang khám' && <button type="button" className="primary-button" onClick={() => onNavigate(`/bac-si/ho-so-kham?maLichHen=${encodeURIComponent(item.maLichHen)}`)}>Mở hồ sơ khám</button>}
-        </div>}
+          </>}
+        </div>
+        {expandedId === item.maLichHen && <AppointmentDetails appointment={item} id={`doctor-details-${item.maLichHen}`} />}
       </article>)}</div><ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} /></>}
     {decision && <DoctorDecisionDialog token={token} action={decision} onClose={() => setDecision(null)} onDone={(type, id) => { setDecision(null); setNotice(type === 'confirm' ? `Đã xác nhận lịch ${id}.` : type === 'reject' ? `Đã từ chối lịch ${id}.` : `Đã hủy lịch ${id}.`); setReload((value) => value + 1) }} />}
     {startTarget && <ConfirmDialog title="Bắt đầu khám?" message={`Bắt đầu khám cho ${startTarget.tenKH || startTarget.maKH}, lịch ${startTarget.maLichHen}?`} confirmLabel={busy ? 'Đang bắt đầu…' : 'Bắt đầu khám'} busy={busy} onConfirm={startExam} onCancel={() => setStartTarget(null)} />}

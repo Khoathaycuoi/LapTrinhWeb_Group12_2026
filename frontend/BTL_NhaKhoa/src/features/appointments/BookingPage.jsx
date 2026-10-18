@@ -29,7 +29,7 @@ function dateLabel(date) {
   return Number.isNaN(parsed.getTime()) ? date : dateFormatter.format(parsed)
 }
 
-export default function BookingPage({ token, onNavigate, mode = 'customer', customerId, customerName }) {
+export default function BookingPage({ token, onNavigate, mode = 'customer', customerId, customerName, staffBasePath = '/le-tan' }) {
   const atReception = mode === 'reception'
   const [catalogReload, setCatalogReload] = useState(0)
   const [catalog, setCatalog] = useState({ status: 'loading', services: [], doctors: [], error: '' })
@@ -140,7 +140,7 @@ export default function BookingPage({ token, onNavigate, mode = 'customer', cust
         gioHen: selectedTime,
         danhSachMaDichVu: selectedServiceIds,
       })
-      onNavigate(atReception ? `/le-tan/lich-hen?ngayHen=${date}` : '/khach-hang/lich-hen?nhom=upcoming', false, {
+      onNavigate(atReception ? `${staffBasePath}/lich-hen?ngayHen=${date}` : '/khach-hang/lich-hen?nhom=upcoming', false, {
         notice: typeof response === 'string' ? response : 'Đã gửi yêu cầu đặt lịch.',
       })
     } catch (error) {

@@ -39,7 +39,6 @@ function IntakeCard({ appointment, tab, now, onAction }) {
       <div><span>Phòng</span><strong>{appointment.maPhong || 'Chưa phân phòng'}</strong></div>
       <div><span>Thời lượng dự kiến</span><strong>{appointment.thoiLuongDuKienPhut} phút</strong></div>
     </div>
-    {appointment.ghi_chu && <p className="intake-card-note">Ghi chú: {appointment.ghi_chu}</p>}
     {tab === 'no-show' && appointment.ghiChuKhongDen && <p className="intake-card-note">Ghi chú không đến: {appointment.ghiChuKhongDen}</p>}
     {tab === 'active' && appointment.denLuc && <p className="intake-card-note">Đã tiếp nhận lúc {new Date(appointment.denLuc).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>}
     {tab === 'waiting' && <div className="intake-card-actions">

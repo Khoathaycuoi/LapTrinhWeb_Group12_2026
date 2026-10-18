@@ -83,9 +83,12 @@ function CancelDialog({ appointment, reason, error, busy, onReasonChange, onCanc
 function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
   const services = appointment.dichVusDuKien ?? []
   const cancellableStatus = ['Chờ xác nhận', 'Đã xác nhận'].includes(appointment.trangThai)
-  const hasDetails = Boolean(appointment.maPhong || appointment.lyDoHuy || appointment.lyDoTuChoi ||
-    (appointment.ghi_chu && !appointment.lyDoHuy) || services.length)
   const estimatedTotal = services.reduce((sum, service) => sum + Number(service.donGiaTaiThoiDiemDat || 0), 0)
+  const formatMoment = (value) => {
+    if (!value) return null
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? null : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+  }
 
   return <article className="appointment-card">
     <div className="appointment-card-top">
@@ -98,19 +101,25 @@ function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
       <div><span>Thời lượng dự kiến</span><strong>{appointment.thoiLuongDuKienPhut} phút</strong></div>
     </div>
     <div className="appointment-card-actions">
-      {hasDetails && <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Chi tiết dịch vụ và lịch'}</button>}
+      <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Xem chi tiết'}</button>
       {canCancel(appointment) && <button type="button" className="appointment-cancel-button" onClick={onCancel}>Hủy lịch</button>}
       {cancellableStatus && !canCancel(appointment) && <span className="appointment-cancel-note">{appointment.trangThai === 'Chờ xác nhận'
         ? 'Lịch chờ đã qua giờ hẹn và không thể hủy.'
         : 'Lịch đã xác nhận không thể tự hủy trong vòng 12 giờ trước giờ hẹn. Vui lòng liên hệ Lễ tân.'}</span>}
     </div>
-    {expanded && hasDetails && <div className="appointment-details">
-      {(appointment.maPhong || appointment.lyDoHuy || appointment.lyDoTuChoi || (appointment.ghi_chu && !appointment.lyDoHuy)) && <dl>
+    {expanded && <div className="appointment-details">
+      <dl>
+        <div><dt>Mã lịch hẹn</dt><dd>{appointment.maLichHen}</dd></div>
         {appointment.maPhong && <div><dt>Phòng khám</dt><dd>{appointment.maPhong}</dd></div>}
-        {appointment.ghi_chu && !appointment.lyDoHuy && <div><dt>Ghi chú</dt><dd className="appointment-note">{appointment.ghi_chu}</dd></div>}
-        {appointment.lyDoHuy && <div><dt>Lý do hủy</dt><dd className="appointment-note">{appointment.lyDoHuy}</dd></div>}
+        {appointment.trangThai === 'Đã hủy' && <div><dt>Lý do hủy</dt><dd className="appointment-note">{appointment.lyDoHuy || 'Không có lý do được ghi nhận.'}</dd></div>}
+        {appointment.nguoiHuy && <div><dt>Người hủy</dt><dd>{appointment.nguoiHuy}</dd></div>}
+        {appointment.huyLuc && <div><dt>Hủy lúc</dt><dd>{formatMoment(appointment.huyLuc)}</dd></div>}
         {appointment.lyDoTuChoi && <div><dt>Lý do từ chối</dt><dd className="appointment-note">{appointment.lyDoTuChoi}</dd></div>}
-      </dl>}
+        {appointment.tuChoiLuc && <div><dt>Từ chối lúc</dt><dd>{formatMoment(appointment.tuChoiLuc)}</dd></div>}
+        {appointment.ghiChuKhongDen && <div><dt>Ghi chú không đến</dt><dd className="appointment-note">{appointment.ghiChuKhongDen}</dd></div>}
+        {appointment.nguoiDanhDauKhongDen && <div><dt>Người đánh dấu</dt><dd>{appointment.nguoiDanhDauKhongDen}</dd></div>}
+        {appointment.khongDenLuc && <div><dt>Đánh dấu không đến lúc</dt><dd>{formatMoment(appointment.khongDenLuc)}</dd></div>}
+      </dl>
       {services.length > 0 && <div className="appointment-services"><h3>Chi phí dự kiến khi đặt</h3><ul>{services.map((service) => <li key={service.maDichVu}><span>{service.tenDichVu} · {service.thoiLuongTaiThoiDiemDatPhut} phút</span><span>{moneyFormatter.format(service.donGiaTaiThoiDiemDat)}</span></li>)}</ul><div className="appointment-estimated-total"><span>Tổng dự kiến</span><strong>{moneyFormatter.format(estimatedTotal)}</strong></div><p>Hóa đơn thực tế chỉ tính các dịch vụ đã thực hiện.</p></div>}
     </div>}
   </article>

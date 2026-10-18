@@ -26,6 +26,9 @@
 .reception-card-info strong { overflow-wrap: anywhere; color: var(--color-text); font-size: 12px; font-weight: 600; line-height: 1.5; }
 .reception-card-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--color-border); }
 .reception-card-actions .primary-button { min-height: 39px; font-size: 12px; }
+.reception-details-button { margin-right: auto; padding: 0 4px; border: 0; background: none; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.reception-details-button:hover { text-decoration: underline; }
+.reception-details-button:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
 .reception-cancel-button { min-height: 39px; padding: 0 14px; border: 1px solid #ECC9CE; border-radius: 9px; background: #FFF8F8; color: var(--color-error); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .reception-cancel-button:hover { background: #FFF0F1; }
 .reception-feedback { color: var(--color-muted); font-size: 13px; line-height: 1.6; }

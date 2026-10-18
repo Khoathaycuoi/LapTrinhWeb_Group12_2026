@@ -25,6 +25,7 @@
 .customer-detail-dialog dl { display: grid; grid-template-columns: 125px 1fr; gap: 12px; margin: 22px 0 0; font-size: 12px; }
 .customer-detail-dialog dt { color: var(--color-muted); }
 .customer-detail-dialog dd { margin: 0; color: var(--color-text); font-weight: 700; }
+.customer-status-dialog .customer-form-error { color: var(--color-error); }
 @media (max-width: 620px) {
   .reception-customers-heading, .customer-list article { align-items: stretch; flex-direction: column; }
   .customer-create-form { grid-template-columns: 1fr; }

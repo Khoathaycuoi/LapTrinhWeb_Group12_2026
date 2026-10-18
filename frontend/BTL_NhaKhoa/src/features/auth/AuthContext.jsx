@@ -19,6 +19,7 @@ async function loadSession(token, claims) {
     token,
     role: identity.vaiTro ?? identity.VaiTro ?? claims.vai_tro,
     name: name.trim(),
+    phone: identity.soDienThoai ?? identity.SoDienThoai ?? claims.sub ?? '',
   }
 }
 
