@@ -51,10 +51,12 @@ function IntakeCard({ appointment, tab, now, onAction }) {
   </article>
 }
 
-export default function ReceptionIntakePage({ token }) {
+export default function ReceptionIntakePage({ token, query = '' }) {
   const [now, setNow] = useState(Date.now())
   const today = localDate(new Date(now))
-  const [tab, setTab] = useState('waiting')
+  const [tab, setTab] = useState(() => ['active', 'arrived'].includes(new URLSearchParams(query).get('nhom')) ? 'active' : 'waiting')
+  const [arrivedOnly, setArrivedOnly] = useState(() => new URLSearchParams(query).get('nhom') === 'arrived')
+  const [upcomingOnly, setUpcomingOnly] = useState(() => new URLSearchParams(query).get('nhom') === 'upcoming')
   const [keywordInput, setKeywordInput] = useState('')
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
@@ -71,9 +73,17 @@ export default function ReceptionIntakePage({ token }) {
   useEffect(() => { setPage(1) }, [today])
 
   useEffect(() => {
+    const group = new URLSearchParams(query).get('nhom')
+    setTab(['active', 'arrived'].includes(group) ? 'active' : 'waiting')
+    setArrivedOnly(group === 'arrived')
+    setUpcomingOnly(group === 'upcoming')
+    setPage(1)
+  }, [query])
+
+  useEffect(() => {
     const controller = new AbortController()
     setList({ status: 'loading', items: [], totalItems: 0, error: '' })
-    receptionAppointmentsApi.intakeList(token, { date: today, tab, keyword, page, pageSize }, controller.signal)
+    receptionAppointmentsApi.intakeList(token, { date: today, tab, arrivedOnly, upcomingOnly, keyword, page, pageSize }, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return
         if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -91,7 +101,7 @@ export default function ReceptionIntakePage({ token }) {
         })
       })
     return () => controller.abort()
-  }, [token, today, tab, keyword, page, reload])
+  }, [token, today, tab, arrivedOnly, upcomingOnly, keyword, page, reload])
 
   function refresh() { setReload((value) => value + 1) }
 
@@ -101,7 +111,7 @@ export default function ReceptionIntakePage({ token }) {
     <div className="intake-filters">
       <div className="intake-tabs" role="group" aria-label="Trạng thái tiếp nhận">
         {tabs.map(([value, label]) => <button key={value} type="button" className={tab === value ? 'active' : ''} aria-pressed={tab === value}
-          onClick={() => { if (value !== tab) { setPage(1); setTab(value) } }}>{label}</button>)}
+          onClick={() => { if (value !== tab || arrivedOnly || upcomingOnly) { setPage(1); setArrivedOnly(false); setUpcomingOnly(false); setTab(value) } }}>{label}</button>)}
       </div>
       <form onSubmit={(event) => { event.preventDefault(); setPage(1); setKeyword(keywordInput.trim()); refresh() }}>
         <label htmlFor="intake-search">Tên hoặc số điện thoại khách</label>
@@ -109,6 +119,8 @@ export default function ReceptionIntakePage({ token }) {
           <button type="submit" className="secondary-button">Tìm</button></div>
       </form>
       <button type="button" className="intake-refresh" onClick={refresh}>Làm mới</button>
+      {arrivedOnly && <button type="button" className="intake-refresh" onClick={() => { setPage(1); setArrivedOnly(false) }}>Xem cả đang khám</button>}
+      {upcomingOnly && <button type="button" className="intake-refresh" onClick={() => { setPage(1); setUpcomingOnly(false) }}>Xem cả hôm nay</button>}
     </div>
     {list.status === 'loading' && <div className="intake-feedback" role="status">Đang tải danh sách tiếp nhận…</div>}
     {list.status === 'error' && <div className="intake-feedback" role="alert"><strong>Không tải được danh sách tiếp nhận.</strong><p>{list.error}</p><button type="button" className="primary-button" onClick={refresh}>Thử lại</button></div>}

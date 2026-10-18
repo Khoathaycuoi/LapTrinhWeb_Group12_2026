@@ -5,6 +5,7 @@ public sealed class HoaDonResponse
     public string MaHoaDon { get; init; } = string.Empty;
     public string MaHoSoKham { get; init; } = string.Empty;
     public string MaKhachHang { get; init; } = string.Empty;
+    public string TenKhachHang { get; init; } = string.Empty;
     public DateTime NgayLap { get; init; }
     public decimal TongTien { get; init; }
     public decimal DaThanhToan { get; init; }

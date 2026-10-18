@@ -1,9 +1,13 @@
 import { request } from '../../lib/api'
 
 export const receptionAppointmentsApi = {
-  intakeList: (token, { date, tab, keyword, page, pageSize }, signal) => {
+  intakeList: (token, { date, tab, arrivedOnly, upcomingOnly, keyword, page, pageSize }, signal) => {
     const query = new URLSearchParams({ ngayHen: date, page, pageSize })
-    if (tab === 'waiting') query.set('trangThai', 'DA_XAC_NHAN')
+    if (tab === 'waiting') {
+      query.set('trangThai', 'DA_XAC_NHAN')
+      if (upcomingOnly) query.set('nhom', 'upcoming')
+    }
+    else if (tab === 'active' && arrivedOnly) query.set('trangThai', 'DA_DEN')
     else if (tab === 'active') query.set('nhom', 'active')
     else query.set('trangThai', 'KHONG_DEN')
     if (keyword) {
@@ -22,6 +26,7 @@ export const receptionAppointmentsApi = {
     const query = new URLSearchParams()
     if (filters.status) query.set('trangThai', filters.status)
     if (filters.upcoming) query.set('nhom', 'upcoming')
+    else if (filters.tracked) query.set('nhom', 'tracked')
     if (filters.date) query.set('ngayHen', filters.date)
     if (filters.customer) query.set('tenKH', filters.customer)
     query.set('page', filters.page)

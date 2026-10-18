@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { dashboardApi } from './dashboardApi'
-import './CustomerDashboard.css'
+import './DashboardCommon.css'
 
 const moneyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',

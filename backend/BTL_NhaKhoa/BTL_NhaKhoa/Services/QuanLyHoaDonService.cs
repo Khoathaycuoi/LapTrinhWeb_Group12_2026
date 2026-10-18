@@ -55,18 +55,22 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
     }
 
     public async Task<IReadOnlyList<HoaDonResponse>> LayDanhSachAsync(
-        ulong maTaiKhoan, string? maKhachHang, bool conNo = false)
+        ulong maTaiKhoan, string? maKhachHang, bool conNo = false,
+        DateOnly? tuNgay = null, DateOnly? denNgay = null, string? trangThai = null)
     {
-        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang, conNo);
+        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang,
+            conNo, tuNgay, denNgay, trangThai);
         var hoaDons = await query.OrderByDescending(x => x.NgayLap)
             .ThenByDescending(x => x.MaHoaDon).ToListAsync();
         return hoaDons.Select(TaoResponse).ToList();
     }
 
     public async Task<DanhSachPhanTrangResponse<HoaDonResponse>> LayTrangAsync(
-        ulong maTaiKhoan, string? maKhachHang, bool conNo, int page, int pageSize)
+        ulong maTaiKhoan, string? maKhachHang, bool conNo, DateOnly? tuNgay,
+        DateOnly? denNgay, string? trangThai, int page, int pageSize)
     {
-        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang, conNo);
+        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang,
+            conNo, tuNgay, denNgay, trangThai);
         var totalItems = await query.CountAsync();
         var hoaDons = await query.OrderByDescending(x => x.NgayLap)
             .ThenByDescending(x => x.MaHoaDon)
@@ -76,7 +80,8 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
     }
 
     private async Task<IQueryable<HoaDon>> TaoTruyVanDanhSachAsync(
-        ulong maTaiKhoan, string? maKhachHang, bool conNo)
+        ulong maTaiKhoan, string? maKhachHang, bool conNo,
+        DateOnly? tuNgay, DateOnly? denNgay, string? trangThai)
     {
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
@@ -98,6 +103,19 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
         if (conNo)
             query = query.Where(x => x.TrangThai == "CHUA_THANH_TOAN" ||
                 x.TrangThai == "THANH_TOAN_MOT_PHAN");
+        if (trangThai != null)
+            query = query.Where(x => x.TrangThai == trangThai);
+
+        if (tuNgay.HasValue)
+        {
+            var batDau = tuNgay.Value.ToDateTime(TimeOnly.MinValue);
+            query = query.Where(x => x.NgayLap >= batDau);
+        }
+        if (denNgay.HasValue && denNgay.Value < DateOnly.MaxValue)
+        {
+            var sauNgayKetThuc = denNgay.Value.AddDays(1).ToDateTime(TimeOnly.MinValue);
+            query = query.Where(x => x.NgayLap < sauNgayKetThuc);
+        }
 
         return query;
     }
@@ -189,7 +207,7 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
     }
 
     private IQueryable<HoaDon> TruyVanHoaDon() => db.HoaDons.AsNoTracking()
-        .Include(x => x.HoSoKham).ThenInclude(x => x.KhachHang)
+        .Include(x => x.HoSoKham).ThenInclude(x => x.KhachHang).ThenInclude(x => x.ConNguoi)
         .Include(x => x.ChiTietHoaDons)
         .Include(x => x.ThanhToans).ThenInclude(x => x.NguoiXacNhanTaiKhoan)
             .ThenInclude(x => x.ConNguoi)
@@ -206,6 +224,7 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
             MaHoaDon = TaoMa("HD_", hoaDon.MaHoaDon),
             MaHoSoKham = TaoMa("HSK_", hoaDon.MaHoSoKham),
             MaKhachHang = TaoMa("KH_", hoaDon.HoSoKham.MaKhachHang),
+            TenKhachHang = hoaDon.HoSoKham.KhachHang.ConNguoi.HoTen,
             NgayLap = hoaDon.NgayLap,
             TongTien = hoaDon.TongTien,
             DaThanhToan = daThu,

@@ -138,9 +138,10 @@ function ConfirmationDialog({ appointment, doctors, token, onClose, onRetryDocto
   </div>
 }
 
-export default function ReceptionAppointments({ token }) {
-  const [tab, setTab] = useState('pending')
-  const [date, setDate] = useState('')
+export default function ReceptionAppointments({ token, query = '' }) {
+  const [tab, setTab] = useState(() => new URLSearchParams(query).has('ngayHen') ? 'all' : 'pending')
+  const [date, setDate] = useState(() => new URLSearchParams(query).get('ngayHen') || '')
+  const [trackedOnly, setTrackedOnly] = useState(() => new URLSearchParams(query).get('nhom') === 'tracked')
   const [customerInput, setCustomerInput] = useState('')
   const [customer, setCustomer] = useState('')
   const [page, setPage] = useState(1)
@@ -152,6 +153,14 @@ export default function ReceptionAppointments({ token }) {
   const [cancelTarget, setCancelTarget] = useState(null)
   const [noShowTarget, setNoShowTarget] = useState(null)
   const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(query)
+    setTab(params.has('ngayHen') ? 'all' : 'pending')
+    setDate(params.get('ngayHen') || '')
+    setTrackedOnly(params.get('nhom') === 'tracked')
+    setPage(1)
+  }, [query])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -167,7 +176,7 @@ export default function ReceptionAppointments({ token }) {
     const controller = new AbortController()
     setList({ status: 'loading', items: [], totalItems: 0, error: '' })
     receptionAppointmentsApi.list(token, {
-      status: tab === 'pending' ? 'CHO_XAC_NHAN' : '', upcoming: tab === 'pending',
+      status: tab === 'pending' ? 'CHO_XAC_NHAN' : '', upcoming: tab === 'pending', tracked: tab === 'all' && trackedOnly,
       date, customer, page, pageSize,
     }, controller.signal)
       .then((result) => {
@@ -187,7 +196,7 @@ export default function ReceptionAppointments({ token }) {
         })
       })
     return () => controller.abort()
-  }, [token, tab, date, customer, page, reload])
+  }, [token, tab, trackedOnly, date, customer, page, reload])
 
   function refresh() {
     setList({ status: 'loading', items: [], totalItems: 0, error: '' })
@@ -201,8 +210,8 @@ export default function ReceptionAppointments({ token }) {
     <ToastNotice message={notice} onDismiss={() => setNotice('')} />
     <div className="reception-filters">
       <div className="reception-tabs" role="group" aria-label="Nhóm lịch hẹn">
-        <button type="button" className={tab === 'pending' ? 'active' : ''} aria-pressed={tab === 'pending'} onClick={() => { if (tab !== 'pending') { setPage(1); setTab('pending') } }}>Chờ xác nhận</button>
-        <button type="button" className={tab === 'all' ? 'active' : ''} aria-pressed={tab === 'all'} onClick={() => { if (tab !== 'all') { setPage(1); setTab('all') } }}>Tất cả lịch hẹn</button>
+        <button type="button" className={tab === 'pending' ? 'active' : ''} aria-pressed={tab === 'pending'} onClick={() => { if (tab !== 'pending') { setPage(1); setTrackedOnly(false); setTab('pending') } }}>Chờ xác nhận</button>
+        <button type="button" className={tab === 'all' ? 'active' : ''} aria-pressed={tab === 'all'} onClick={() => { if (tab !== 'all' || trackedOnly) { setPage(1); setTrackedOnly(false); setTab('all') } }}>Tất cả lịch hẹn</button>
       </div>
       <label>Ngày hẹn<input type="date" value={date} onChange={(event) => { setPage(1); setDate(event.target.value) }} /></label>
       <form onSubmit={(event) => { event.preventDefault(); setPage(1); setCustomer(customerInput.trim()); refresh() }}>
@@ -210,6 +219,7 @@ export default function ReceptionAppointments({ token }) {
         <div><input id="reception-customer-search" type="search" value={customerInput} onChange={(event) => setCustomerInput(event.target.value)} placeholder="Tìm theo tên" /><button type="submit" className="secondary-button">Tìm</button></div>
       </form>
       <button type="button" className="reception-refresh" onClick={refresh}>Làm mới</button>
+      {trackedOnly && <button type="button" className="reception-refresh" onClick={() => { setPage(1); setTrackedOnly(false) }}>Xem tất cả trạng thái</button>}
     </div>
     {list.status === 'loading' && <div className="reception-feedback" role="status">Đang tải lịch hẹn…</div>}
     {list.status === 'error' && <div className="reception-feedback" role="alert"><strong>Không tải được lịch hẹn.</strong><p>{list.error}</p><button type="button" className="primary-button" onClick={refresh}>Thử lại</button></div>}

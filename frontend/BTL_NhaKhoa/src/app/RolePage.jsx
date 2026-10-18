@@ -3,6 +3,8 @@ import MyAppointments from '../features/appointments/MyAppointments'
 import BookingPage from '../features/appointments/BookingPage'
 import ReceptionAppointments from '../features/appointments/ReceptionAppointments'
 import ReceptionIntakePage from '../features/appointments/ReceptionIntakePage'
+import ReceptionDashboard from '../features/dashboard/ReceptionDashboard'
+import ReceptionInvoices from '../features/invoices/ReceptionInvoices'
 import PlaceholderPage from '../pages/PlaceholderPage'
 
 export default function RolePage({ session, routePath, query, navigationState, onNavigate }) {
@@ -22,11 +24,19 @@ export default function RolePage({ session, routePath, query, navigationState, o
   }
 
   if (session.role === 'LE_TAN' && routePath === '/le-tan/lich-hen') {
-    return <ReceptionAppointments token={session.token} />
+    return <ReceptionAppointments token={session.token} query={query} />
   }
 
   if (session.role === 'LE_TAN' && routePath === '/le-tan/tiep-nhan') {
-    return <ReceptionIntakePage token={session.token} />
+    return <ReceptionIntakePage token={session.token} query={query} />
+  }
+
+  if (session.role === 'LE_TAN' && routePath === '/le-tan/overview') {
+    return <ReceptionDashboard token={session.token} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'LE_TAN' && routePath === '/le-tan/hoa-don') {
+    return <ReceptionInvoices token={session.token} query={query} onNavigate={onNavigate} />
   }
 
   return <PlaceholderPage role={session.role} path={routePath} />

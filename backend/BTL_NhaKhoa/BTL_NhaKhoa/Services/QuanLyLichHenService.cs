@@ -27,7 +27,7 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
         string.IsNullOrWhiteSpace(trangThai) || ChuanHoaTrangThai(trangThai) != null;
 
     public static bool NhomHopLe(string? nhom) =>
-        string.IsNullOrWhiteSpace(nhom) || nhom is "all" or "upcoming" or "active" or "finished";
+        string.IsNullOrWhiteSpace(nhom) || nhom is "all" or "upcoming" or "active" or "finished" or "tracked";
 
     public async Task<KetQuaLichHen> DatAsync(DatLichRequest yeuCau, ulong maTaiKhoan)
     {
@@ -278,6 +278,9 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
             "finished" => query.Where(x => x.TrangThai == "DA_HOAN_THANH" ||
                 x.TrangThai == "DA_HUY" || x.TrangThai == "KHONG_DEN" ||
                 x.TrangThai == "TU_CHOI" || x.TrangThai == "HET_HAN"),
+            "tracked" => query.Where(x => x.TrangThai != "DA_HUY" &&
+                x.TrangThai != "TU_CHOI" && x.TrangThai != "HET_HAN" &&
+                (x.TrangThai != "CHO_XAC_NHAN" || x.ThoiGianBatDau > hienTai)),
             _ => query
         };
         if (ngayHen.HasValue)
