@@ -23,10 +23,37 @@ public sealed class HoaDonController(QuanLyHoaDonService quanLyHoaDonService) : 
     [HttpGet]
     [Authorize(Roles = "KHACH_HANG,LE_TAN,QUAN_LY")]
     public async Task<IActionResult> LayDanhSach([FromQuery] string? maKhachHang,
-        [FromQuery] bool conNo = false)
+        [FromQuery] bool conNo = false, [FromQuery] DateOnly? tuNgay = null,
+        [FromQuery] DateOnly? denNgay = null, [FromQuery] string? trangThai = null,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
         if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
-        return Ok(await quanLyHoaDonService.LayDanhSachAsync(maTaiKhoan, maKhachHang, conNo));
+        if (tuNgay.HasValue && denNgay.HasValue && tuNgay.Value > denNgay.Value)
+            return BadRequest("Từ ngày không được sau đến ngày.");
+        if (trangThai != null && trangThai is not ("CHUA_THANH_TOAN" or
+                "THANH_TOAN_MOT_PHAN" or "DA_THANH_TOAN" or "DA_HUY"))
+            return BadRequest("Trạng thái hóa đơn không hợp lệ.");
+        if (conNo && trangThai != null)
+            return BadRequest("Không thể kết hợp conNo và trangThai.");
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyHoaDonService.LayTrangAsync(maTaiKhoan, maKhachHang,
+                conNo, tuNgay, denNgay, trangThai, phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
+        return Ok(await quanLyHoaDonService.LayDanhSachAsync(maTaiKhoan, maKhachHang,
+            conNo, tuNgay, denNgay, trangThai));
+    }
+
+    [HttpGet("cho-lap")]
+    [Authorize(Roles = "LE_TAN,QUAN_LY")]
+    public async Task<IActionResult> LayHoSoChoLap([FromQuery] PhanTrangRequest? phanTrang = null)
+    {
+        var soTrang = phanTrang?.SoTrang ?? 1;
+        var kichThuocTrang = phanTrang?.KichThuocTrang ?? 20;
+        if (phanTrang?.CoPhanTrang == true && !phanTrang.HopLe)
+            return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+        return Ok(await quanLyHoaDonService.LayHoSoChoLapAsync(soTrang, kichThuocTrang));
     }
 
     [HttpGet("{maHoaDon}")]

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { appointmentsApi } from './appointmentsApi'
+import ListPagination from '../../components/ListPagination'
+import ToastNotice from '../../components/ToastNotice'
 import '../../components/ConfirmDialog.css'
 import './MyAppointments.css'
 
@@ -12,12 +14,13 @@ const groups = [
 
 const upcomingStatuses = ['Chờ xác nhận', 'Đã xác nhận']
 const activeStatuses = ['Đã đến', 'Đang khám']
-const finishedStatuses = ['Đã hoàn thành', 'Đã hủy', 'Không đến', 'Từ chối']
+const finishedStatuses = ['Đã hoàn thành', 'Đã hủy', 'Không đến', 'Từ chối', 'Hết hạn']
 const groupStatuses = {
   upcoming: upcomingStatuses,
   active: activeStatuses,
   finished: finishedStatuses,
 }
+const pageSize = 10
 
 const statusTones = {
   'Chờ xác nhận': 'pending',
@@ -28,6 +31,7 @@ const statusTones = {
   'Đã hủy': 'muted',
   'Không đến': 'error',
   'Từ chối': 'error',
+  'Hết hạn': 'muted',
 }
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'full' })
@@ -43,15 +47,11 @@ function formatAppointmentDate(date, time) {
 function canCancel(appointment) {
   if (!upcomingStatuses.includes(appointment.trangThai)) return false
   const start = new Date(`${appointment.ngayHen}T${appointment.gioHen}`)
-  return !Number.isNaN(start.getTime()) && start.getTime() - Date.now() >= 12 * 60 * 60 * 1000
-}
-
-function inGroup(appointment, group) {
-  if (group === 'all') return true
-  if (group === 'active') return activeStatuses.includes(appointment.trangThai)
-  if (group === 'finished') return finishedStatuses.includes(appointment.trangThai)
-  const start = new Date(`${appointment.ngayHen}T${appointment.gioHen}`)
-  return upcomingStatuses.includes(appointment.trangThai) && !Number.isNaN(start.getTime()) && start.getTime() >= Date.now()
+  if (Number.isNaN(start.getTime())) return false
+  const timeLeft = start.getTime() - Date.now()
+  return appointment.trangThai === 'Chờ xác nhận'
+    ? timeLeft > 0
+    : timeLeft >= 12 * 60 * 60 * 1000
 }
 
 function CancelDialog({ appointment, reason, error, busy, onReasonChange, onCancel, onConfirm }) {
@@ -66,7 +66,9 @@ function CancelDialog({ appointment, reason, error, busy, onReasonChange, onCanc
   return <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onCancel() }}>
     <form className="confirm-dialog appointment-cancel-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-appointment-title" onSubmit={onConfirm}>
       <h2 id="cancel-appointment-title">Hủy lịch hẹn {appointment.maLichHen}?</h2>
-      <p>Lịch sẽ được hủy sau khi bạn xác nhận. Khách hàng chỉ được hủy trước giờ hẹn ít nhất 12 tiếng.</p>
+      <p>{appointment.trangThai === 'Chờ xác nhận'
+        ? 'Lịch chờ xác nhận có thể hủy trước giờ hẹn.'
+        : 'Lịch đã xác nhận chỉ có thể tự hủy trước giờ hẹn ít nhất 12 tiếng.'}</p>
       <label htmlFor="cancel-reason">Lý do hủy <span aria-hidden="true">*</span></label>
       <textarea id="cancel-reason" autoFocus required maxLength={2000} rows={3} value={reason} onChange={(event) => onReasonChange(event.target.value)} placeholder="Nhập lý do hủy lịch hẹn" />
       {error && <div className="alert alert-error" role="alert">{error}</div>}
@@ -81,6 +83,9 @@ function CancelDialog({ appointment, reason, error, busy, onReasonChange, onCanc
 function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
   const services = appointment.dichVusDuKien ?? []
   const cancellableStatus = ['Chờ xác nhận', 'Đã xác nhận'].includes(appointment.trangThai)
+  const hasDetails = Boolean(appointment.maPhong || appointment.lyDoHuy || appointment.lyDoTuChoi ||
+    (appointment.ghi_chu && !appointment.lyDoHuy) || services.length)
+  const estimatedTotal = services.reduce((sum, service) => sum + Number(service.donGiaTaiThoiDiemDat || 0), 0)
 
   return <article className="appointment-card">
     <div className="appointment-card-top">
@@ -93,58 +98,70 @@ function AppointmentCard({ appointment, expanded, onToggle, onCancel }) {
       <div><span>Thời lượng dự kiến</span><strong>{appointment.thoiLuongDuKienPhut} phút</strong></div>
     </div>
     <div className="appointment-card-actions">
-      <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Xem chi tiết'}</button>
+      {hasDetails && <button type="button" className="appointment-text-button" aria-expanded={expanded} onClick={onToggle}>{expanded ? 'Thu gọn' : 'Chi tiết dịch vụ và lịch'}</button>}
       {canCancel(appointment) && <button type="button" className="appointment-cancel-button" onClick={onCancel}>Hủy lịch</button>}
-      {cancellableStatus && !canCancel(appointment) && <span className="appointment-cancel-note">Không thể tự hủy trong vòng 12 giờ trước giờ hẹn. Vui lòng liên hệ Lễ tân.</span>}
+      {cancellableStatus && !canCancel(appointment) && <span className="appointment-cancel-note">{appointment.trangThai === 'Chờ xác nhận'
+        ? 'Lịch chờ đã qua giờ hẹn và không thể hủy.'
+        : 'Lịch đã xác nhận không thể tự hủy trong vòng 12 giờ trước giờ hẹn. Vui lòng liên hệ Lễ tân.'}</span>}
     </div>
-    {expanded && <div className="appointment-details">
-      <dl>
-        <div><dt>Mã lịch hẹn</dt><dd>{appointment.maLichHen}</dd></div>
-        <div><dt>Ngày giờ hẹn</dt><dd>{formatAppointmentDate(appointment.ngayHen, appointment.gioHen)}</dd></div>
-        <div><dt>Phòng</dt><dd>{appointment.maPhong || 'Chưa phân phòng'}</dd></div>
-        {appointment.ghi_chu && <div><dt>Ghi chú</dt><dd className="appointment-note">{appointment.ghi_chu}</dd></div>}
+    {expanded && hasDetails && <div className="appointment-details">
+      {(appointment.maPhong || appointment.lyDoHuy || appointment.lyDoTuChoi || (appointment.ghi_chu && !appointment.lyDoHuy)) && <dl>
+        {appointment.maPhong && <div><dt>Phòng khám</dt><dd>{appointment.maPhong}</dd></div>}
+        {appointment.ghi_chu && !appointment.lyDoHuy && <div><dt>Ghi chú</dt><dd className="appointment-note">{appointment.ghi_chu}</dd></div>}
         {appointment.lyDoHuy && <div><dt>Lý do hủy</dt><dd className="appointment-note">{appointment.lyDoHuy}</dd></div>}
         {appointment.lyDoTuChoi && <div><dt>Lý do từ chối</dt><dd className="appointment-note">{appointment.lyDoTuChoi}</dd></div>}
-      </dl>
-      {services.length > 0 && <div className="appointment-services"><h3>Dịch vụ dự kiến khi đặt</h3><ul>{services.map((service) => <li key={service.maDichVu}><span>{service.tenDichVu}</span><span>{moneyFormatter.format(service.donGiaTaiThoiDiemDat)}</span></li>)}</ul></div>}
+      </dl>}
+      {services.length > 0 && <div className="appointment-services"><h3>Chi phí dự kiến khi đặt</h3><ul>{services.map((service) => <li key={service.maDichVu}><span>{service.tenDichVu} · {service.thoiLuongTaiThoiDiemDatPhut} phút</span><span>{moneyFormatter.format(service.donGiaTaiThoiDiemDat)}</span></li>)}</ul><div className="appointment-estimated-total"><span>Tổng dự kiến</span><strong>{moneyFormatter.format(estimatedTotal)}</strong></div><p>Hóa đơn thực tế chỉ tính các dịch vụ đã thực hiện.</p></div>}
     </div>}
   </article>
 }
 
-export default function MyAppointments({ token, groupParam, onGroupChange }) {
+export default function MyAppointments({ token, groupParam, statusParam, arrivalNotice, onGroupChange }) {
   const group = groups.some(([, value]) => value === groupParam) ? groupParam : 'all'
-  const [specificStatus, setSpecificStatus] = useState('')
+  const [specificStatus, setSpecificStatus] = useState(statusParam ?? '')
   const [date, setDate] = useState('')
+  const [page, setPage] = useState(1)
   const [reload, setReload] = useState(0)
-  const [state, setState] = useState({ status: 'loading', items: [], error: '' })
+  const [state, setState] = useState({ status: 'loading', items: [], totalItems: 0, error: '' })
   const [expandedId, setExpandedId] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [cancelReason, setCancelReason] = useState('')
   const [cancelError, setCancelError] = useState('')
   const [cancelling, setCancelling] = useState(false)
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(arrivalNotice ?? '')
+  const selectedStatus = (groupStatuses[group] ?? []).includes(specificStatus) ? specificStatus : ''
+
+  useEffect(() => { setPage(1) }, [group])
+  useEffect(() => { setSpecificStatus(statusParam ?? ''); setPage(1) }, [statusParam])
 
   useEffect(() => {
     const controller = new AbortController()
     let active = true
-    appointmentsApi.myAppointments(token, { date }, controller.signal)
-      .then((items) => {
-        if (active) setState(Array.isArray(items)
-          ? { status: 'success', items, error: '' }
-          : { status: 'error', items: [], error: 'Máy chủ chưa trả danh sách lịch hẹn.' })
+    setState({ status: 'loading', items: [], totalItems: 0, error: '' })
+    appointmentsApi.myAppointments(token, { date, group, status: selectedStatus, page, pageSize }, controller.signal)
+      .then((result) => {
+        if (!active) return
+        if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
+          setState({ status: 'error', items: [], totalItems: 0, error: 'Hiện chưa thể hiển thị lịch hẹn. Vui lòng thử lại sau.' })
+          return
+        }
+        const lastPage = Math.max(1, Math.ceil(result.totalItems / pageSize))
+        if (page > lastPage) { setPage(lastPage); return }
+        setState({ status: 'success', items: result.items, totalItems: result.totalItems, error: '' })
       })
       .catch((error) => {
-        if (active) setState({ status: 'error', items: [], error: error.message })
+        if (active && !controller.signal.aborted) setState({
+          status: 'error', items: [], totalItems: 0,
+          error: error.status === 0
+            ? error.message
+            : 'Hiện chưa thể hiển thị lịch hẹn. Vui lòng thử lại sau.',
+        })
       })
     return () => { active = false; controller.abort() }
-  }, [token, date, reload])
-
-  const selectedStatus = (groupStatuses[group] ?? []).includes(specificStatus) ? specificStatus : ''
-  const visibleItems = state.items.filter((appointment) =>
-    inGroup(appointment, group) && (!selectedStatus || appointment.trangThai === selectedStatus))
+  }, [token, date, group, selectedStatus, page, reload])
 
   function refresh() {
-    setState({ status: 'loading', items: [], error: '' })
+    setState({ status: 'loading', items: [], totalItems: 0, error: '' })
     setReload((value) => value + 1)
   }
 
@@ -173,24 +190,25 @@ export default function MyAppointments({ token, groupParam, onGroupChange }) {
 
   return <div className="my-appointments">
     <div className="page-heading"><div><h1>Lịch hẹn của tôi</h1><p className="page-description">Theo dõi lịch đã đặt và trạng thái xử lý tại phòng khám.</p></div></div>
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
+    <ToastNotice message={notice} onDismiss={() => setNotice('')} />
     <div className="appointment-filters">
       <div className="appointment-groups" role="group" aria-label="Lọc lịch hẹn">
-        {groups.map(([label, value]) => <button key={value} type="button" className={group === value ? 'appointment-group active' : 'appointment-group'} aria-pressed={group === value} onClick={() => { if (value !== group) { setSpecificStatus(''); onGroupChange(value) } }}>{label}</button>)}
+        {groups.map(([label, value]) => <button key={value} type="button" className={group === value ? 'appointment-group active' : 'appointment-group'} aria-pressed={group === value} onClick={() => { if (value !== group) { setPage(1); setSpecificStatus(''); onGroupChange(value) } }}>{label}</button>)}
       </div>
-      {group !== 'all' && <label>Trạng thái cụ thể<select value={selectedStatus} onChange={(event) => setSpecificStatus(event.target.value)}>
+      {group !== 'all' && <label>Trạng thái cụ thể<select value={selectedStatus} onChange={(event) => { setPage(1); setSpecificStatus(event.target.value) }}>
         <option value="">Tất cả trong nhóm</option>
         {groupStatuses[group].map((value) => <option key={value} value={value}>{value}</option>)}
       </select></label>}
-      <label>Ngày hẹn<input type="date" value={date} onChange={(event) => { setDate(event.target.value); setState({ status: 'loading', items: [], error: '' }) }} /></label>
-      {(group !== 'all' || date) && <button type="button" className="appointment-clear-filters" onClick={() => { if (group !== 'all') onGroupChange('all'); setSpecificStatus(''); if (date) { setDate(''); setState({ status: 'loading', items: [], error: '' }) } }}>Xóa bộ lọc</button>}
+      <label>Ngày hẹn<input type="date" value={date} onChange={(event) => { setPage(1); setDate(event.target.value) }} /></label>
+      {(group !== 'all' || date) && <button type="button" className="appointment-clear-filters" onClick={() => { setPage(1); if (group !== 'all') onGroupChange('all'); setSpecificStatus(''); setDate('') }}>Xóa bộ lọc</button>}
     </div>
     {state.status === 'loading' && <div className="appointment-feedback" role="status">Đang tải lịch hẹn…</div>}
     {state.status === 'error' && <div className="appointment-feedback appointment-feedback-error" role="alert"><strong>Không tải được lịch hẹn.</strong><p>{state.error}</p><button type="button" className="primary-button" onClick={refresh}>Thử lại</button></div>}
     {state.status === 'success' && <>
-      <div className="appointment-count">{visibleItems.length} lịch hẹn{group !== 'all' || date ? ' phù hợp bộ lọc' : ''}</div>
-      {visibleItems.length ? <div className="appointment-list">{visibleItems.map((appointment) => <AppointmentCard key={appointment.maLichHen} appointment={appointment} expanded={expandedId === appointment.maLichHen} onToggle={() => setExpandedId(expandedId === appointment.maLichHen ? null : appointment.maLichHen)} onCancel={() => { setCancelTarget(appointment); setCancelReason(''); setCancelError('') }} />)}</div>
+      <div className="appointment-count">{state.totalItems} lịch hẹn{group !== 'all' || date ? ' phù hợp bộ lọc' : ''}</div>
+      {state.items.length ? <div className="appointment-list">{state.items.map((appointment) => <AppointmentCard key={appointment.maLichHen} appointment={appointment} expanded={expandedId === appointment.maLichHen} onToggle={() => setExpandedId(expandedId === appointment.maLichHen ? null : appointment.maLichHen)} onCancel={() => { setCancelTarget(appointment); setCancelReason(''); setCancelError('') }} />)}</div>
         : <div className="appointment-feedback"><strong>Chưa có lịch hẹn nào{group !== 'all' || date ? ' phù hợp bộ lọc' : ''}.</strong><p>{group !== 'all' || date ? 'Bạn có thể đổi hoặc xóa bộ lọc để xem các lịch khác.' : 'Khi bạn đặt lịch, thông tin sẽ xuất hiện tại đây.'}</p></div>}
+      <ListPagination page={page} pageSize={pageSize} totalItems={state.totalItems} onPageChange={(nextPage) => { setExpandedId(null); setPage(nextPage) }} />
     </>}
     {cancelTarget && <CancelDialog appointment={cancelTarget} reason={cancelReason} error={cancelError} busy={cancelling} onReasonChange={setCancelReason} onCancel={closeCancel} onConfirm={confirmCancel} />}
   </div>

@@ -7,7 +7,6 @@
 .primary-button:hover { background: var(--color-primary-dark); }
 .alert { margin-bottom: 17px; padding: 11px 13px; border: 1px solid; border-radius: 9px; font-size: 12px; line-height: 1.55; }
 .alert-error { border-color: #F0D1D5; background: #FFF7F7; color: var(--color-error); }
-.alert-success { border-color: #CFE8DE; background: #F4FBF7; color: var(--color-success); }
 
 @media (max-width: 700px) {
   .page-heading { align-items: flex-start; margin-bottom: 22px; }

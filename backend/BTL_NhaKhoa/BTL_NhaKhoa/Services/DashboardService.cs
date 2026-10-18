@@ -10,7 +10,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
     private static readonly string[] TrangThaiLichHen =
     [
         "CHO_XAC_NHAN", "DA_XAC_NHAN", "DA_DEN", "DANG_KHAM",
-        "DA_HOAN_THANH", "KHONG_DEN", "DA_HUY", "TU_CHOI"
+        "DA_HOAN_THANH", "KHONG_DEN", "DA_HUY", "TU_CHOI", "HET_HAN"
     ];
 
     public async Task<DashboardQuanLyResponse> LayQuanLyAsync()
@@ -27,7 +27,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
         var soLichHomNay = await LichDangTheoDoi()
             .CountAsync(x => x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < dauNgayMai);
         var soLichChoXacNhan = await db.LichHens.AsNoTracking()
-            .CountAsync(x => x.TrangThai == "CHO_XAC_NHAN");
+            .CountAsync(x => x.TrangThai == "CHO_XAC_NHAN" && x.ThoiGianBatDau > hienTai);
         var doanhThuThang = await db.ThanhToans.AsNoTracking()
             .Where(x => x.TrangThai == "DA_XAC_NHAN" && x.HoaDon.TrangThai != "DA_HUY" &&
                 x.ThoiDiemThanhToan >= dauThang && x.ThoiDiemThanhToan < dauThangSau)
@@ -92,7 +92,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
         var dauNgay = hienTai.Date;
         var dauNgayMai = dauNgay.AddDays(1);
         var soLichChoXacNhan = await db.LichHens.AsNoTracking()
-            .CountAsync(x => x.TrangThai == "CHO_XAC_NHAN");
+            .CountAsync(x => x.TrangThai == "CHO_XAC_NHAN" && x.ThoiGianBatDau > hienTai);
         var soLichHomNay = await LichDangTheoDoi()
             .CountAsync(x => x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < dauNgayMai);
         var soKhachChoKham = await db.LichHens.AsNoTracking()
@@ -100,7 +100,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
                 x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < dauNgayMai);
         var soHoaDonConNo = await HoaDonConNo(null).CountAsync();
         var lichCho = await TruyVanLich()
-            .Where(x => x.TrangThai == "CHO_XAC_NHAN")
+            .Where(x => x.TrangThai == "CHO_XAC_NHAN" && x.ThoiGianBatDau > hienTai)
             .OrderBy(x => x.ThoiGianBatDau).ThenBy(x => x.MaLichHen)
             .Take(5).ToListAsync();
         var lichSapDienRa = await TruyVanLich()
@@ -130,13 +130,15 @@ public sealed class DashboardService(NhaKhoaDbContext db)
             .Select(x => (ulong?)x.MaBacSi).FirstOrDefaultAsync();
         if (!maBacSi.HasValue) return null;
 
-        var dauNgay = DateTime.Today;
+        var hienTai = DateTime.Now;
+        var dauNgay = hienTai.Date;
         var dauNgayMai = dauNgay.AddDays(1);
         var soLichHomNay = await LichDangTheoDoi()
             .CountAsync(x => x.MaBacSi == maBacSi &&
                 x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < dauNgayMai);
         var soLichChoXacNhan = await db.LichHens.AsNoTracking()
-            .CountAsync(x => x.MaBacSi == maBacSi && x.TrangThai == "CHO_XAC_NHAN");
+            .CountAsync(x => x.MaBacSi == maBacSi && x.TrangThai == "CHO_XAC_NHAN" &&
+                x.ThoiGianBatDau > hienTai);
         var soKhachChoKham = await db.LichHens.AsNoTracking()
             .CountAsync(x => x.MaBacSi == maBacSi && x.TrangThai == "DA_DEN" &&
                 x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < dauNgayMai);
@@ -148,6 +150,8 @@ public sealed class DashboardService(NhaKhoaDbContext db)
         var lichHomNay = await TruyVanLich()
             .Where(x => x.MaBacSi == maBacSi &&
                 x.TrangThai != "DA_HUY" && x.TrangThai != "TU_CHOI" &&
+                x.TrangThai != "HET_HAN" &&
+                (x.TrangThai != "CHO_XAC_NHAN" || x.ThoiGianBatDau > hienTai) &&
                 x.ThoiGianBatDau >= dauNgay && x.ThoiGianBatDau < dauNgayMai)
             .OrderBy(x => x.ThoiGianBatDau).ThenBy(x => x.MaLichHen)
             .Take(20).ToListAsync();
@@ -175,7 +179,7 @@ public sealed class DashboardService(NhaKhoaDbContext db)
 
         var hienTai = DateTime.Now;
         var lichSapToi = TruyVanLich().Where(x => x.MaKhachHang == maKhachHang &&
-            (x.TrangThai == "CHO_XAC_NHAN" || x.TrangThai == "DA_XAC_NHAN") &&
+            x.TrangThai == "DA_XAC_NHAN" &&
             x.ThoiGianBatDau >= hienTai);
         var soLichSapToi = await lichSapToi.CountAsync();
         var lichGanNhat = await lichSapToi.OrderBy(x => x.ThoiGianBatDau)
@@ -233,8 +237,14 @@ public sealed class DashboardService(NhaKhoaDbContext db)
         db.TaiKhoans.AsNoTracking().Where(x => x.MaTaiKhoan == maTaiKhoan)
             .Select(x => (ulong?)x.MaConNguoi).FirstOrDefaultAsync();
 
-    private IQueryable<LichHen> LichDangTheoDoi() => db.LichHens.AsNoTracking()
-        .Where(x => x.TrangThai != "DA_HUY" && x.TrangThai != "TU_CHOI");
+    private IQueryable<LichHen> LichDangTheoDoi()
+    {
+        var lucNay = DateTime.Now;
+        return db.LichHens.AsNoTracking()
+            .Where(x => x.TrangThai != "DA_HUY" && x.TrangThai != "TU_CHOI" &&
+                x.TrangThai != "HET_HAN" &&
+                (x.TrangThai != "CHO_XAC_NHAN" || x.ThoiGianBatDau > lucNay));
+    }
 
     private IQueryable<LichHen> TruyVanLich() => db.LichHens.AsNoTracking()
         .Include(x => x.KhachHang).ThenInclude(x => x.ConNguoi)

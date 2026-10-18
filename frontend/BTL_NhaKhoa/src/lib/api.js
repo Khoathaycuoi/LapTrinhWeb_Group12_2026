@@ -1,5 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 const TOKEN_KEY = 'nha-khoa.access-token'
+const CONNECTION_ERROR = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
@@ -24,11 +25,19 @@ export async function request(path, { token = tokenStore.get(), ...options } = {
   try {
     response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
   } catch {
-    throw new ApiError('Không thể kết nối đến hệ thống. Vui lòng thử lại sau.', 0)
+    throw new ApiError(CONNECTION_ERROR, 0)
   }
 
   const contentType = response.headers.get('content-type') ?? ''
   const body = response.status === 204 ? '' : await response.text()
+  // Vite proxy returns 502 when the backend is unavailable; some proxies return an empty 500.
+  if ([502, 503, 504].includes(response.status) ||
+      (response.status === 500 && !body.trim())) {
+    throw new ApiError(CONNECTION_ERROR, 0)
+  }
+  if (response.status >= 500) {
+    throw new ApiError('Hệ thống đang gặp sự cố. Vui lòng thử lại sau.', response.status)
+  }
   if (!response.ok) {
     if (response.status === 401 && token) {
       tokenStore.clear()

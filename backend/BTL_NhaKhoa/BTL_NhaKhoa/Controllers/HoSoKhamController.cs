@@ -13,9 +13,15 @@ public sealed class HoSoKhamController(QuanLyKhamBenhService quanLyKhamBenhServi
 {
     [HttpGet("cua-toi")]
     [Authorize(Roles = "BAC_SI,KHACH_HANG")]
-    public async Task<IActionResult> LayCuaToi()
+    public async Task<IActionResult> LayCuaToi([FromQuery] PhanTrangRequest? phanTrang = null)
     {
         if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyKhamBenhService.LayTrangCuaToiAsync(maTaiKhoan,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyKhamBenhService.LayCuaToiAsync(maTaiKhoan));
     }
 

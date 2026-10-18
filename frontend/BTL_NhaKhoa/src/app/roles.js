@@ -13,7 +13,8 @@ export const roleNavigation = {
   ],
   LE_TAN: [
     ['Tổng quan', 'overview'], ['Lịch hẹn', 'lich-hen'], ['Khách hàng', 'khach-hang'],
-    ['Tiếp nhận', 'tiep-nhan'], ['Hóa đơn', 'hoa-don'],
+    ['Đặt lịch tại quầy', 'dat-lich'], ['Tiếp nhận', 'tiep-nhan'],
+    ['Hóa đơn', 'hoa-don'], ['Chấm công', 'cham-cong'],
   ],
   BAC_SI: [
     ['Tổng quan', 'overview'], ['Lịch của tôi', 'lich-hen'], ['Hồ sơ khám', 'ho-so-kham'],

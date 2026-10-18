@@ -848,7 +848,7 @@ namespace BTL_NhaKhoa.Migrations
                         {
                             t.HasCheckConstraint("check_lich_hen_thoi_luong", "thoi_luong_du_kien_phut > 0");
 
-                            t.HasCheckConstraint("check_lich_hen_trang_thai", "trang_thai IN ('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM', 'DA_HOAN_THANH', 'DA_HUY', 'KHONG_DEN', 'TU_CHOI')");
+                            t.HasCheckConstraint("check_lich_hen_trang_thai", "trang_thai IN ('CHO_XAC_NHAN', 'HET_HAN', 'DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM', 'DA_HOAN_THANH', 'DA_HUY', 'KHONG_DEN', 'TU_CHOI')");
                         });
                 });
 

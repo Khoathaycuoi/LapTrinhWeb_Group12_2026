@@ -55,12 +55,73 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
     }
 
     public async Task<IReadOnlyList<HoaDonResponse>> LayDanhSachAsync(
-        ulong maTaiKhoan, string? maKhachHang, bool conNo = false)
+        ulong maTaiKhoan, string? maKhachHang, bool conNo = false,
+        DateOnly? tuNgay = null, DateOnly? denNgay = null, string? trangThai = null)
+    {
+        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang,
+            conNo, tuNgay, denNgay, trangThai);
+        var hoaDons = await query.OrderByDescending(x => x.NgayLap)
+            .ThenByDescending(x => x.MaHoaDon).ToListAsync();
+        return hoaDons.Select(TaoResponse).ToList();
+    }
+
+    public async Task<DanhSachPhanTrangResponse<HoSoChoLapHoaDonResponse>> LayHoSoChoLapAsync(
+        int page, int pageSize)
+    {
+        var query = db.HoSoKhams.AsNoTracking().Where(x =>
+            x.ChotLuc != null && x.LichHen != null &&
+            x.LichHen.TrangThai == "DA_HOAN_THANH" && x.HoaDon == null &&
+            x.DichVuThucHiens.Any());
+        var totalItems = await query.CountAsync();
+        var hoSos = await query
+            .Include(x => x.KhachHang).ThenInclude(x => x.ConNguoi)
+            .Include(x => x.DichVuThucHiens)
+            .OrderByDescending(x => x.NgayKham).ThenByDescending(x => x.MaHoSoKham)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .AsSplitQuery().ToListAsync();
+        var items = hoSos.Select(x => new HoSoChoLapHoaDonResponse
+        {
+            MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
+            MaKhachHang = TaoMa("KH_", x.MaKhachHang),
+            TenKhachHang = x.KhachHang.ConNguoi.HoTen,
+            NgayKham = x.NgayKham,
+            TongTienDuKien = x.DichVuThucHiens.Sum(d => d.DonGiaThucTe * d.SoLuong),
+            DichVusThucHien = x.DichVuThucHiens.OrderBy(d => d.MaDichVuThucHien)
+                .Select(d => new ChiTietHoaDonResponse
+                {
+                    MaDichVuThucHien = TaoMa("DVTH_", d.MaDichVuThucHien),
+                    TenDichVu = d.TenDichVuTaiThoiDiemThucHien,
+                    DonGia = d.DonGiaThucTe,
+                    SoLuong = d.SoLuong,
+                    ThanhTien = d.DonGiaThucTe * d.SoLuong
+                }).ToList()
+        }).ToList();
+        return new DanhSachPhanTrangResponse<HoSoChoLapHoaDonResponse>(
+            items, totalItems, page, pageSize);
+    }
+
+    public async Task<DanhSachPhanTrangResponse<HoaDonResponse>> LayTrangAsync(
+        ulong maTaiKhoan, string? maKhachHang, bool conNo, DateOnly? tuNgay,
+        DateOnly? denNgay, string? trangThai, int page, int pageSize)
+    {
+        var query = await TaoTruyVanDanhSachAsync(maTaiKhoan, maKhachHang,
+            conNo, tuNgay, denNgay, trangThai);
+        var totalItems = await query.CountAsync();
+        var hoaDons = await query.OrderByDescending(x => x.NgayLap)
+            .ThenByDescending(x => x.MaHoaDon)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<HoaDonResponse>(
+            hoaDons.Select(TaoResponse).ToList(), totalItems, page, pageSize);
+    }
+
+    private async Task<IQueryable<HoaDon>> TaoTruyVanDanhSachAsync(
+        ulong maTaiKhoan, string? maKhachHang, bool conNo,
+        DateOnly? tuNgay, DateOnly? denNgay, string? trangThai)
     {
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
-        if (taiKhoan == null) return [];
         var query = TruyVanHoaDon();
+        if (taiKhoan == null) return query.Where(x => false);
         if (taiKhoan.MaVaiTro == "KHACH_HANG")
             query = query.Where(x => x.HoSoKham.KhachHang.MaConNguoi == taiKhoan.MaConNguoi);
         else if (taiKhoan.MaVaiTro is "LE_TAN" or "QUAN_LY")
@@ -68,18 +129,30 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
             if (!string.IsNullOrWhiteSpace(maKhachHang))
             {
                 if (!QuanLyLichHenService.ThuDocMa(maKhachHang, "KH_", out var idKhachHang))
-                    return [];
+                    return query.Where(x => false);
                 query = query.Where(x => x.HoSoKham.MaKhachHang == idKhachHang);
             }
         }
-        else return [];
+        else return query.Where(x => false);
 
         if (conNo)
             query = query.Where(x => x.TrangThai == "CHUA_THANH_TOAN" ||
                 x.TrangThai == "THANH_TOAN_MOT_PHAN");
+        if (trangThai != null)
+            query = query.Where(x => x.TrangThai == trangThai);
 
-        var hoaDons = await query.OrderByDescending(x => x.NgayLap).ToListAsync();
-        return hoaDons.Select(TaoResponse).ToList();
+        if (tuNgay.HasValue)
+        {
+            var batDau = tuNgay.Value.ToDateTime(TimeOnly.MinValue);
+            query = query.Where(x => x.NgayLap >= batDau);
+        }
+        if (denNgay.HasValue && denNgay.Value < DateOnly.MaxValue)
+        {
+            var sauNgayKetThuc = denNgay.Value.AddDays(1).ToDateTime(TimeOnly.MinValue);
+            query = query.Where(x => x.NgayLap < sauNgayKetThuc);
+        }
+
+        return query;
     }
 
     public async Task<(KetQuaHoaDon KetQua, HoaDonResponse? DuLieu)> LayChiTietAsync(
@@ -169,7 +242,7 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
     }
 
     private IQueryable<HoaDon> TruyVanHoaDon() => db.HoaDons.AsNoTracking()
-        .Include(x => x.HoSoKham).ThenInclude(x => x.KhachHang)
+        .Include(x => x.HoSoKham).ThenInclude(x => x.KhachHang).ThenInclude(x => x.ConNguoi)
         .Include(x => x.ChiTietHoaDons)
         .Include(x => x.ThanhToans).ThenInclude(x => x.NguoiXacNhanTaiKhoan)
             .ThenInclude(x => x.ConNguoi)
@@ -186,6 +259,7 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
             MaHoaDon = TaoMa("HD_", hoaDon.MaHoaDon),
             MaHoSoKham = TaoMa("HSK_", hoaDon.MaHoSoKham),
             MaKhachHang = TaoMa("KH_", hoaDon.HoSoKham.MaKhachHang),
+            TenKhachHang = hoaDon.HoSoKham.KhachHang.ConNguoi.HoTen,
             NgayLap = hoaDon.NgayLap,
             TongTien = hoaDon.TongTien,
             DaThanhToan = daThu,

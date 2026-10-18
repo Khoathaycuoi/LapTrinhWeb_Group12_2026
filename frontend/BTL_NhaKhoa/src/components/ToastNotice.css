@@ -1,0 +1,31 @@
+.toast-notice {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid #BFE5D5;
+  border-radius: 11px;
+  background: #F4FBF7;
+  box-shadow: 0 8px 24px rgba(37, 49, 74, .1);
+  color: #287555;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.toast-notice-error { border-color: #F0D1D5; background: #FFF7F7; color: var(--color-error); }
+.toast-notice-icon { display: grid; flex: 0 0 21px; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: #DDF2E7; font-size: 13px; }
+.toast-notice-error .toast-notice-icon { background: #FBE6E8; }
+.toast-notice-message { min-width: 0; overflow-wrap: anywhere; }
+.toast-notice button { align-self: flex-start; margin: -4px -5px -4px 2px; padding: 3px 6px; border: 0; background: none; color: inherit; font: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+.toast-notice button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 4px; }
+
+@media (max-width: 620px) {
+  .toast-notice { right: 16px; bottom: 16px; }
+}

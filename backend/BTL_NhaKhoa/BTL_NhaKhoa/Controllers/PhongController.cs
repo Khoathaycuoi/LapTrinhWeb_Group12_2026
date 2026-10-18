@@ -11,13 +11,30 @@ namespace BTL_NhaKhoa.Controllers;
 public sealed class PhongController(QuanLyPhongService quanLyPhongService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> LayDanhSach() => Ok(await quanLyPhongService.LayDanhSachAsync());
+    public async Task<IActionResult> LayDanhSach([FromQuery] PhanTrangRequest? phanTrang = null)
+    {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyPhongService.LayTrangAsync(
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
+        return Ok(await quanLyPhongService.LayDanhSachAsync());
+    }
 
     [HttpGet("{maPhong}/lich-su")]
     [Authorize(Roles = "QUAN_LY,LE_TAN")]
     public async Task<IActionResult> LayLichSu(string maPhong, [FromQuery] DateOnly? tuNgay,
-        [FromQuery] DateOnly? denNgay)
+        [FromQuery] DateOnly? denNgay, [FromQuery] PhanTrangRequest? phanTrang = null)
     {
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            var (loiTrang, khongTimThayTrang, duLieuTrang) = await quanLyPhongService.LayTrangLichSuAsync(
+                maPhong, tuNgay, denNgay, phanTrang.SoTrang, phanTrang.KichThuocTrang);
+            if (loiTrang != null) return khongTimThayTrang ? NotFound(loiTrang) : BadRequest(loiTrang);
+            return Ok(duLieuTrang);
+        }
         var (loi, khongTimThay, duLieu) = await quanLyPhongService.LayLichSuAsync(
             maPhong, tuNgay, denNgay);
         if (loi != null) return khongTimThay ? NotFound(loi) : BadRequest(loi);

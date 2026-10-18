@@ -143,6 +143,23 @@ public sealed class QuanLyChamCongService(NhaKhoaDbContext db)
             .Select(TaoResponse).ToList();
     }
 
+    public async Task<DanhSachPhanTrangResponse<ChamCongResponse>> LayTrangCuaToiAsync(
+        ulong maTaiKhoan, DateOnly? tuNgay, DateOnly? denNgay, int page, int pageSize)
+    {
+        var nhanVien = await TimNhanVienAsync(maTaiKhoan);
+        if (nhanVien == null)
+            return new DanhSachPhanTrangResponse<ChamCongResponse>([], 0, page, pageSize);
+        var query = TruyVan().Where(x => x.MaNhanVien == nhanVien.MaNhanVien);
+        if (tuNgay.HasValue) query = query.Where(x => x.NgayChamCong >= tuNgay.Value);
+        if (denNgay.HasValue) query = query.Where(x => x.NgayChamCong <= denNgay.Value);
+        var totalItems = await query.CountAsync();
+        var items = await query.OrderByDescending(x => x.NgayChamCong)
+            .ThenByDescending(x => x.MaChamCong)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<ChamCongResponse>(
+            items.Select(TaoResponse).ToList(), totalItems, page, pageSize);
+    }
+
     public async Task<IReadOnlyList<ChamCongResponse>> LayDanhSachAsync(
         string? maNhanVien, DateOnly? tuNgay, DateOnly? denNgay, string? trangThaiDuyet)
     {
@@ -158,6 +175,29 @@ public sealed class QuanLyChamCongService(NhaKhoaDbContext db)
             query = query.Where(x => x.TrangThaiDuyet == trangThaiDuyet.Trim().ToUpperInvariant());
         return (await query.OrderByDescending(x => x.NgayChamCong)
             .ThenBy(x => x.MaNhanVien).ToListAsync()).Select(TaoResponse).ToList();
+    }
+
+    public async Task<DanhSachPhanTrangResponse<ChamCongResponse>> LayTrangAsync(
+        string? maNhanVien, DateOnly? tuNgay, DateOnly? denNgay, string? trangThaiDuyet,
+        int page, int pageSize)
+    {
+        var query = TruyVan();
+        if (!string.IsNullOrWhiteSpace(maNhanVien))
+        {
+            if (!QuanLyLichHenService.ThuDocMa(maNhanVien, "NV_", out var id))
+                return new DanhSachPhanTrangResponse<ChamCongResponse>([], 0, page, pageSize);
+            query = query.Where(x => x.MaNhanVien == id);
+        }
+        if (tuNgay.HasValue) query = query.Where(x => x.NgayChamCong >= tuNgay.Value);
+        if (denNgay.HasValue) query = query.Where(x => x.NgayChamCong <= denNgay.Value);
+        if (!string.IsNullOrWhiteSpace(trangThaiDuyet))
+            query = query.Where(x => x.TrangThaiDuyet == trangThaiDuyet.Trim().ToUpperInvariant());
+        var totalItems = await query.CountAsync();
+        var items = await query.OrderByDescending(x => x.NgayChamCong)
+            .ThenBy(x => x.MaNhanVien).ThenBy(x => x.MaChamCong)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<ChamCongResponse>(
+            items.Select(TaoResponse).ToList(), totalItems, page, pageSize);
     }
 
     public async Task<IReadOnlyList<TongHopChamCongNgayResponse>> LayTongHopNgayAsync(DateOnly ngay)

@@ -38,10 +38,17 @@ public sealed class ChamCongController(QuanLyChamCongService quanLyChamCongServi
 
     [HttpGet("me")]
     [Authorize(Roles = "LE_TAN,BAC_SI")]
-    public async Task<IActionResult> LayCuaToi([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay)
+    public async Task<IActionResult> LayCuaToi([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
     {
         if (!ThuDocTaiKhoan(out var id)) return Unauthorized();
         if (tuNgay > denNgay) return BadRequest("Từ ngày không được sau đến ngày.");
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyChamCongService.LayTrangCuaToiAsync(id, tuNgay, denNgay,
+                phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyChamCongService.LayCuaToiAsync(id, tuNgay, denNgay));
     }
 
@@ -49,9 +56,15 @@ public sealed class ChamCongController(QuanLyChamCongService quanLyChamCongServi
     [Authorize(Roles = "QUAN_LY")]
     public async Task<IActionResult> LayDanhSach([FromQuery] string? maNhanVien,
         [FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay,
-        [FromQuery] string? trangThaiDuyet)
+        [FromQuery] string? trangThaiDuyet, [FromQuery] PhanTrangRequest? phanTrang = null)
     {
         if (tuNgay > denNgay) return BadRequest("Từ ngày không được sau đến ngày.");
+        if (phanTrang?.CoPhanTrang == true)
+        {
+            if (!phanTrang.HopLe) return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+            return Ok(await quanLyChamCongService.LayTrangAsync(maNhanVien, tuNgay, denNgay,
+                trangThaiDuyet, phanTrang.SoTrang, phanTrang.KichThuocTrang));
+        }
         return Ok(await quanLyChamCongService.LayDanhSachAsync(
             maNhanVien, tuNgay, denNgay, trangThaiDuyet));
     }

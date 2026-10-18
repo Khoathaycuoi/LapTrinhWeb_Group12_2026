@@ -94,7 +94,36 @@ public sealed class QuanLyDichVuService(NhaKhoaDbContext db)
         return danhSach.Select(TaoResponse).ToList();
     }
 
+    public async Task<DanhSachPhanTrangResponse<DichVuResponse>> LayTrangTatCaAsync(int page, int pageSize)
+    {
+        var query = db.DichVus.AsNoTracking();
+        var totalItems = await query.CountAsync();
+        var danhSach = await query.OrderBy(x => x.MaDichVu)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<DichVuResponse>(
+            danhSach.Select(TaoResponse).ToList(), totalItems, page, pageSize);
+    }
+
     public async Task<IReadOnlyList<DichVuResponse>> TimKiemAsync(
+        string? ten, string? trangThai, decimal? giaTu, decimal? giaDen)
+    {
+        var query = TaoTruyVanTimKiem(ten, trangThai, giaTu, giaDen);
+        var danhSach = await query.OrderBy(x => x.MaDichVu).ToListAsync();
+        return danhSach.Select(TaoResponse).ToList();
+    }
+
+    public async Task<DanhSachPhanTrangResponse<DichVuResponse>> TimKiemTrangAsync(
+        string? ten, string? trangThai, decimal? giaTu, decimal? giaDen, int page, int pageSize)
+    {
+        var query = TaoTruyVanTimKiem(ten, trangThai, giaTu, giaDen);
+        var totalItems = await query.CountAsync();
+        var danhSach = await query.OrderBy(x => x.MaDichVu)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new DanhSachPhanTrangResponse<DichVuResponse>(
+            danhSach.Select(TaoResponse).ToList(), totalItems, page, pageSize);
+    }
+
+    private IQueryable<DichVu> TaoTruyVanTimKiem(
         string? ten, string? trangThai, decimal? giaTu, decimal? giaDen)
     {
         var query = db.DichVus.AsNoTracking().AsQueryable();
@@ -116,8 +145,7 @@ public sealed class QuanLyDichVuService(NhaKhoaDbContext db)
         {
             query = query.Where(x => x.DonGia <= giaDen.Value);
         }
-        var danhSach = await query.OrderBy(x => x.MaDichVu).ToListAsync();
-        return danhSach.Select(TaoResponse).ToList();
+        return query;
     }
 
     public static bool TrangThaiHopLe(string? trangThai) =>
