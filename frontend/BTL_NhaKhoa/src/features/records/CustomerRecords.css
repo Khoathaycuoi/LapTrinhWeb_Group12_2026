@@ -1,0 +1,37 @@
+.customer-records { max-width: 1180px; }
+.customer-record-count { margin: 0 0 11px; color: var(--color-muted); font-size: 12px; }
+.customer-record-cards { display: grid; gap: 14px; }
+.customer-record-cards article, .customer-record-feedback, .customer-record-summary, .customer-record-section { border: 1px solid var(--color-border); border-radius: 15px; background: #fff; }
+.customer-record-cards article { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 21px 24px; }
+.customer-record-cards article > div { min-width: 0; }
+.customer-record-cards small { color: var(--color-primary); font-size: 11px; font-weight: 700; }
+.customer-record-cards h2 { margin: 5px 0; color: var(--color-text); font-size: 17px; }
+.customer-record-cards p { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.6; }
+.customer-record-cards button { flex: 0 0 auto; }
+.customer-record-feedback { padding: 24px; color: var(--color-muted); font-size: 13px; }
+.customer-record-feedback p { margin: 0 0 14px; }
+.customer-record-detail { display: grid; gap: 16px; }
+.customer-record-detail .page-heading { margin-bottom: 0; }
+.customer-record-back { justify-self: start; padding: 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer; }
+.customer-record-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; padding: 20px 24px; }
+.customer-record-summary > div { display: grid; gap: 6px; }
+.customer-record-summary span, .customer-record-field span { color: var(--color-muted); font-size: 11px; }
+.customer-record-summary strong { color: var(--color-text); font-size: 13px; }
+.customer-record-section { padding: 24px; }
+.customer-record-section h2 { margin: 0 0 17px; color: var(--color-text); font-size: 17px; }
+.customer-record-section p { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
+.customer-record-field + .customer-record-field { margin-top: 16px; }
+.customer-record-field p { margin-top: 6px; color: var(--color-text); }
+.customer-record-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.customer-record-list li { display: grid; gap: 5px; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 12px; }
+.customer-record-list strong { color: var(--color-text); }
+.customer-record-list span, .customer-record-list small { color: var(--color-muted); }
+.customer-record-prescriptions { display: grid; gap: 20px; }
+.customer-record-prescriptions > div > strong { display: block; margin-bottom: 10px; color: var(--color-text); font-size: 13px; }
+.customer-record-prescriptions > div > p { margin-bottom: 12px; }
+
+@media (max-width: 620px) {
+  .customer-record-cards article { align-items: stretch; flex-direction: column; padding: 18px; }
+  .customer-record-summary { grid-template-columns: 1fr; }
+  .customer-record-section { padding: 18px; }
+}

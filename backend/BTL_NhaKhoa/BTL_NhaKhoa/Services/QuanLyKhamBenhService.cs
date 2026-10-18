@@ -207,7 +207,8 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
         var taiKhoan = await db.TaiKhoans.AsNoTracking()
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
         if (taiKhoan == null) return [];
-        var query = db.HoSoKhams.AsNoTracking();
+        IQueryable<HoSoKham> query = db.HoSoKhams.AsNoTracking()
+            .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi);
         if (taiKhoan.MaVaiTro == "BAC_SI")
         {
             query = query.Where(x => x.BacSi.NhanVien.MaConNguoi == taiKhoan.MaConNguoi);
@@ -224,6 +225,7 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
             MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
             NgayKham = x.NgayKham,
             MaBacSi = TaoMa("BS_", x.MaBacSi),
+            TenBacSi = x.BacSi.NhanVien.ConNguoi.HoTen,
             TomTat = x.TomTatChoKhach ?? string.Empty,
             ChotLuc = x.ChotLuc
         }).ToList();
@@ -236,7 +238,8 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
             .FirstOrDefaultAsync(x => x.MaTaiKhoan == maTaiKhoan);
         if (taiKhoan == null)
             return new DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>([], 0, page, pageSize);
-        var query = db.HoSoKhams.AsNoTracking();
+        IQueryable<HoSoKham> query = db.HoSoKhams.AsNoTracking()
+            .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi);
         if (taiKhoan.MaVaiTro == "BAC_SI")
         {
             query = query.Where(x => x.BacSi.NhanVien.MaConNguoi == taiKhoan.MaConNguoi);
@@ -259,6 +262,7 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
             MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
             NgayKham = x.NgayKham,
             MaBacSi = TaoMa("BS_", x.MaBacSi),
+            TenBacSi = x.BacSi.NhanVien.ConNguoi.HoTen,
             TomTat = x.TomTatChoKhach ?? string.Empty,
             ChotLuc = x.ChotLuc
         }).ToList();
@@ -292,6 +296,7 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
     }
 
     private IQueryable<HoSoKham> TaoTruyVanHoSo() => db.HoSoKhams.AsNoTracking()
+        .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi)
         .Include(x => x.DichVuThucHiens)
         .Include(x => x.LichHen).ThenInclude(x => x!.ChiTietLichHens).ThenInclude(x => x.DichVu)
         .Include(x => x.DonThuocs).ThenInclude(x => x.ChiTietDonThuocs)
@@ -305,6 +310,7 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
         NgayKham = hoSo.NgayKham,
         MaKhachHang = TaoMa("KH_", hoSo.MaKhachHang),
         MaBacSi = TaoMa("BS_", hoSo.MaBacSi),
+        TenBacSi = hoSo.BacSi.NhanVien.ConNguoi.HoTen,
         TrieuChung = hoSo.TrieuChung,
         ChanDoan = hoSo.ChanDoan,
         TomTatChoKhach = hoSo.TomTatChoKhach,

@@ -8,6 +8,7 @@ public sealed class HoSoKhamResponse
     public DateTime NgayKham { get; init; }
     public string MaKhachHang { get; init; } = string.Empty;
     public string MaBacSi { get; init; } = string.Empty;
+    public string TenBacSi { get; init; } = string.Empty;
     public string? TrieuChung { get; init; }
     public string? ChanDoan { get; init; }
     public string? TomTatChoKhach { get; init; }

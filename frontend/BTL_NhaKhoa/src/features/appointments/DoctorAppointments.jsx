@@ -82,11 +82,12 @@ function DoctorDecisionDialog({ token, action, onClose, onDone }) {
           {rooms.items.map((room) => <option key={room.maPhong} value={room.maPhong}>{room.tenPhong} ({room.maPhong})</option>)}
         </select></label>
         {rooms.status === 'loading' && <p role="status">Đang tìm phòng trống…</p>}
+        {rooms.status === 'success' && rooms.items.length === 0 && <p role="status">Không có phòng trống cho lịch này.</p>}
         {rooms.status === 'error' && <p role="alert">{rooms.error}</p>}
       </> : <label>{action.type === 'reject' ? 'Lý do từ chối' : 'Lý do hủy'}<textarea required maxLength={500} rows={3} value={reason} onChange={(event) => { setReason(event.target.value); setError('') }} placeholder="Nhập lý do để khách hàng biết" /></label>}
       {error && <p className="doctor-form-error" role="alert">{error}</p>}
       <div className="confirm-actions"><button type="button" className="secondary-button" disabled={busy} onClick={onClose}>Quay lại</button>
-        <button type="submit" className="primary-button" disabled={busy || (action.type === 'confirm' && rooms.status !== 'success')}>{busy ? 'Đang xử lý…' : action.type === 'confirm' ? 'Xác nhận' : action.type === 'reject' ? 'Từ chối lịch' : 'Hủy lịch'}</button></div>
+        <button type="submit" className="primary-button" disabled={busy || (action.type === 'confirm' && (rooms.status !== 'success' || rooms.items.length === 0))}>{busy ? 'Đang xử lý…' : action.type === 'confirm' ? 'Xác nhận' : action.type === 'reject' ? 'Từ chối lịch' : 'Hủy lịch'}</button></div>
     </form>
   </div>
 }

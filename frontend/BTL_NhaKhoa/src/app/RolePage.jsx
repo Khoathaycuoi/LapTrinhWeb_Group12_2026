@@ -1,19 +1,26 @@
 import CustomerDashboard from '../features/dashboard/CustomerDashboard'
+import ManagerDashboard from '../features/dashboard/ManagerDashboard'
 import MyAppointments from '../features/appointments/MyAppointments'
 import BookingPage from '../features/appointments/BookingPage'
 import ReceptionAppointments from '../features/appointments/ReceptionAppointments'
 import ReceptionIntakePage from '../features/appointments/ReceptionIntakePage'
 import ReceptionDashboard from '../features/dashboard/ReceptionDashboard'
 import ReceptionInvoices from '../features/invoices/ReceptionInvoices'
+import CustomerInvoices from '../features/invoices/CustomerInvoices'
 import ReceptionCustomers from '../features/customers/ReceptionCustomers'
 import ReceptionBookingPage from '../features/appointments/ReceptionBookingPage'
 import ReceptionAttendance from '../features/attendance/ReceptionAttendance'
 import DoctorDashboard from '../features/dashboard/DoctorDashboard'
 import DoctorAppointments from '../features/appointments/DoctorAppointments'
 import DoctorRecords from '../features/records/DoctorRecords'
+import CustomerRecords from '../features/records/CustomerRecords'
 import PlaceholderPage from '../pages/PlaceholderPage'
 
 export default function RolePage({ session, routePath, query, navigationState, onNavigate }) {
+  if (session.role === 'QUAN_LY' && routePath === '/quan-ly/overview') {
+    return <ManagerDashboard token={session.token} />
+  }
+
   if (session.role === 'KHACH_HANG' && routePath === '/khach-hang/overview') {
     return <CustomerDashboard token={session.token} onNavigate={onNavigate} />
   }
@@ -27,6 +34,14 @@ export default function RolePage({ session, routePath, query, navigationState, o
 
   if (session.role === 'KHACH_HANG' && routePath === '/khach-hang/dat-lich') {
     return <BookingPage token={session.token} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'KHACH_HANG' && routePath === '/khach-hang/hoa-don') {
+    return <CustomerInvoices token={session.token} query={query} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'KHACH_HANG' && routePath === '/khach-hang/lich-su-kham') {
+    return <CustomerRecords token={session.token} query={query} onNavigate={onNavigate} />
   }
 
   if (session.role === 'LE_TAN' && routePath === '/le-tan/lich-hen') {
