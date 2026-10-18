@@ -19,7 +19,7 @@ function RecordDetail({ token, recordId, onBack }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setState({ status: 'loading', record: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setState({ status: 'loading', record: null, error: '' }) })
     customerRecordsApi.detail(token, recordId, controller.signal).then((record) => {
       if (controller.signal.aborted) return
       setState(record?.maHoSoKham
@@ -64,7 +64,7 @@ export default function CustomerRecords({ token, query = '', onNavigate }) {
   useEffect(() => {
     if (recordId) return undefined
     const controller = new AbortController()
-    setState({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setState({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     customerRecordsApi.list(token, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {

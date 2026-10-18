@@ -41,7 +41,7 @@ export default function ManagerStaff({ token, currentPhone }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     staffApi.list(token, group, keyword, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -61,7 +61,7 @@ export default function ManagerStaff({ token, currentPhone }) {
   useEffect(() => {
     if (!detailId) return undefined
     const controller = new AbortController()
-    setDetail({ status: 'loading', data: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setDetail({ status: 'loading', data: null, error: '' }) })
     staffApi.detail(token, detailId, controller.signal).then((data) => {
       if (!controller.signal.aborted) setDetail({ status: 'success', data, error: '' })
     }).catch((error) => {
@@ -171,7 +171,7 @@ export default function ManagerStaff({ token, currentPhone }) {
     {list.status === 'success' && <><p className="manager-staff-count">{list.totalItems} {groupLabel.toLocaleLowerCase('vi-VN')}</p>
       {list.items.length === 0 && <div className="manager-staff-feedback">Không có nhân sự phù hợp.</div>}
       <div className="manager-staff-list">{list.items.map((person) => <article key={person.id}>
-        <div><span>{person.id}</span><h2>{person.ten}</h2><p>{person.sdt} · {person.trangThai}</p></div>
+        <div><span>{person.id}</span><h2>{person.ten}</h2><p>{person.sdt} · <span className={`manager-staff-state ${person.trangThai === 'Hoạt động' ? 'manager-staff-state-active' : 'manager-staff-state-inactive'}`}>{person.trangThai}</span></p></div>
         <div className="manager-staff-actions"><button type="button" className="secondary-button" onClick={() => setDetailId(person.id)}>Chi tiết</button>
           {!(person.trangThai === 'Hoạt động' && currentPhone && normalizePhone(person.sdt) === normalizePhone(currentPhone)) &&
             <button type="button" className="secondary-button" onClick={() => { setStatusTarget({ person, active: person.trangThai !== 'Hoạt động' }); setStatusError('') }}>

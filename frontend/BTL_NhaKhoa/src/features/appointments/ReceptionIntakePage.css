@@ -16,6 +16,11 @@
 .intake-code { color: var(--color-primary); font-size: 11px; font-weight: 700; }
 .intake-card h2 { margin: 5px 0 0; color: var(--color-text); font: 700 16px/1.4 Manrope, sans-serif; }
 .intake-status { flex: 0 0 auto; padding: 6px 10px; border-radius: 18px; background: #E9F1FC; color: #3975BC; font-size: 11px; font-weight: 700; }
+.intake-status-confirmed { background: #E7F7EE; color: #287A54; }
+.intake-status-arrived { background: #E9F1FC; color: #3975BC; }
+.intake-status-examining { background: #F0ECFA; color: #7458AD; }
+.intake-status-no-show { background: #FFF0F1; color: #B64D60; }
+.intake-status-neutral { background: #F1F3F8; color: #69758D; }
 .intake-card-info { display: grid; grid-template-columns: .8fr 1.7fr 1fr .8fr .9fr; gap: 16px; margin-top: 19px; }
 .intake-card-info div { display: grid; align-content: start; gap: 5px; min-width: 0; }
 .intake-card-info span { color: var(--color-muted); font-size: 11px; }

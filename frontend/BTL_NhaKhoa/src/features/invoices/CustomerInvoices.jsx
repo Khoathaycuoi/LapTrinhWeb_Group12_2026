@@ -35,7 +35,7 @@ function InvoiceDetail({ token, invoiceId, onClose }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setState({ status: 'loading', invoice: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setState({ status: 'loading', invoice: null, error: '' }) })
     invoicesApi.detail(token, invoiceId, controller.signal).then((invoice) => {
       if (controller.signal.aborted) return
       setState(invoice?.maHoaDon
@@ -81,11 +81,11 @@ export default function CustomerInvoices({ token, query = '', onNavigate }) {
   const [state, setState] = useState({ status: 'loading', items: [], totalItems: 0, error: '' })
   const [selectedId, setSelectedId] = useState(null)
 
-  useEffect(() => { setFilter(filterFromQuery(query)); setPage(1) }, [query])
+  useEffect(() => { queueMicrotask(() => { setFilter(filterFromQuery(query)); setPage(1) }) }, [query])
 
   useEffect(() => {
     const controller = new AbortController()
-    setState({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setState({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     invoicesApi.list(token, { page, pageSize, paymentFilter: filter }, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {

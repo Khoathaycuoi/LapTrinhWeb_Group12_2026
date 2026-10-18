@@ -1,5 +1,5 @@
 .reception-attendance { max-width: 1180px; }
-.attendance-review { color: var(--color-muted); font-size: 12px; }
+.attendance-review { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--color-muted); font-size: 12px; }
 .attendance-date-filter { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
 .attendance-date-filter label { display: grid; gap: 6px; color: var(--color-text); font-size: 12px; font-weight: 700; }
 .attendance-date-filter input { box-sizing: border-box; min-height: 42px; padding: 0 11px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; color: var(--color-text); font: inherit; font-weight: 400; }
@@ -19,7 +19,31 @@
 .attendance-history-list { display: grid; gap: 10px; }
 .attendance-history-list article { display: grid; grid-template-columns: 1.1fr repeat(3, 1fr); gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--color-border); color: var(--color-text); font-size: 12px; }
 .attendance-history-list article > div:first-child { display: grid; gap: 4px; }
-.attendance-history-list span, .attendance-history-list small { color: var(--color-muted); }
+.attendance-history-list small { color: var(--color-muted); }
 .attendance-history-list small { grid-column: 1 / -1; }
+.attendance-history-duration { font-weight: 700; }
+.attendance-status { display: inline-flex; align-items: center; width: fit-content; padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1.3; }
+.attendance-status-neutral { background: #F0F2F6; color: #647086; }
+.attendance-status-processing { background: #EAF2FC; color: #2F6EA8; }
+.attendance-status-pending { background: #FFF2DE; color: #9B671F; }
+.attendance-status-success { background: #E7F6EE; color: #23765D; }
+.attendance-status-error { background: #FDECEF; color: #B34657; }
+.attendance-history-warning { color: #A66B1C; font-weight: 700; }
+.attendance-history-list .attendance-history-rejected { color: #B34657; }
+.attendance-review .attendance-history-rejected { color: #B34657; }
+.attendance-history-approved { color: #23765D; }
+.attendance-history-toggle { justify-self: start; padding: 2px 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer; }
+.attendance-history-toggle:hover { color: var(--color-primary-dark); text-decoration: underline; }
+.attendance-history-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.attendance-history-list article > .attendance-history-detail { grid-column: 1 / -1; display: block; margin-top: 5px; padding: 16px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-background, #F8FAFF); }
+.attendance-history-periods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.attendance-history-period { padding: 14px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; }
+.attendance-history-period-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.attendance-history-period-heading h3 { margin: 0; }
+.attendance-history-detail h3 { margin: 0 0 10px; color: var(--color-text); font-size: 13px; }
+.attendance-history-detail p { margin: 5px 0; line-height: 1.5; }
+.attendance-history-changes { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-border); }
+.attendance-history-changes ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.attendance-history-changes li { display: grid; gap: 4px; }
 @media (max-width: 720px) { .attendance-periods { grid-template-columns: 1fr; } .attendance-history-list article { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 480px) { .attendance-date-filter label, .attendance-date-filter input { width: 100%; } }
+@media (max-width: 480px) { .attendance-date-filter label, .attendance-date-filter input { width: 100%; } .attendance-history-periods { grid-template-columns: 1fr; } }

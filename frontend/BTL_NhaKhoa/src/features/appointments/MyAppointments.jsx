@@ -140,13 +140,13 @@ export default function MyAppointments({ token, groupParam, statusParam, arrival
   const [notice, setNotice] = useState(arrivalNotice ?? '')
   const selectedStatus = (groupStatuses[group] ?? []).includes(specificStatus) ? specificStatus : ''
 
-  useEffect(() => { setPage(1) }, [group])
-  useEffect(() => { setSpecificStatus(statusParam ?? ''); setPage(1) }, [statusParam])
+  useEffect(() => { queueMicrotask(() => setPage(1)) }, [group])
+  useEffect(() => { queueMicrotask(() => { setSpecificStatus(statusParam ?? ''); setPage(1) }) }, [statusParam])
 
   useEffect(() => {
     const controller = new AbortController()
     let active = true
-    setState({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (active) setState({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     appointmentsApi.myAppointments(token, { date, group, status: selectedStatus, page, pageSize }, controller.signal)
       .then((result) => {
         if (!active) return

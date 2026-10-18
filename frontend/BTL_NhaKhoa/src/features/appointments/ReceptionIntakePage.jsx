@@ -12,6 +12,7 @@ const tabs = [
   ['active', 'Đã đến / Đang khám'],
   ['no-show', 'Không đến'],
 ]
+const statusTones = { 'Đã xác nhận': 'confirmed', 'Đã đến': 'arrived', 'Đang khám': 'examining', 'Không đến': 'no-show' }
 
 function localDate(date) {
   const year = date.getFullYear()
@@ -30,7 +31,7 @@ function IntakeCard({ appointment, tab, now, onAction }) {
   return <article className="intake-card">
     <div className="intake-card-heading">
       <div><span className="intake-code">{appointment.maLichHen}</span><h2>{appointment.gioHen?.slice(0, 5)} · {appointment.tenKH || appointment.maKH}</h2></div>
-      <span className="intake-status">{appointment.trangThai}</span>
+      <span className={`intake-status intake-status-${statusTones[appointment.trangThai] || 'neutral'}`}>{appointment.trangThai}</span>
     </div>
     <div className="intake-card-info">
       <div><span>Mã khách hàng</span><strong>{appointment.maKH}</strong></div>
@@ -51,7 +52,7 @@ function IntakeCard({ appointment, tab, now, onAction }) {
 }
 
 export default function ReceptionIntakePage({ token, query = '' }) {
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(() => Date.now())
   const today = localDate(new Date(now))
   const [tab, setTab] = useState(() => ['active', 'arrived'].includes(new URLSearchParams(query).get('nhom')) ? 'active' : 'waiting')
   const [arrivedOnly, setArrivedOnly] = useState(() => new URLSearchParams(query).get('nhom') === 'arrived')
@@ -69,19 +70,21 @@ export default function ReceptionIntakePage({ token, query = '' }) {
     return () => window.clearInterval(timer)
   }, [])
 
-  useEffect(() => { setPage(1) }, [today])
+  useEffect(() => { queueMicrotask(() => setPage(1)) }, [today])
 
   useEffect(() => {
     const group = new URLSearchParams(query).get('nhom')
-    setTab(['active', 'arrived'].includes(group) ? 'active' : 'waiting')
-    setArrivedOnly(group === 'arrived')
-    setUpcomingOnly(group === 'upcoming')
-    setPage(1)
+    queueMicrotask(() => {
+      setTab(['active', 'arrived'].includes(group) ? 'active' : 'waiting')
+      setArrivedOnly(group === 'arrived')
+      setUpcomingOnly(group === 'upcoming')
+      setPage(1)
+    })
   }, [query])
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     receptionAppointmentsApi.intakeList(token, { date: today, tab, arrivedOnly, upcomingOnly, keyword, page, pageSize }, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return

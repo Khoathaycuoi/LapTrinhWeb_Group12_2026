@@ -20,6 +20,11 @@
 .manager-attendance-list article span { color: var(--color-primary); font-size: 11px; font-weight: 700; }
 .manager-attendance-list h2 { margin: 5px 0; color: var(--color-text); font-size: 16px; }
 .manager-attendance-list p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.manager-attendance .manager-attendance-state { display: inline-flex; width: fit-content; padding: 4px 9px; border-radius: 999px; background: #F1F3F8; color: #69758D; font-size: 11px; font-weight: 700; }
+.manager-attendance .manager-attendance-state-processing { background: #E9F1FC; color: #3975BC; }
+.manager-attendance .manager-attendance-state-pending { background: #FFF2DE; color: #9B671F; }
+.manager-attendance .manager-attendance-state-success { background: #E7F7EE; color: #287A54; }
+.manager-attendance .manager-attendance-state-error { background: #FFF0F1; color: #B64D60; }
 .manager-attendance-detail { margin-top: 24px; }
 .manager-attendance-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .manager-attendance-detail-heading h2 { margin: 0; font-size: 18px; }

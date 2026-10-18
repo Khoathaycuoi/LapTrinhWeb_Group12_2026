@@ -13,6 +13,9 @@ const periodLabels = {
   CHUA_XAC_DINH: 'Chưa xác định', LAM_VIEC: 'Làm việc',
   NGHI_PHEP: 'Nghỉ phép', VANG_KHONG_PHEP: 'Vắng không phép',
 }
+const reviewTones = { CHUA_CO_DU_LIEU: 'neutral', CHUA_HOAN_TAT: 'pending', CHO_DUYET: 'processing', DA_DUYET: 'success', TU_CHOI: 'error' }
+const periodTones = { CHUA_XAC_DINH: 'neutral', LAM_VIEC: 'success', NGHI_PHEP: 'pending', VANG_KHONG_PHEP: 'error' }
+function ReviewState({ value }) { return <span className={`manager-attendance-state manager-attendance-state-${reviewTones[value] || 'neutral'}`}>{reviewLabels[value] || value}</span> }
 const tabs = [
   { id: 'pending', label: 'Chờ duyệt', status: 'CHO_DUYET' },
   { id: 'incomplete', label: 'Chưa hoàn tất', status: 'CHUA_HOAN_TAT' },
@@ -41,7 +44,7 @@ function Period({ record, period, onEdit }) {
   const end = morning ? record.gioRaSang : record.gioRaChieu
   const reason = morning ? record.lyDoSang : record.lyDoChieu
   return <div className="manager-attendance-period">
-    <div><strong>Buổi {morning ? 'sáng' : 'chiều'}</strong><span>{periodLabels[state] || state}</span></div>
+    <div><strong>Buổi {morning ? 'sáng' : 'chiều'}</strong><span className={`manager-attendance-state manager-attendance-state-${periodTones[state] || 'neutral'}`}>{periodLabels[state] || state}</span></div>
     <p>Vào {time(start)} · Ra {time(end)}</p>
     {reason && <small>Lý do: {reason}</small>}
     {record.trangThaiDuyet !== 'DA_DUYET' && record.trangThaiDuyet !== 'TU_CHOI' &&
@@ -124,7 +127,7 @@ export default function ManagerAttendance({ token }) {
   useEffect(() => {
     if (tab === 'day') return undefined
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     const status = tabs.find((item) => item.id === tab)?.status || ''
     attendanceApi.managerList(token, page, { ...filters, status }, controller.signal).then((result) => {
       if (controller.signal.aborted) return
@@ -145,7 +148,7 @@ export default function ManagerAttendance({ token }) {
   useEffect(() => {
     if (tab !== 'day') return undefined
     const controller = new AbortController()
-    setDaily({ status: 'loading', items: [], error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setDaily({ status: 'loading', items: [], error: '' }) })
     attendanceApi.managerDay(token, day, controller.signal).then((items) => {
       if (!controller.signal.aborted) setDaily(Array.isArray(items)
         ? { status: 'success', items, error: '' }
@@ -160,7 +163,7 @@ export default function ManagerAttendance({ token }) {
   useEffect(() => {
     if (!detailId) return undefined
     const controller = new AbortController()
-    setDetail({ status: 'loading', data: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setDetail({ status: 'loading', data: null, error: '' }) })
     attendanceApi.managerDetail(token, detailId, controller.signal).then((data) => {
       if (!controller.signal.aborted) setDetail({ status: 'success', data, error: '' })
     }).catch((error) => {
@@ -237,7 +240,7 @@ export default function ManagerAttendance({ token }) {
       {daily.status === 'success' && <><p>{daily.items.length} nhân viên đang hoạt động · {day}</p>
         {daily.items.length === 0 && <p>Không có Lễ tân hoặc Bác sĩ đang hoạt động.</p>}
         <div className="manager-attendance-list">{daily.items.map((item) => <article key={item.maNhanVien}>
-          <div><span>{item.maNhanVien} · {item.vaiTro === 'BAC_SI' ? 'Bác sĩ' : 'Lễ tân'}</span><h2>{item.hoTen}</h2><p>{reviewLabels[item.trangThai] || item.trangThai}</p></div>
+          <div><span>{item.maNhanVien} · {item.vaiTro === 'BAC_SI' ? 'Bác sĩ' : 'Lễ tân'}</span><h2>{item.hoTen}</h2><ReviewState value={item.trangThai} /></div>
           {item.chamCong ? <button type="button" className="secondary-button" onClick={() => setDetailId(item.chamCong.maChamCong)}>Chi tiết</button>
             : <div className="manager-attendance-missing-actions"><button type="button" className="secondary-button" onClick={() => openEditor(item, 'SANG', true)}>Bổ sung sáng</button><button type="button" className="secondary-button" onClick={() => openEditor(item, 'CHIEU', true)}>Bổ sung chiều</button></div>}
         </article>)}</div>
@@ -256,7 +259,7 @@ export default function ManagerAttendance({ token }) {
       {list.status === 'success' && <><p className="manager-attendance-count">{list.totalItems} bản chấm công</p>
         {list.items.length === 0 && <div className="manager-attendance-feedback">Không có bản chấm công phù hợp.</div>}
         <div className="manager-attendance-list">{list.items.map((item) => <article key={item.maChamCong}>
-          <div><span>{item.maChamCong} · {item.maNhanVien}</span><h2>{item.hoTen} · {item.ngayChamCong}</h2><p>{reviewLabels[item.trangThaiDuyet] || item.trangThaiDuyet} · {minutes(item.tongPhutLamViec)}</p></div>
+          <div><span>{item.maChamCong} · {item.maNhanVien}</span><h2>{item.hoTen} · {item.ngayChamCong}</h2><p><ReviewState value={item.trangThaiDuyet} /> · {minutes(item.tongPhutLamViec)}</p></div>
           <button type="button" className="secondary-button" onClick={() => setDetailId(item.maChamCong)}>Chi tiết</button>
         </article>)}</div>
         <ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} />
@@ -267,7 +270,7 @@ export default function ManagerAttendance({ token }) {
       {detail.status === 'loading' && <p role="status">Đang tải chi tiết…</p>}
       {detail.status === 'error' && <div role="alert"><p>{detail.error}</p><button type="button" className="secondary-button" onClick={() => setReload((value) => value + 1)}>Thử lại</button></div>}
       {detail.status === 'success' && record && <>
-        <p>{record.hoTen} · {record.maNhanVien} · {record.ngayChamCong} · {reviewLabels[record.trangThaiDuyet] || record.trangThaiDuyet}</p>
+        <p>{record.hoTen} · {record.maNhanVien} · {record.ngayChamCong} · <ReviewState value={record.trangThaiDuyet} /></p>
         <div className="manager-attendance-periods"><Period record={record} period="SANG" onEdit={openEditor} /><Period record={record} period="CHIEU" onEdit={openEditor} /></div>
         <p>Tổng giờ làm: {minutes(record.tongPhutLamViec)}</p>
         {(record.soPhutTreSang > 0 || record.soPhutTreChieu > 0 || record.soPhutVeSomSang > 0 || record.soPhutVeSomChieu > 0) && <p>Đi trễ: sáng {record.soPhutTreSang} phút, chiều {record.soPhutTreChieu} phút · Về sớm: sáng {record.soPhutVeSomSang} phút, chiều {record.soPhutVeSomChieu} phút.</p>}

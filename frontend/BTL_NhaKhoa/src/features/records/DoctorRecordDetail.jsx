@@ -29,7 +29,7 @@ export default function DoctorRecordDetail({ token, recordId, appointmentId, ini
 
   useEffect(() => {
     const controller = new AbortController()
-    setState({ status: 'loading', record: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setState({ status: 'loading', record: null, error: '' }) })
     const load = recordId ? doctorRecordsApi.detail(token, recordId, controller.signal)
       : doctorRecordsApi.fromAppointment(token, appointmentId, controller.signal)
     load.then((record) => {
@@ -46,12 +46,12 @@ export default function DoctorRecordDetail({ token, recordId, appointmentId, ini
 
   const record = state.record
   useEffect(() => {
-    if (!record?.maKhachHang || !['DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM'].includes(record.trangThaiLichHen)) {
-      setHistory({ status: 'unavailable', text: '', error: '' })
-      return undefined
-    }
     const controller = new AbortController()
-    setHistory({ status: 'loading', text: '', error: '' })
+    if (!record?.maKhachHang || !['DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM'].includes(record.trangThaiLichHen)) {
+      queueMicrotask(() => { if (!controller.signal.aborted) setHistory({ status: 'unavailable', text: '', error: '' }) })
+      return () => controller.abort()
+    }
+    queueMicrotask(() => { if (!controller.signal.aborted) setHistory({ status: 'loading', text: '', error: '' }) })
     doctorRecordsApi.medicalHistory(token, record.maKhachHang, controller.signal)
       .then((result) => { if (!controller.signal.aborted) setHistory({ status: 'success', text: result?.tienSuBenh || '', error: '' }) })
       .catch((error) => { if (!controller.signal.aborted) setHistory({ status: 'error', text: '', error: error.message }) })

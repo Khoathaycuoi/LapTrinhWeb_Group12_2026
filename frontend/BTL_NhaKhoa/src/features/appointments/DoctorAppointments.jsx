@@ -111,13 +111,15 @@ export default function DoctorAppointments({ token, query = '', navigationState,
 
   useEffect(() => {
     const nextTab = new URLSearchParams(query).get('nhom')
-    setTab(tabs.some(([key]) => key === nextTab) ? nextTab : 'today')
-    setPage(1)
+    queueMicrotask(() => {
+      setTab(tabs.some(([key]) => key === nextTab) ? nextTab : 'today')
+      setPage(1)
+    })
   }, [query])
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     doctorAppointmentsApi.list(token, { tab, date, keyword, page }, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {

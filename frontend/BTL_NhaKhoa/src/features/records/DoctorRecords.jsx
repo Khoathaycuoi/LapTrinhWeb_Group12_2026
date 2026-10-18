@@ -18,7 +18,7 @@ export default function DoctorRecords({ token, query = '', navigationState, onNa
   useEffect(() => {
     if (recordId || appointmentId) return undefined
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     doctorRecordsApi.list(token, page, unfinalized, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {

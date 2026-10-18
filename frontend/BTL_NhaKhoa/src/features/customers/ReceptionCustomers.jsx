@@ -52,7 +52,7 @@ export default function ReceptionCustomers({ token, onNavigate, managerMode = fa
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     receptionCustomersApi.list(token, keyword, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -72,7 +72,7 @@ export default function ReceptionCustomers({ token, onNavigate, managerMode = fa
   useEffect(() => {
     if (!detailId) return undefined
     const controller = new AbortController()
-    setDetail({ status: 'loading', data: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setDetail({ status: 'loading', data: null, error: '' }) })
     receptionCustomersApi.detail(token, detailId, controller.signal).then((data) => {
       if (!controller.signal.aborted) setDetail({ status: 'success', data, error: '' })
     }).catch((error) => {
@@ -141,7 +141,7 @@ export default function ReceptionCustomers({ token, onNavigate, managerMode = fa
     {list.status === 'success' && <><p className="customer-count">{list.totalItems} khách hàng</p>
       {list.items.length === 0 && <div className="customer-feedback">Không có khách hàng phù hợp.</div>}
       <div className="customer-list">{list.items.map((customer) => <article key={customer.id}>
-        <div><span>{customer.id}</span><h2>{customer.ten}</h2><p>{customer.sdt} · {customer.trangThai}</p></div>
+        <div><span>{customer.id}</span><h2>{customer.ten}</h2><p>{customer.sdt} · <span className={`customer-state ${customer.trangThai === 'Hoạt động' ? 'customer-state-active' : ''}`}>{customer.trangThai}</span></p></div>
         <div className="customer-actions"><button type="button" className="secondary-button" onClick={() => setDetailId(customer.id)}>Chi tiết</button>
           {customer.trangThai === 'Hoạt động' && <button type="button" className="primary-button" onClick={() => onNavigate(`${staffBasePath}/dat-lich?maKhachHang=${encodeURIComponent(customer.id)}`)}>Đặt lịch</button>}
           {managerMode && <button type="button" className="secondary-button" onClick={() => { setStatusTarget({ customer, active: customer.trangThai !== 'Hoạt động' }); setStatusError('') }}>

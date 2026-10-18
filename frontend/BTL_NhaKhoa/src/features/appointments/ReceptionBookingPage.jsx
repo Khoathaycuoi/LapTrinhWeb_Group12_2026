@@ -14,13 +14,12 @@ export default function ReceptionBookingPage({ token, query = '', onNavigate, st
   const [reload, setReload] = useState(0)
   const [list, setList] = useState({ status: 'idle', items: [], totalItems: 0, error: '' })
 
-  useEffect(() => { setCustomerId(new URLSearchParams(query).get('maKhachHang') || '') }, [query])
+  useEffect(() => { queueMicrotask(() => setCustomerId(new URLSearchParams(query).get('maKhachHang') || '')) }, [query])
 
   useEffect(() => {
-    if (!customerId) { setCustomer(null); return undefined }
     const controller = new AbortController()
-    setCustomer(null)
-    setCustomerError('')
+    queueMicrotask(() => { if (!controller.signal.aborted) { setCustomer(null); setCustomerError('') } })
+    if (!customerId) return () => controller.abort()
     receptionCustomersApi.detail(token, customerId, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (result?.role !== 'KHACH_HANG' || result.trangThai !== 'Hoạt động') {
@@ -37,7 +36,7 @@ export default function ReceptionBookingPage({ token, query = '', onNavigate, st
   useEffect(() => {
     if (customerId) return undefined
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     receptionCustomersApi.list(token, keyword, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {

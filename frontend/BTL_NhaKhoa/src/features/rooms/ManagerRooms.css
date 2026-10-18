@@ -16,6 +16,10 @@
 .manager-room-list article span { color: var(--color-primary); font-size: 11px; font-weight: 700; }
 .manager-room-list h2 { margin: 5px 0; color: var(--color-text); font-size: 16px; }
 .manager-room-list p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.manager-room-list article .manager-room-state { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #F1F3F8; color: #69758D; font-size: 11px; font-weight: 700; }
+.manager-room-list article .manager-room-state-HOAT_DONG { background: #E7F7EE; color: #287A54; }
+.manager-room-list article .manager-room-state-TAM_NGUNG { background: #FFF2DE; color: #9B671F; }
+.manager-room-list article .manager-room-state-BAO_TRI { background: #FFF0F1; color: #B64D60; }
 .manager-room-actions { display: flex; align-items: end; gap: 9px; flex-wrap: wrap; }
 .manager-room-actions select { min-width: 155px; }
 .manager-room-history { margin-top: 23px; }
