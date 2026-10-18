@@ -605,16 +605,16 @@ public sealed class QuanLyLichHenService(NhaKhoaDbContext db)
     }
 
     public async Task<IReadOnlyList<TimeOnly>> LayCaTrongAsync(ulong maBacSi, DateOnly ngay,
-        int thoiLuongPhut = 30, ulong? maTaiKhoanKhachHang = null)
+        int thoiLuongPhut = 30, ulong? maTaiKhoanKhachHang = null, ulong? maKhachHangDuocChon = null)
     {
         var dauNgay = ngay.ToDateTime(TimeOnly.MinValue);
         var cuoiNgay = dauNgay.AddDays(1);
-        var maKhachHang = maTaiKhoanKhachHang.HasValue
+        var maKhachHang = maKhachHangDuocChon ?? (maTaiKhoanKhachHang.HasValue
             ? await db.KhachHangs.AsNoTracking()
                 .Where(x => x.ConNguoi.TaiKhoan != null &&
                     x.ConNguoi.TaiKhoan.MaTaiKhoan == maTaiKhoanKhachHang.Value)
                 .Select(x => (ulong?)x.MaKhachHang).FirstOrDefaultAsync()
-            : null;
+            : null);
         var lichCuaKhach = maKhachHang.HasValue
             ? await db.LichHens.AsNoTracking()
                 .Where(x => x.MaKhachHang == maKhachHang.Value &&

@@ -138,7 +138,7 @@ function ConfirmationDialog({ appointment, doctors, token, onClose, onRetryDocto
   </div>
 }
 
-export default function ReceptionAppointments({ token, query = '' }) {
+export default function ReceptionAppointments({ token, query = '', arrivalNotice }) {
   const [tab, setTab] = useState(() => new URLSearchParams(query).has('ngayHen') ? 'all' : 'pending')
   const [date, setDate] = useState(() => new URLSearchParams(query).get('ngayHen') || '')
   const [trackedOnly, setTrackedOnly] = useState(() => new URLSearchParams(query).get('nhom') === 'tracked')
@@ -153,6 +153,8 @@ export default function ReceptionAppointments({ token, query = '' }) {
   const [cancelTarget, setCancelTarget] = useState(null)
   const [noShowTarget, setNoShowTarget] = useState(null)
   const [notice, setNotice] = useState('')
+
+  useEffect(() => { if (arrivalNotice) setNotice(arrivalNotice) }, [arrivalNotice])
 
   useEffect(() => {
     const params = new URLSearchParams(query)

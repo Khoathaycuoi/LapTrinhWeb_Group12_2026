@@ -66,7 +66,7 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
     [HttpGet("ca-trong")]
     [Authorize(Roles = "KHACH_HANG,LE_TAN,QUAN_LY,BAC_SI")]
     public async Task<IActionResult> LayCaTrong([FromQuery] string maBacSi, [FromQuery] DateOnly? ngay,
-        [FromQuery] int thoiLuongPhut = 30)
+        [FromQuery] int thoiLuongPhut = 30, [FromQuery] string? maKhachHang = null)
     {
         if (!QuanLyLichHenService.ThuDocMa(maBacSi, "BS_", out var idBacSi) || !ngay.HasValue)
             return BadRequest("Mã bác sĩ và ngày phải hợp lệ.");
@@ -79,8 +79,16 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
             if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
             maTaiKhoanKhachHang = maTaiKhoan;
         }
+        ulong? idKhachHang = null;
+        if (!string.IsNullOrWhiteSpace(maKhachHang) &&
+            (User.IsInRole("LE_TAN") || User.IsInRole("QUAN_LY")))
+        {
+            if (!QuanLyLichHenService.ThuDocMa(maKhachHang, "KH_", out var id))
+                return BadRequest("Mã khách hàng không hợp lệ.");
+            idKhachHang = id;
+        }
         return Ok(await quanLyLichHenService.LayCaTrongAsync(idBacSi, ngay.Value,
-            thoiLuongPhut, maTaiKhoanKhachHang));
+            thoiLuongPhut, maTaiKhoanKhachHang, idKhachHang));
     }
 
     [HttpPut("xac-nhan/{maLichHen}")]

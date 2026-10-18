@@ -11,4 +11,15 @@ export const invoicesApi = {
     return request(`/api/hoa-don?${query}`, { token, signal })
   },
   detail: (token, invoiceId, signal) => request(`/api/hoa-don/${encodeURIComponent(invoiceId)}`, { token, signal }),
+  recordPayment: (token, invoiceId, payment) => request(`/api/hoa-don/${encodeURIComponent(invoiceId)}/thanh-toan`, {
+    token,
+    method: 'POST',
+    body: JSON.stringify(payment),
+  }),
+  eligibleExams: (token, page, signal) => request(`/api/hoa-don/cho-lap?page=${page}&pageSize=10`, { token, signal }),
+  create: (token, examId) => request('/api/hoa-don', {
+    token,
+    method: 'POST',
+    body: JSON.stringify({ maHoSoKham: examId }),
+  }),
 }

@@ -65,6 +65,41 @@ public sealed class QuanLyHoaDonService(NhaKhoaDbContext db)
         return hoaDons.Select(TaoResponse).ToList();
     }
 
+    public async Task<DanhSachPhanTrangResponse<HoSoChoLapHoaDonResponse>> LayHoSoChoLapAsync(
+        int page, int pageSize)
+    {
+        var query = db.HoSoKhams.AsNoTracking().Where(x =>
+            x.ChotLuc != null && x.LichHen != null &&
+            x.LichHen.TrangThai == "DA_HOAN_THANH" && x.HoaDon == null &&
+            x.DichVuThucHiens.Any());
+        var totalItems = await query.CountAsync();
+        var hoSos = await query
+            .Include(x => x.KhachHang).ThenInclude(x => x.ConNguoi)
+            .Include(x => x.DichVuThucHiens)
+            .OrderByDescending(x => x.NgayKham).ThenByDescending(x => x.MaHoSoKham)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .AsSplitQuery().ToListAsync();
+        var items = hoSos.Select(x => new HoSoChoLapHoaDonResponse
+        {
+            MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
+            MaKhachHang = TaoMa("KH_", x.MaKhachHang),
+            TenKhachHang = x.KhachHang.ConNguoi.HoTen,
+            NgayKham = x.NgayKham,
+            TongTienDuKien = x.DichVuThucHiens.Sum(d => d.DonGiaThucTe * d.SoLuong),
+            DichVusThucHien = x.DichVuThucHiens.OrderBy(d => d.MaDichVuThucHien)
+                .Select(d => new ChiTietHoaDonResponse
+                {
+                    MaDichVuThucHien = TaoMa("DVTH_", d.MaDichVuThucHien),
+                    TenDichVu = d.TenDichVuTaiThoiDiemThucHien,
+                    DonGia = d.DonGiaThucTe,
+                    SoLuong = d.SoLuong,
+                    ThanhTien = d.DonGiaThucTe * d.SoLuong
+                }).ToList()
+        }).ToList();
+        return new DanhSachPhanTrangResponse<HoSoChoLapHoaDonResponse>(
+            items, totalItems, page, pageSize);
+    }
+
     public async Task<DanhSachPhanTrangResponse<HoaDonResponse>> LayTrangAsync(
         ulong maTaiKhoan, string? maKhachHang, bool conNo, DateOnly? tuNgay,
         DateOnly? denNgay, string? trangThai, int page, int pageSize)

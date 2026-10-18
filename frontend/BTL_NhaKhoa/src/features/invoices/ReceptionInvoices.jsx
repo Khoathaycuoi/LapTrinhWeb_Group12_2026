@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ListPagination from '../../components/ListPagination'
+import ConfirmDialog from '../../components/ConfirmDialog'
+import ToastNotice from '../../components/ToastNotice'
 import { invoicesApi } from './invoicesApi'
+import InvoicePaymentForm from './InvoicePaymentForm'
+import InvoiceCreation from './InvoiceCreation'
 import '../../components/ConfirmDialog.css'
 import './ReceptionInvoices.css'
 
@@ -27,9 +31,14 @@ function paymentFilterFromQuery(query) {
   return 'all'
 }
 
-function InvoiceDetails({ token, invoiceId, onClose }) {
+function InvoiceDetails({ token, invoiceId, onClose, onPaymentRecorded }) {
   const [reload, setReload] = useState(0)
   const [state, setState] = useState({ status: 'loading', data: null, error: '' })
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false)
+  const [paymentDraft, setPaymentDraft] = useState(null)
+  const [paymentBusy, setPaymentBusy] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
+  const paymentPendingRef = useRef(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -47,15 +56,37 @@ function InvoiceDetails({ token, invoiceId, onClose }) {
   }, [token, invoiceId, reload])
 
   useEffect(() => {
-    function onKeyDown(event) { if (event.key === 'Escape') onClose() }
+    function onKeyDown(event) { if (event.key === 'Escape' && !paymentDraft && !paymentBusy) onClose() }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+  }, [onClose, paymentDraft, paymentBusy])
+
+  async function recordPayment() {
+    if (!paymentDraft || paymentPendingRef.current) return
+    paymentPendingRef.current = true
+    setPaymentBusy(true)
+    setPaymentError('')
+    try {
+      await invoicesApi.recordPayment(token, invoiceId, paymentDraft)
+      setPaymentDraft(null)
+      setPaymentFormOpen(false)
+      setState({ status: 'loading', data: null, error: '' })
+      setReload((value) => value + 1)
+      onPaymentRecorded(invoiceId)
+    } catch (error) {
+      setPaymentDraft(null)
+      setPaymentError(error.status === 400 || error.status === 0
+        ? error.message : 'Chưa ghi nhận được khoản thu. Vui lòng thử lại.')
+    } finally {
+      paymentPendingRef.current = false
+      setPaymentBusy(false)
+    }
+  }
 
   const invoice = state.data
-  return <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+  return <><div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !paymentBusy && !paymentDraft) onClose() }}>
     <section className="confirm-dialog invoice-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="invoice-detail-title">
-      <div className="invoice-detail-heading"><div><h2 id="invoice-detail-title">Hóa đơn {invoiceId}</h2><p>Chi tiết dịch vụ và các khoản đã thu</p></div><button type="button" aria-label="Đóng chi tiết hóa đơn" onClick={onClose}>×</button></div>
+      <div className="invoice-detail-heading"><div><h2 id="invoice-detail-title">Hóa đơn {invoiceId}</h2><p>Chi tiết dịch vụ và các khoản đã thu</p></div><button type="button" aria-label="Đóng chi tiết hóa đơn" disabled={paymentBusy || Boolean(paymentDraft)} onClick={onClose}>×</button></div>
       {state.status === 'loading' && <p className="invoice-detail-feedback" role="status">Đang tải chi tiết hóa đơn…</p>}
       {state.status === 'error' && <div className="invoice-detail-feedback" role="alert"><p>{state.error}</p><button type="button" className="secondary-button" onClick={() => { setState({ status: 'loading', data: null, error: '' }); setReload((value) => value + 1) }}>Thử lại</button></div>}
       {state.status === 'success' && invoice && <>
@@ -63,6 +94,10 @@ function InvoiceDetails({ token, invoiceId, onClose }) {
         <h3>Dịch vụ đã thực hiện</h3>
         <ul className="invoice-detail-lines">{invoice.chiTietHoaDons?.map((line) => <li key={line.maDichVuThucHien}><span>{line.tenDichVu} × {line.soLuong}</span><strong>{moneyFormatter.format(line.thanhTien)}</strong></li>)}</ul>
         <div className="invoice-detail-totals"><div><span>Tổng hóa đơn</span><strong>{moneyFormatter.format(invoice.tongTien)}</strong></div><div><span>Đã thanh toán</span><strong>{moneyFormatter.format(invoice.daThanhToan)}</strong></div><div><span>Còn nợ</span><strong>{moneyFormatter.format(invoice.conNo)}</strong></div></div>
+        {invoice.conNo > 0 && invoice.trangThai !== 'DA_HUY' && (paymentFormOpen
+          ? <InvoicePaymentForm invoice={invoice} error={paymentError} onErrorDismiss={() => setPaymentError('')}
+              onReview={setPaymentDraft} onCancel={() => { setPaymentFormOpen(false); setPaymentError('') }} />
+          : <button type="button" className="primary-button invoice-payment-open" onClick={() => { setPaymentError(''); setPaymentFormOpen(true) }}>Ghi nhận thanh toán</button>)}
         <h3>Khoản thu</h3>
         {invoice.thanhToans?.length ? <ul className="invoice-detail-payments">{invoice.thanhToans.map((payment) => <li key={payment.maThanhToan}>
           <div><strong>{payment.maThanhToan} · {moneyFormatter.format(payment.soTien)}</strong><span>{methodLabels[payment.phuongThuc] || payment.phuongThuc} · {formatDate(payment.thoiDiemThanhToan)}</span></div>
@@ -72,6 +107,10 @@ function InvoiceDetails({ token, invoiceId, onClose }) {
       </>}
     </section>
   </div>
+    {paymentDraft && <ConfirmDialog title="Xác nhận khoản thu?"
+      message={`Đã nhận ${moneyFormatter.format(paymentDraft.soTien)} bằng ${methodLabels[paymentDraft.phuongThuc]?.toLocaleLowerCase('vi-VN') || paymentDraft.phuongThuc} cho hóa đơn ${invoiceId}?`}
+      confirmLabel="Ghi nhận" busy={paymentBusy} onConfirm={recordPayment} onCancel={() => setPaymentDraft(null)} />}
+  </>
 }
 
 export default function ReceptionInvoices({ token, query = '', onNavigate }) {
@@ -86,6 +125,8 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
   const [reload, setReload] = useState(0)
   const [state, setState] = useState({ status: 'loading', items: [], totalItems: 0, error: '' })
   const [selectedId, setSelectedId] = useState(null)
+  const [showCreation, setShowCreation] = useState(false)
+  const [notice, setNotice] = useState('')
 
   useEffect(() => { setPaymentFilter(paymentFilterFromQuery(query)); setPage(1) }, [query])
 
@@ -145,7 +186,13 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
   }
 
   return <div className="reception-invoices">
-    <div className="page-heading"><div><h1>Hóa đơn</h1><p className="page-description">Theo dõi tổng tiền, các khoản đã thu và số tiền còn nợ.</p></div></div>
+    <div className="page-heading invoice-page-heading"><div><h1>Hóa đơn</h1><p className="page-description">Theo dõi tổng tiền, các khoản đã thu và số tiền còn nợ.</p></div><button type="button" className="primary-button" onClick={() => setShowCreation(true)}>Lập hóa đơn</button></div>
+    {showCreation && <InvoiceCreation token={token} onClose={() => setShowCreation(false)} onCreated={(invoiceId) => {
+      setShowCreation(false)
+      refresh()
+      setNotice(`Đã lập hóa đơn ${invoiceId || ''}.`)
+      if (invoiceId) setSelectedId(invoiceId)
+    }} />}
     <div className="invoice-filters">
       <div className="invoice-tabs" role="group" aria-label="Lọc hóa đơn">
         <button type="button" className={paymentFilter === 'all' ? 'active' : ''} aria-pressed={paymentFilter === 'all'} onClick={() => selectPaymentFilter('all')}>Tất cả</button>
@@ -178,6 +225,8 @@ export default function ReceptionInvoices({ token, query = '', onNavigate }) {
       </article>)}</div> : <div className="invoice-feedback">Không có hóa đơn nào phù hợp.</div>}
       <ListPagination page={page} pageSize={pageSize} totalItems={state.totalItems} onPageChange={setPage} />
     </>}
-    {selectedId && <InvoiceDetails key={selectedId} token={token} invoiceId={selectedId} onClose={() => setSelectedId(null)} />}
+    {selectedId && <InvoiceDetails key={selectedId} token={token} invoiceId={selectedId}
+      onClose={() => setSelectedId(null)} onPaymentRecorded={(invoiceId) => { refresh(); setNotice(`Đã ghi nhận thanh toán cho hóa đơn ${invoiceId}.`) }} />}
+    <ToastNotice message={notice} onDismiss={() => setNotice('')} />
   </div>
 }

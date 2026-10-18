@@ -45,6 +45,17 @@ public sealed class HoaDonController(QuanLyHoaDonService quanLyHoaDonService) : 
             conNo, tuNgay, denNgay, trangThai));
     }
 
+    [HttpGet("cho-lap")]
+    [Authorize(Roles = "LE_TAN,QUAN_LY")]
+    public async Task<IActionResult> LayHoSoChoLap([FromQuery] PhanTrangRequest? phanTrang = null)
+    {
+        var soTrang = phanTrang?.SoTrang ?? 1;
+        var kichThuocTrang = phanTrang?.KichThuocTrang ?? 20;
+        if (phanTrang?.CoPhanTrang == true && !phanTrang.HopLe)
+            return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+        return Ok(await quanLyHoaDonService.LayHoSoChoLapAsync(soTrang, kichThuocTrang));
+    }
+
     [HttpGet("{maHoaDon}")]
     [Authorize(Roles = "KHACH_HANG,LE_TAN,QUAN_LY")]
     public async Task<IActionResult> LayChiTiet(string maHoaDon)

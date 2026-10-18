@@ -29,7 +29,8 @@ function dateLabel(date) {
   return Number.isNaN(parsed.getTime()) ? date : dateFormatter.format(parsed)
 }
 
-export default function BookingPage({ token, onNavigate }) {
+export default function BookingPage({ token, onNavigate, mode = 'customer', customerId, customerName }) {
+  const atReception = mode === 'reception'
   const [catalogReload, setCatalogReload] = useState(0)
   const [catalog, setCatalog] = useState({ status: 'loading', services: [], doctors: [], error: '' })
   const [selectedServiceIds, setSelectedServiceIds] = useState([])
@@ -64,7 +65,7 @@ export default function BookingPage({ token, onNavigate }) {
   const selectedServices = catalog.services.filter((service) => selectedServiceIds.includes(service.maDichVu))
   const totalMinutes = selectedServices.reduce((sum, service) => sum + Number(service.thoiLuongDuKienPhut), 0)
   const estimatedPrice = selectedServices.reduce((sum, service) => sum + Number(service.donGia), 0)
-  const slotKey = catalog.status === 'success' && step === 3 && date && totalMinutes > 0
+  const slotKey = catalog.status === 'success' && step === 3 && date && totalMinutes > 0 && (!atReception || doctorId)
     ? `${date}|${doctorId || 'all'}|${totalMinutes}` : ''
 
   useEffect(() => {
@@ -73,7 +74,8 @@ export default function BookingPage({ token, onNavigate }) {
     let active = true
     const ids = doctorId ? [doctorId] : catalog.doctors.map((doctor) => doctor.id)
 
-    Promise.allSettled(ids.map((id) => bookingApi.availableSlots(token, id, date, totalMinutes, controller.signal)))
+    Promise.allSettled(ids.map((id) => bookingApi.availableSlots(token, id, date, totalMinutes, controller.signal,
+      atReception ? customerId : undefined)))
       .then((results) => {
         if (!active) return
         const fulfilled = results.filter((result) => result.status === 'fulfilled' && Array.isArray(result.value))
@@ -89,7 +91,7 @@ export default function BookingPage({ token, onNavigate }) {
       })
 
     return () => { active = false; controller.abort() }
-  }, [token, catalog.doctors, doctorId, date, totalMinutes, slotKey])
+  }, [token, catalog.doctors, doctorId, date, totalMinutes, slotKey, atReception, customerId])
 
   function toggleService(id) {
     setSelectedServiceIds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
@@ -103,8 +105,8 @@ export default function BookingPage({ token, onNavigate }) {
       setBookingError('Vui lòng chọn ít nhất một dịch vụ để tiếp tục.')
       return
     }
-    if (step === 2 && (!date || date < todayLocal())) {
-      setBookingError('Vui lòng chọn ngày hẹn từ hôm nay trở đi.')
+    if (step === 2 && (!date || date < todayLocal() || (atReception && !doctorId))) {
+      setBookingError(atReception && !doctorId ? 'Vui lòng chọn bác sĩ để đặt lịch tại quầy.' : 'Vui lòng chọn ngày hẹn từ hôm nay trở đi.')
       return
     }
     setStep((current) => Math.min(current + 1, 3))
@@ -119,6 +121,7 @@ export default function BookingPage({ token, onNavigate }) {
     event.preventDefault()
     setBookingError('')
     if (step !== 3 || !selectedServiceIds.length || !date || date < todayLocal() ||
+      (atReception && (!customerId || !doctorId)) ||
       !selectedTime || slots.key !== slotKey || !slots.times.includes(selectedTime)) {
       setBookingError('Vui lòng chọn dịch vụ, ngày và giờ còn trống trước khi đặt lịch.')
       return
@@ -131,13 +134,14 @@ export default function BookingPage({ token, onNavigate }) {
     setBooking(true)
     try {
       const response = await bookingApi.book(token, {
+        ...(atReception ? { maKhachHang: customerId } : {}),
         ...(doctorId ? { maBacSi: doctorId } : {}),
         ngayHen: date,
         gioHen: selectedTime,
         danhSachMaDichVu: selectedServiceIds,
       })
-      onNavigate('/khach-hang/lich-hen?nhom=upcoming', false, {
-        notice: typeof response === 'string' ? response : 'Đã gửi yêu cầu đặt lịch. Vui lòng chờ xác nhận.',
+      onNavigate(atReception ? `/le-tan/lich-hen?ngayHen=${date}` : '/khach-hang/lich-hen?nhom=upcoming', false, {
+        notice: typeof response === 'string' ? response : 'Đã gửi yêu cầu đặt lịch.',
       })
     } catch (error) {
       setConfirmBooking(false)
@@ -157,7 +161,7 @@ export default function BookingPage({ token, onNavigate }) {
   const visibleDoctors = catalog.doctors.filter((doctor) => normalizeSearch(doctor.ten).includes(doctorQuery))
 
   return <div className="booking-page">
-    <div className="page-heading"><div><h1>Đặt lịch khám</h1><p className="page-description">Chọn dịch vụ, thời gian và bác sĩ phù hợp. Phòng khám sẽ xác nhận yêu cầu của bạn.</p></div></div>
+    <div className="page-heading"><div><h1>{atReception ? `Đặt lịch cho ${customerName}` : 'Đặt lịch khám'}</h1><p className="page-description">{atReception ? 'Chọn dịch vụ, bác sĩ và giờ hẹn cho khách tại quầy.' : 'Chọn dịch vụ, thời gian và bác sĩ phù hợp. Phòng khám sẽ xác nhận yêu cầu của bạn.'}</p></div></div>
 
     {catalog.status === 'loading' && <div className="booking-feedback" role="status">Đang tải dịch vụ và bác sĩ…</div>}
     {catalog.status === 'error' && <div className="booking-feedback booking-feedback-error" role="alert">
@@ -185,7 +189,7 @@ export default function BookingPage({ token, onNavigate }) {
       </section>}
 
       {step === 2 && <section className="booking-panel">
-        <div className="booking-section-heading"><span>02</span><div><h2>Chọn bác sĩ và ngày hẹn</h2><p>Bạn có thể để phòng khám sắp xếp bác sĩ.</p></div></div>
+        <div className="booking-section-heading"><span>02</span><div><h2>Chọn bác sĩ và ngày hẹn</h2><p>{atReception ? 'Đặt tại quầy cần chọn bác sĩ để xác nhận lịch ngay khi còn chỗ.' : 'Bạn có thể để phòng khám sắp xếp bác sĩ.'}</p></div></div>
         <div className="booking-fields booking-step-two">
           <label className="booking-search-label" htmlFor="booking-doctor-search">Tìm bác sĩ
             <input id="booking-doctor-search" type="search" value={doctorSearch} onChange={(event) => setDoctorSearch(event.target.value)} placeholder="Nhập tên bác sĩ" autoComplete="off" />
@@ -194,9 +198,9 @@ export default function BookingPage({ token, onNavigate }) {
           <div className="booking-doctor-field">
             <span className="booking-doctor-list-title">Bác sĩ</span>
             <div className="booking-doctor-options" role="radiogroup" aria-label="Chọn bác sĩ">
-              <label className={doctorId === '' ? 'booking-doctor-option selected' : 'booking-doctor-option'}>
+              {!atReception && <label className={doctorId === '' ? 'booking-doctor-option selected' : 'booking-doctor-option'}>
                 <input type="radio" name="booking-doctor" checked={doctorId === ''} onChange={() => { setDoctorId(''); setSelectedTime('') }} />Để phòng khám sắp xếp
-              </label>
+              </label>}
               {visibleDoctors.map((doctor) => <label key={doctor.id} className={doctorId === doctor.id ? 'booking-doctor-option selected' : 'booking-doctor-option'}>
                 <input type="radio" name="booking-doctor" checked={doctorId === doctor.id} onChange={() => { setDoctorId(doctor.id); setSelectedTime('') }} />{doctor.ten}
               </label>)}
@@ -224,16 +228,16 @@ export default function BookingPage({ token, onNavigate }) {
       </section>}
 
       <div className="booking-submit-row">
-        {step === 3 && <p>Lịch của Khách hàng sẽ ở trạng thái <strong>Chờ xác nhận</strong>. Bạn có thể theo dõi trong “Lịch hẹn của tôi”.</p>}
+        {step === 3 && <p>{atReception ? 'Lịch sẽ được xác nhận ngay nếu bác sĩ và phòng còn trống.' : <>Lịch của Khách hàng sẽ ở trạng thái <strong>Chờ xác nhận</strong>. Bạn có thể theo dõi trong “Lịch hẹn của tôi”.</>}</p>}
         {bookingError && <div className="alert alert-error" role="alert">{bookingError}</div>}
         <div className="booking-navigation">
           {step > 1 && <button type="button" className="secondary-button" disabled={booking} onClick={previousStep}>Quay lại</button>}
           {step < 3 ? <button type="button" className="primary-button" onClick={nextStep}>Tiếp tục</button>
-            : <button type="submit" className="primary-button" disabled={booking || !selectedTime || slots.key !== slotKey || !slots.times.includes(selectedTime)}>Gửi yêu cầu đặt lịch</button>}
+            : <button type="submit" className="primary-button" disabled={booking || !selectedTime || slots.key !== slotKey || !slots.times.includes(selectedTime)}>{atReception ? 'Đặt lịch tại quầy' : 'Gửi yêu cầu đặt lịch'}</button>}
         </div>
       </div>
     </form>}
-    {confirmBooking && <ConfirmDialog title="Xác nhận đặt lịch" message={`Gửi yêu cầu cho ${selectedServices.length} dịch vụ vào ${dateLabel(date)}, lúc ${timeLabel(selectedTime)}${selectedDoctor ? ` với bác sĩ ${selectedDoctor.ten}` : ', để phòng khám sắp xếp bác sĩ'}? Lịch sẽ ở trạng thái Chờ xác nhận.`}
+    {confirmBooking && <ConfirmDialog title="Xác nhận đặt lịch" message={`${atReception ? `Đặt lịch cho ${customerName}` : `Gửi yêu cầu cho ${selectedServices.length} dịch vụ`} vào ${dateLabel(date)}, lúc ${timeLabel(selectedTime)}${selectedDoctor ? ` với bác sĩ ${selectedDoctor.ten}` : ', để phòng khám sắp xếp bác sĩ'}?${atReception ? ' Hệ thống sẽ kiểm tra lại và xác nhận nếu còn chỗ.' : ' Lịch sẽ ở trạng thái Chờ xác nhận.'}`}
       confirmLabel={booking ? 'Đang gửi…' : 'Xác nhận đặt lịch'} busy={booking} onCancel={() => setConfirmBooking(false)} onConfirm={sendBooking} />}
   </div>
 }

@@ -5,6 +5,9 @@ import ReceptionAppointments from '../features/appointments/ReceptionAppointment
 import ReceptionIntakePage from '../features/appointments/ReceptionIntakePage'
 import ReceptionDashboard from '../features/dashboard/ReceptionDashboard'
 import ReceptionInvoices from '../features/invoices/ReceptionInvoices'
+import ReceptionCustomers from '../features/customers/ReceptionCustomers'
+import ReceptionBookingPage from '../features/appointments/ReceptionBookingPage'
+import ReceptionAttendance from '../features/attendance/ReceptionAttendance'
 import PlaceholderPage from '../pages/PlaceholderPage'
 
 export default function RolePage({ session, routePath, query, navigationState, onNavigate }) {
@@ -24,7 +27,19 @@ export default function RolePage({ session, routePath, query, navigationState, o
   }
 
   if (session.role === 'LE_TAN' && routePath === '/le-tan/lich-hen') {
-    return <ReceptionAppointments token={session.token} query={query} />
+    return <ReceptionAppointments token={session.token} query={query} arrivalNotice={navigationState?.notice} />
+  }
+
+  if (session.role === 'LE_TAN' && routePath === '/le-tan/khach-hang') {
+    return <ReceptionCustomers token={session.token} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'LE_TAN' && routePath === '/le-tan/dat-lich') {
+    return <ReceptionBookingPage token={session.token} query={query} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'LE_TAN' && routePath === '/le-tan/cham-cong') {
+    return <ReceptionAttendance token={session.token} />
   }
 
   if (session.role === 'LE_TAN' && routePath === '/le-tan/tiep-nhan') {
