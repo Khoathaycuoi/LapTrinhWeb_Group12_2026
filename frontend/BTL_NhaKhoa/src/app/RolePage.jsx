@@ -12,6 +12,7 @@ import CustomerInvoices from '../features/invoices/CustomerInvoices'
 import ReceptionCustomers from '../features/customers/ReceptionCustomers'
 import ReceptionBookingPage from '../features/appointments/ReceptionBookingPage'
 import ReceptionAttendance from '../features/attendance/ReceptionAttendance'
+import ManagerAttendance from '../features/attendance/ManagerAttendance'
 import ManagerStaff from '../features/staff/ManagerStaff'
 import ManagerServices from '../features/services/ManagerServices'
 import ManagerRooms from '../features/rooms/ManagerRooms'
@@ -52,6 +53,10 @@ export default function RolePage({ session, routePath, query, navigationState, o
 
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/phong') {
     return <ManagerRooms token={session.token} />
+  }
+
+  if (session.role === 'QUAN_LY' && routePath === '/quan-ly/cham-cong') {
+    return <ManagerAttendance token={session.token} />
   }
 
   if (session.role === 'KHACH_HANG' && routePath === '/khach-hang/overview') {

@@ -1,0 +1,50 @@
+.manager-attendance { max-width: 1180px; }
+.manager-attendance-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; padding: 4px; border: 1px solid var(--color-border); border-radius: 10px; background: #fff; }
+.manager-attendance-tabs button { min-height: 38px; padding: 0 15px; border: 0; border-radius: 7px; background: none; color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.manager-attendance-tabs button.active, .manager-attendance-tabs button:hover { background: #e9edfa; color: var(--color-primary-dark); }
+.manager-attendance-filters { display: flex; align-items: end; flex-wrap: wrap; gap: 9px; margin-bottom: 18px; }
+.manager-attendance-filters label, .manager-attendance-editor label, .manager-attendance-reject label { display: grid; gap: 6px; color: var(--color-text); font-size: 12px; font-weight: 700; }
+.manager-attendance-filters input, .manager-attendance-editor input, .manager-attendance-editor select, .manager-attendance-editor textarea, .manager-attendance-reject textarea { box-sizing: border-box; width: 100%; min-height: 42px; padding: 8px 11px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; color: var(--color-text); font: inherit; font-weight: 400; }
+.manager-attendance-filters label { width: min(100%, 205px); }
+.manager-attendance-clear { min-height: 42px; border: 0; background: none; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.manager-attendance-error { color: var(--color-error); font-size: 12px; }
+.confirm-dialog .manager-attendance-error { color: var(--color-error); }
+.manager-attendance-feedback, .manager-attendance-list article, .manager-attendance-day, .manager-attendance-detail { border: 1px solid var(--color-border); border-radius: 14px; background: #fff; }
+.manager-attendance-feedback, .manager-attendance-day, .manager-attendance-detail { padding: 20px; }
+.manager-attendance-feedback { color: var(--color-muted); font-size: 12px; }
+.manager-attendance-feedback p { margin: 0 0 12px; }
+.manager-attendance-count, .manager-attendance-day > p { margin: 0 0 10px; color: var(--color-muted); font-size: 12px; }
+.manager-attendance-list { display: grid; gap: 11px; }
+.manager-attendance-list article { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 17px 20px; }
+.manager-attendance-missing-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.manager-attendance-list article span { color: var(--color-primary); font-size: 11px; font-weight: 700; }
+.manager-attendance-list h2 { margin: 5px 0; color: var(--color-text); font-size: 16px; }
+.manager-attendance-list p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.manager-attendance-detail { margin-top: 24px; }
+.manager-attendance-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.manager-attendance-detail-heading h2 { margin: 0; font-size: 18px; }
+.manager-attendance-detail > p { color: var(--color-muted); font-size: 12px; }
+.manager-attendance-periods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+.manager-attendance-period { padding: 17px; border: 1px solid var(--color-border); border-radius: 10px; }
+.manager-attendance-period > div { display: flex; justify-content: space-between; gap: 12px; }
+.manager-attendance-period strong { color: var(--color-text); font-size: 14px; }
+.manager-attendance-period span, .manager-attendance-period small { color: var(--color-muted); font-size: 12px; }
+.manager-attendance-period p { margin: 10px 0; color: var(--color-text); font-size: 12px; }
+.manager-attendance-period small { display: block; margin-bottom: 10px; }
+.manager-attendance-detail-actions { display: flex; gap: 9px; margin: 20px 0; }
+.manager-attendance-changes { border-top: 1px solid var(--color-border); margin-top: 22px; padding-top: 18px; }
+.manager-attendance-changes h3 { margin: 0 0 12px; font-size: 15px; }
+.manager-attendance-changes p { color: var(--color-muted); font-size: 12px; }
+.manager-attendance-changes ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.manager-attendance-changes li { display: grid; gap: 4px; color: var(--color-muted); font-size: 12px; }
+.manager-attendance-changes li strong { color: var(--color-text); }
+.manager-attendance-editor, .manager-attendance-reject { width: min(100%, 560px); text-align: left; }
+.manager-attendance-editor form { display: grid; gap: 13px; margin-top: 18px; }
+.manager-attendance-time-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.manager-attendance-editor .confirm-actions { margin-top: 5px; }
+@media (max-width: 620px) {
+  .manager-attendance-tabs { display: flex; }
+  .manager-attendance-tabs button { flex: 1 1 42%; }
+  .manager-attendance-list article { align-items: stretch; flex-direction: column; }
+  .manager-attendance-periods, .manager-attendance-time-fields { grid-template-columns: 1fr; }
+}
