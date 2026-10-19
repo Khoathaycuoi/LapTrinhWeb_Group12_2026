@@ -10,9 +10,12 @@ namespace BTL_NhaKhoa.Services;
 public sealed record KetQuaThaoTacCaNhan(string? Loi = null, bool KhongTimThay = false,
     bool TrungDuLieu = false);
 
-public sealed class TaiKhoanCaNhanService(NhaKhoaDbContext db)
+public sealed class TaiKhoanCaNhanService(NhaKhoaDbContext db, IWebHostEnvironment moiTruong)
 {
     private readonly PasswordHasher<TaiKhoan> _maHoaMatKhau = new();
+    private const long DungLuongAnhToiDa = 2 * 1024 * 1024;
+    public static string? TaoDuongDanAnh(string? tenFile) =>
+        tenFile == null ? null : $"/api/users/anh-dai-dien/{tenFile}";
 
     public async Task<ThongTinCaNhanResponse?> LayThongTinAsync(ulong maTaiKhoan)
     {
@@ -59,6 +62,7 @@ public sealed class TaiKhoanCaNhanService(NhaKhoaDbContext db)
             Id = id,
             Ten = conNguoi.HoTen,
             SoDienThoai = conNguoi.SoDienThoai,
+            AnhDaiDienUrl = TaoDuongDanAnh(conNguoi.TenAnhDaiDien),
             GioiTinh = conNguoi.GioiTinh,
             Role = role,
             DiaChi = conNguoi.DiaChi,
@@ -69,6 +73,76 @@ public sealed class TaiKhoanCaNhanService(NhaKhoaDbContext db)
             SoNamKinhNghiem = taiKhoan.MaVaiTro == "BAC_SI" ? bacSi?.SoNamKinhNghiem : null,
             TrangThai = taiKhoan.TrangThai == "HOAT_DONG" ? "Hoạt động" : "Không hoạt động"
         };
+    }
+
+    public async Task<(string? Loi, string? DuongDan)> LuuAnhAsync(ulong maTaiKhoan, IFormFile? anh)
+    {
+        if (anh == null || anh.Length == 0 || anh.Length > DungLuongAnhToiDa)
+            return ("Vui lòng chọn ảnh có dung lượng không quá 2 MB.", null);
+
+        await using var boNho = new MemoryStream();
+        await anh.CopyToAsync(boNho);
+        var duLieu = boNho.ToArray();
+        var duoiFile = XacDinhDinhDangAnh(duLieu);
+        if (duoiFile == null)
+            return ("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP hợp lệ.", null);
+
+        var conNguoi = await db.TaiKhoans.Where(x => x.MaTaiKhoan == maTaiKhoan)
+            .Select(x => x.ConNguoi).FirstOrDefaultAsync();
+        if (conNguoi == null) return ("Không tìm thấy tài khoản.", null);
+
+        var thuMuc = Path.Combine(moiTruong.ContentRootPath, "wwwroot", "avatars");
+        Directory.CreateDirectory(thuMuc);
+        var tenFileMoi = $"{Guid.NewGuid():N}.{duoiFile}";
+        var duongDanMoi = Path.Combine(thuMuc, tenFileMoi);
+        await File.WriteAllBytesAsync(duongDanMoi, duLieu);
+        var tenFileCu = conNguoi.TenAnhDaiDien;
+        try
+        {
+            conNguoi.TenAnhDaiDien = tenFileMoi;
+            await db.SaveChangesAsync();
+        }
+        catch
+        {
+            File.Delete(duongDanMoi);
+            throw;
+        }
+        XoaFileCu(thuMuc, tenFileCu);
+        return (null, TaoDuongDanAnh(tenFileMoi));
+    }
+
+    public async Task<bool> XoaAnhAsync(ulong maTaiKhoan)
+    {
+        var conNguoi = await db.TaiKhoans.Where(x => x.MaTaiKhoan == maTaiKhoan)
+            .Select(x => x.ConNguoi).FirstOrDefaultAsync();
+        if (conNguoi == null) return false;
+        var tenFileCu = conNguoi.TenAnhDaiDien;
+        conNguoi.TenAnhDaiDien = null;
+        await db.SaveChangesAsync();
+        XoaFileCu(Path.Combine(moiTruong.ContentRootPath, "wwwroot", "avatars"), tenFileCu);
+        return true;
+    }
+
+    private static void XoaFileCu(string thuMuc, string? tenFile)
+    {
+        if (tenFile != null && System.Text.RegularExpressions.Regex.IsMatch(tenFile, "^[a-f0-9]{32}\\.(jpg|png|webp)$"))
+        {
+            var duongDan = Path.Combine(thuMuc, tenFile);
+            try
+            {
+                if (File.Exists(duongDan)) File.Delete(duongDan);
+            }
+            catch (IOException) { /* Ảnh cũ không còn được tham chiếu; có thể dọn sau. */ }
+            catch (UnauthorizedAccessException) { /* Không làm hỏng thao tác đã lưu trong DB. */ }
+        }
+    }
+
+    private static string? XacDinhDinhDangAnh(byte[] duLieu)
+    {
+        if (duLieu.Length >= 3 && duLieu[0] == 0xFF && duLieu[1] == 0xD8 && duLieu[2] == 0xFF) return "jpg";
+        if (duLieu.Length >= 8 && duLieu.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 })) return "png";
+        if (duLieu.Length >= 12 && duLieu.AsSpan(0, 4).SequenceEqual("RIFF"u8) && duLieu.AsSpan(8, 4).SequenceEqual("WEBP"u8)) return "webp";
+        return null;
     }
 
     public async Task<KetQuaThaoTacCaNhan> CapNhatAsync(ulong maTaiKhoan, CapNhatCaNhanRequest yeuCau)

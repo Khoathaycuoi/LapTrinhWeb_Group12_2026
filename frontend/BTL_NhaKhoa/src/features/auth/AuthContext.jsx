@@ -4,13 +4,11 @@ import { AuthContext } from './auth-context'
 
 async function loadSession(token, claims) {
   const identity = await authApi.me(token)
-  let name = identity.ten ?? identity.Ten
-
-  // Older running backend instances may not yet include ten in /api/auth/me.
-  if (!name?.trim()) {
-    const profile = await authApi.profile(token)
-    name = profile.ten ?? profile.Ten
-  }
+  const profile = await authApi.profile(token).catch((error) => {
+    if (error.status === 401) throw error
+    return null
+  })
+  const name = profile?.ten ?? profile?.Ten ?? identity.ten ?? identity.Ten
   if (!name?.trim()) {
     throw new Error('Không thể tải tên tài khoản. Vui lòng thử lại sau.')
   }
@@ -20,6 +18,7 @@ async function loadSession(token, claims) {
     role: identity.vaiTro ?? identity.VaiTro ?? claims.vai_tro,
     name: name.trim(),
     phone: identity.soDienThoai ?? identity.SoDienThoai ?? claims.sub ?? '',
+    avatarUrl: profile?.anhDaiDienUrl ?? null,
   }
 }
 
@@ -82,6 +81,9 @@ export function AuthProvider({ children }) {
     },
     updateProfileName(name) {
       setSession((current) => current ? { ...current, name } : current)
+    },
+    updateAvatar(avatarUrl) {
+      setSession((current) => current ? { ...current, avatarUrl } : current)
     },
   }), [session, ready])
 

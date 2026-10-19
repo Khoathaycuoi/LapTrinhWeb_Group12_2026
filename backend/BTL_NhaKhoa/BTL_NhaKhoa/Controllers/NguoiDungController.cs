@@ -11,8 +11,26 @@ namespace BTL_NhaKhoa.Controllers;
 [Route("api/users")]
 public sealed class NguoiDungController(
     TaiKhoanCaNhanService taiKhoanCaNhanService,
-    QuanLyNguoiDungService quanLyNguoiDungService) : ControllerBase
+    QuanLyNguoiDungService quanLyNguoiDungService,
+    IWebHostEnvironment moiTruong) : ControllerBase
 {
+    [HttpGet("anh-dai-dien/{tenFile}")]
+    [AllowAnonymous]
+    public IActionResult LayAnhDaiDien(string tenFile)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(tenFile, "^[a-f0-9]{32}\\.(jpg|png|webp)$"))
+            return NotFound();
+        var duongDan = Path.Combine(moiTruong.ContentRootPath, "wwwroot", "avatars", tenFile);
+        if (!System.IO.File.Exists(duongDan)) return NotFound();
+        var loaiAnh = Path.GetExtension(tenFile) switch
+        {
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => "image/jpeg"
+        };
+        return PhysicalFile(duongDan, loaiAnh);
+    }
+
     [HttpGet("bac-si")]
     [Authorize(Roles = "QUAN_LY")]
     public async Task<IActionResult> LayBacSi([FromQuery] string? keyword,
@@ -241,6 +259,25 @@ public sealed class NguoiDungController(
             return ketQua.KhongTimThay ? NotFound(ketQua.Loi) : BadRequest(ketQua.Loi);
         }
         return Content("Cập nhật thông tin thành công!", "text/plain");
+    }
+
+    [HttpPost("me/anh-dai-dien")]
+    [RequestSizeLimit(3 * 1024 * 1024)]
+    public async Task<IActionResult> TaiAnhDaiDien([FromForm] IFormFile? anh)
+    {
+        if (!ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out var maTaiKhoan))
+            return Unauthorized();
+        var (loi, duongDan) = await taiKhoanCaNhanService.LuuAnhAsync(maTaiKhoan, anh);
+        if (loi != null) return BadRequest(loi);
+        return Ok(new { anhDaiDienUrl = duongDan });
+    }
+
+    [HttpDelete("me/anh-dai-dien")]
+    public async Task<IActionResult> XoaAnhDaiDien()
+    {
+        if (!ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out var maTaiKhoan))
+            return Unauthorized();
+        return await taiKhoanCaNhanService.XoaAnhAsync(maTaiKhoan) ? NoContent() : NotFound("Không tìm thấy tài khoản.");
     }
 
     [HttpPut("me/password")]

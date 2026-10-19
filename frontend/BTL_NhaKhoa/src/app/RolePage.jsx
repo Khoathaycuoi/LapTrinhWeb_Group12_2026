@@ -24,9 +24,9 @@ import PlaceholderPage from '../pages/PlaceholderPage'
 import AccountPage from '../features/account/AccountPage'
 import { roles } from './roles'
 
-export default function RolePage({ session, routePath, query, navigationState, onNavigate, onProfileNameChange, onPhoneChanged, onLogout }) {
+export default function RolePage({ session, routePath, query, navigationState, onNavigate, onProfileNameChange, onAvatarChange, onPhoneChanged, onLogout }) {
   if (routePath === `${roles[session.role]?.base}/tai-khoan`) {
-    return <AccountPage token={session.token} role={session.role} onProfileNameChange={onProfileNameChange} onPhoneChanged={onPhoneChanged} onLogout={onLogout} />
+    return <AccountPage token={session.token} role={session.role} onProfileNameChange={onProfileNameChange} onAvatarChange={onAvatarChange} onPhoneChanged={onPhoneChanged} onLogout={onLogout} />
   }
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/overview') {
     return <ManagerDashboard token={session.token} onNavigate={onNavigate} />
@@ -49,7 +49,7 @@ export default function RolePage({ session, routePath, query, navigationState, o
   }
 
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/nhan-su') {
-    return <ManagerStaff token={session.token} currentPhone={session.phone} />
+    return <ManagerStaff token={session.token} currentPhone={session.phone} currentAvatarUrl={session.avatarUrl} />
   }
 
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/dich-vu') {

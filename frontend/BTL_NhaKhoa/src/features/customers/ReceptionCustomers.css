@@ -23,14 +23,9 @@
 .customer-list article .customer-state { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #F1F3F8; color: #69758D; font-size: 11px; font-weight: 700; }
 .customer-list article .customer-state-active { background: #E7F7EE; color: #287A54; }
 .customer-actions { display: flex; gap: 8px; }
-.customer-detail-dialog { width: min(100%, 520px); text-align: left; }
-.customer-detail-dialog dl { display: grid; grid-template-columns: 125px 1fr; gap: 12px; margin: 22px 0 0; font-size: 12px; }
-.customer-detail-dialog dt { color: var(--color-muted); }
-.customer-detail-dialog dd { margin: 0; color: var(--color-text); font-weight: 700; }
 .customer-status-dialog .customer-form-error { color: var(--color-error); }
 @media (max-width: 620px) {
   .reception-customers-heading, .customer-list article { align-items: stretch; flex-direction: column; }
   .customer-create-form { grid-template-columns: 1fr; }
   .customer-actions { flex-wrap: wrap; }
-  .customer-detail-dialog dl { grid-template-columns: 110px 1fr; }
 }

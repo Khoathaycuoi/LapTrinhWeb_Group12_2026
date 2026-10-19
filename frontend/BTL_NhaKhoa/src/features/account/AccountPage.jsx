@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import ToastNotice from '../../components/ToastNotice'
+import { apiAssetUrl } from '../../lib/api'
 import { accountApi } from './accountApi'
 import './AccountPage.css'
 
@@ -37,7 +38,7 @@ function displayDate(value) {
   return `${day}/${month}/${year}`
 }
 
-export default function AccountPage({ token, role, onProfileNameChange, onPhoneChanged, onLogout }) {
+export default function AccountPage({ token, role, onProfileNameChange, onAvatarChange, onPhoneChanged, onLogout }) {
   const [profile, setProfile] = useState(null)
   const [form, setForm] = useState(null)
   const [loadState, setLoadState] = useState({ status: 'loading', error: '' })
@@ -45,6 +46,9 @@ export default function AccountPage({ token, role, onProfileNameChange, onPhoneC
   const [notice, setNotice] = useState('')
   const [profileError, setProfileError] = useState('')
   const [profileBusy, setProfileBusy] = useState(false)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+  const avatarInput = useRef(null)
   const [password, setPassword] = useState({ current: '', next: '', confirm: '' })
   const [passwordError, setPasswordError] = useState('')
   const [passwordBusy, setPasswordBusy] = useState(false)
@@ -148,11 +152,49 @@ export default function AccountPage({ token, role, onProfileNameChange, onPhoneC
   function openMode(nextMode) {
     setForm(profileForm(profile))
     setProfileError('')
+    setAvatarError('')
     setPassword({ current: '', next: '', confirm: '' })
     setPasswordError('')
     setPhone({ next: '', currentPassword: '' })
     setPhoneError('')
     setMode(nextMode)
+  }
+
+  async function uploadAvatar(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setAvatarError('')
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setAvatarError('Chọn ảnh JPG, PNG hoặc WebP không quá 2 MB.')
+      return
+    }
+    setAvatarBusy(true)
+    try {
+      const result = await accountApi.uploadAvatar(token, file)
+      setProfile((current) => ({ ...current, anhDaiDienUrl: result.anhDaiDienUrl }))
+      onAvatarChange(result.anhDaiDienUrl)
+      setNotice('Đã cập nhật ảnh đại diện.')
+    } catch (error) {
+      setAvatarError(error.message || 'Chưa tải được ảnh. Vui lòng thử lại.')
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
+
+  async function deleteAvatar() {
+    setAvatarError('')
+    setAvatarBusy(true)
+    try {
+      await accountApi.deleteAvatar(token)
+      setProfile((current) => ({ ...current, anhDaiDienUrl: null }))
+      onAvatarChange(null)
+      setNotice('Đã xóa ảnh đại diện.')
+    } catch (error) {
+      setAvatarError(error.message || 'Chưa xóa được ảnh. Vui lòng thử lại.')
+    } finally {
+      setAvatarBusy(false)
+    }
   }
 
   const roleName = role === 'QUAN_LY' ? 'Quản lý' : role === 'LE_TAN' ? 'Lễ tân' : role === 'BAC_SI' ? 'Bác sĩ' : 'Khách hàng'
@@ -164,8 +206,8 @@ export default function AccountPage({ token, role, onProfileNameChange, onPhoneC
     {loadState.status === 'error' && <div className="account-panel"><div className="alert alert-error" role="alert">{loadState.error}</div><button type="button" className="secondary-button" onClick={() => setReload((value) => value + 1)}>Thử lại</button></div>}
     {loadState.status === 'success' && form && profile && <section className="account-panel">
       <div className="account-panel-heading">
-        <div><h2>{mode === 'view' ? 'Thông tin cá nhân' : mode === 'edit' ? 'Sửa thông tin cá nhân' : mode === 'password' ? 'Đổi mật khẩu' : 'Đổi số điện thoại'}</h2>
-          {mode === 'view' && <p>{profile.id} · {roleName}</p>}</div>
+        <div className="account-panel-title">{mode === 'view' && <span className="account-avatar">{profile.anhDaiDienUrl ? <img src={apiAssetUrl(profile.anhDaiDienUrl)} alt="Ảnh đại diện" /> : (profile.ten?.trim().split(/\s+/).at(-1)?.[0]?.toLocaleUpperCase('vi-VN') || '?')}</span>}<div><h2>{mode === 'view' ? 'Thông tin cá nhân' : mode === 'edit' ? 'Sửa thông tin cá nhân' : mode === 'password' ? 'Đổi mật khẩu' : 'Đổi số điện thoại'}</h2>
+          {mode === 'view' && <p>{profile.id} · {roleName}</p>}</div></div>
         {mode === 'view' && <button type="button" className="secondary-button" onClick={() => openMode('edit')}>Sửa thông tin</button>}
       </div>
 
@@ -197,11 +239,24 @@ export default function AccountPage({ token, role, onProfileNameChange, onPhoneC
           <div><dt>Số điện thoại</dt><dd>{profile.sdt}</dd></div>
           <div><dt>Trạng thái</dt><dd>{displayValue(profile.trangThai)}</dd></div>
         </dl>
+        <div className="account-avatar-edit">
+          <span className="account-avatar account-avatar-edit-preview">{profile.anhDaiDienUrl ? <img src={apiAssetUrl(profile.anhDaiDienUrl)} alt="Ảnh đại diện" /> : (profile.ten?.trim().split(/\s+/).at(-1)?.[0]?.toLocaleUpperCase('vi-VN') || '?')}</span>
+          <div className="account-avatar-edit-content">
+            <span className="account-avatar-edit-label">Ảnh đại diện</span>
+            <div className="account-avatar-edit-actions">
+              <input ref={avatarInput} className="account-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Chọn ảnh đại diện" onChange={uploadAvatar} />
+              <button type="button" className="secondary-button" disabled={avatarBusy} onClick={() => avatarInput.current?.click()}>{avatarBusy ? 'Đang tải ảnh…' : 'Tải ảnh lên'}</button>
+              {profile.anhDaiDienUrl && <button type="button" className="secondary-button" disabled={avatarBusy} onClick={deleteAvatar}>Xóa ảnh</button>}
+            </div>
+            <small>JPG, PNG hoặc WebP · tối đa 2 MB</small>
+          </div>
+        </div>
+        {avatarError && <div className="alert alert-error" role="alert">{avatarError}</div>}
         <div className="account-grid">
           <label>Họ và tên<input name="ten" value={form.ten} maxLength="150" onChange={(event) => updateForm('ten', event.target.value)} /></label>
           <label>Giới tính<select value={form.gioiTinh} onChange={(event) => updateForm('gioiTinh', event.target.value)}><option value="">Chưa chọn</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
           <label>Ngày sinh<input name="ngaySinh" type="date" value={form.ngaySinh} onChange={(event) => updateForm('ngaySinh', event.target.value)} /></label>
-          <label className="account-wide">Địa chỉ<input value={form.diaChi} maxLength="255" onChange={(event) => updateForm('diaChi', event.target.value)} /></label>
+          <label>Địa chỉ<input value={form.diaChi} maxLength="255" onChange={(event) => updateForm('diaChi', event.target.value)} /></label>
           {role === 'BAC_SI' && <>
             <label>Bằng cấp<input value={form.bangCap} maxLength="255" onChange={(event) => updateForm('bangCap', event.target.value)} /></label>
             <label>Chứng chỉ<input value={form.chungChi} maxLength="255" onChange={(event) => updateForm('chungChi', event.target.value)} /></label>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import ListPagination from '../../components/ListPagination'
+import PersonDetailDialog from '../../components/PersonDetailDialog'
 import ToastNotice from '../../components/ToastNotice'
 import { staffApi } from './staffApi'
 import '../../components/ConfirmDialog.css'
@@ -18,7 +19,7 @@ function normalizePhone(value) {
   return phone.startsWith('+84') ? `0${phone.slice(3)}` : phone
 }
 
-export default function ManagerStaff({ token, currentPhone }) {
+export default function ManagerStaff({ token, currentPhone, currentAvatarUrl }) {
   const [group, setGroup] = useState('receptionist')
   const [keywordInput, setKeywordInput] = useState('')
   const [keyword, setKeyword] = useState('')
@@ -179,14 +180,9 @@ export default function ManagerStaff({ token, currentPhone }) {
       </article>)}</div>
       <ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} />
     </>}
-    {detailId && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailId('') }}><section className="confirm-dialog manager-staff-detail" role="dialog" aria-modal="true" aria-label="Chi tiết nhân sự">
-      <div className="manager-staff-create-heading"><h2>Nhân sự {detailId}</h2><button type="button" className="secondary-button" onClick={() => setDetailId('')}>Đóng</button></div>
-      {detail.status === 'loading' && <p>Đang tải…</p>}
-      {detail.status === 'error' && <p role="alert">{detail.error}</p>}
-      {detail.status === 'success' && detail.data && <dl><dt>Họ và tên</dt><dd>{detail.data.ten}</dd><dt>Số điện thoại</dt><dd>{detail.data.sdt}</dd><dt>Ngày sinh</dt><dd>{detail.data.ngaySinh || 'Chưa cập nhật'}</dd><dt>Giới tính</dt><dd>{detail.data.gioiTinh || 'Chưa cập nhật'}</dd><dt>Địa chỉ</dt><dd>{detail.data.diaChi || 'Chưa cập nhật'}</dd>
-        {detail.data.role === 'BAC_SI' && <><dt>Chứng chỉ</dt><dd>{detail.data.chungChi || 'Chưa cập nhật'}</dd><dt>Bằng cấp</dt><dd>{detail.data.bangCap || 'Chưa cập nhật'}</dd><dt>Năm kinh nghiệm</dt><dd>{detail.data.soNamKinhNghiem ?? 'Chưa cập nhật'}</dd></>}
-        <dt>Trạng thái</dt><dd>{detail.data.trangThai}</dd></dl>}
-    </section></div>}
+    {detailId && <PersonDetailDialog type="staff" id={detailId} detail={detail}
+      avatarUrl={detail.data && currentPhone && normalizePhone(detail.data.sdt) === normalizePhone(currentPhone) ? currentAvatarUrl : undefined}
+      onClose={() => setDetailId('')} />}
     {confirmCreate && <ConfirmDialog title={`Tạo tài khoản ${groupLabel}?`} message={`Tạo tài khoản cho ${form.ten} với số ${form.sdt}?`}
       confirmLabel={createBusy ? 'Đang tạo…' : 'Tạo tài khoản'} busy={createBusy} onConfirm={createStaff} onCancel={() => setConfirmCreate(false)} />}
     {statusTarget && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !statusBusy) setStatusTarget(null) }}><section className="confirm-dialog manager-staff-status" role="alertdialog" aria-modal="true" aria-labelledby="manager-staff-status-title">

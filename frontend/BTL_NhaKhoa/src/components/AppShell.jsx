@@ -1,10 +1,11 @@
 import { roleNavigation, roles } from '../app/roles'
+import { apiAssetUrl } from '../lib/api'
 
 import './AppShell.css'
 
 const icons = ['◫', '▦', '♙', '✚', '▤', '◈', '◷', '▧']
 
-export default function AppShell({ role, name, path, onNavigate, children }) {
+export default function AppShell({ role, name, avatarUrl, path, onNavigate, children }) {
   const info = roles[role]
   const items = roleNavigation[role] ?? []
   const activeItem = items.find(([, key]) => path.endsWith(`/${key}`)) ?? items[0]
@@ -30,7 +31,7 @@ export default function AppShell({ role, name, path, onNavigate, children }) {
     <div className="main-column">
       <header className="topbar">
         <a className="topbar-user" href={`${info.base}/tai-khoan`} onClick={(event) => { event.preventDefault(); onNavigate(`${info.base}/tai-khoan`) }} aria-label="Mở tài khoản của tôi">
-          <span className="avatar">{avatarLetter}</span><span className="user-role">{displayName}</span>
+          <span className="avatar">{avatarUrl ? <img src={apiAssetUrl(avatarUrl)} alt="" /> : avatarLetter}</span><span className="user-role">{displayName}</span>
         </a>
       </header>
       <div className="page-content">{children}</div>

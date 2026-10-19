@@ -2,6 +2,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 const TOKEN_KEY = 'nha-khoa.access-token'
 const CONNECTION_ERROR = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'
 
+export function apiAssetUrl(path) {
+  return path ? `${API_BASE_URL}${path}` : ''
+}
+
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
   set: (token) => localStorage.setItem(TOKEN_KEY, token),

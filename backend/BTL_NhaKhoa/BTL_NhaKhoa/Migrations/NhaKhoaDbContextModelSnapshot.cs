@@ -325,6 +325,11 @@ namespace BTL_NhaKhoa.Migrations
 
             modelBuilder.Entity("BTL_NhaKhoa.Entities.ConNguoi", b =>
                 {
+                    b.Property<string>("TenAnhDaiDien")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("ten_anh_dai_dien");
+
                     b.Property<ulong>("MaConNguoi")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint unsigned")

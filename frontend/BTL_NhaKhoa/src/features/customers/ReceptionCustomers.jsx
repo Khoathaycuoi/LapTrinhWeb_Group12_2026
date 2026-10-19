@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import ListPagination from '../../components/ListPagination'
+import PersonDetailDialog from '../../components/PersonDetailDialog'
 import ToastNotice from '../../components/ToastNotice'
 import { receptionCustomersApi } from './receptionCustomersApi'
 import './ReceptionCustomers.css'
@@ -150,12 +151,7 @@ export default function ReceptionCustomers({ token, onNavigate, managerMode = fa
       </article>)}</div>
       <ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} />
     </>}
-    {detailId && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailId('') }}><section className="confirm-dialog customer-detail-dialog" role="dialog" aria-modal="true" aria-label="Chi tiết khách hàng">
-      <div className="customer-panel-heading"><h2>Khách hàng {detailId}</h2><button type="button" className="secondary-button" onClick={() => setDetailId('')}>Đóng</button></div>
-      {detail.status === 'loading' && <p>Đang tải…</p>}
-      {detail.status === 'error' && <p role="alert">{detail.error}</p>}
-      {detail.status === 'success' && detail.data && <dl><dt>Họ và tên</dt><dd>{detail.data.ten}</dd><dt>Số điện thoại</dt><dd>{detail.data.sdt}</dd><dt>Ngày sinh</dt><dd>{detail.data.ngaySinh || 'Chưa cập nhật'}</dd><dt>Giới tính</dt><dd>{detail.data.gioiTinh || 'Chưa cập nhật'}</dd><dt>Địa chỉ</dt><dd>{detail.data.diaChi || 'Chưa cập nhật'}</dd><dt>Trạng thái</dt><dd>{detail.data.trangThai}</dd></dl>}
-    </section></div>}
+    {detailId && <PersonDetailDialog type="customer" id={detailId} detail={detail} onClose={() => setDetailId('')} />}
     {confirmCreate && <ConfirmDialog title="Tạo tài khoản Khách hàng?" message={`Tạo tài khoản cho ${form.ten} với số ${form.sdt}?`}
       confirmLabel={busy ? 'Đang tạo…' : 'Tạo tài khoản'} busy={busy} onConfirm={createCustomer} onCancel={() => setConfirmCreate(false)} />}
     {statusTarget && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !statusBusy) setStatusTarget(null) }}>

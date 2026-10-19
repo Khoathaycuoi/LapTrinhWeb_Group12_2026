@@ -13,6 +13,9 @@ public sealed class ThongTinCaNhanResponse
     [JsonPropertyName("sdt")]
     public string SoDienThoai { get; init; } = string.Empty;
 
+    [JsonPropertyName("anhDaiDienUrl")]
+    public string? AnhDaiDienUrl { get; init; }
+
     [JsonPropertyName("gioiTinh")]
     public string? GioiTinh { get; init; }
 
