@@ -30,7 +30,6 @@ function Metric({ label, value, description, money = false, href, onNavigate }) 
     <span className="dashboard-metric-label">{label}</span>
     <strong>{money ? moneyFormatter.format(value) : numberFormatter.format(value)}</strong>
     <span className="manager-dashboard-caption">{description}</span>
-    {href && <span className="dashboard-card-arrow" aria-hidden="true">↗</span>}
   </>
   if (!href) return <div className="dashboard-metric manager-dashboard-metric">{content}</div>
   return <a href={href} className="dashboard-card-link dashboard-metric manager-dashboard-metric"

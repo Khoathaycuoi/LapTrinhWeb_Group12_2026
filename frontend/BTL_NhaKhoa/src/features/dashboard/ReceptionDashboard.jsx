@@ -22,7 +22,7 @@ function NavigateCard({ href, label, onNavigate, className, children }) {
 
 function AppointmentPanel({ title, appointments, emptyText, href, onNavigate }) {
   return <NavigateCard href={href} className="dashboard-panel reception-dashboard-panel" label={`Mở ${title.toLocaleLowerCase('vi-VN')}`} onNavigate={onNavigate}>
-    <div className="dashboard-panel-heading"><h2>{title}</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
+    <div className="dashboard-panel-heading"><h2>{title}</h2></div>
     {appointments.length ? <ul className="reception-dashboard-list">{appointments.map((appointment) => <li key={appointment.maLichHen}>
       <span className="reception-dashboard-time">{appointmentTime(appointment.thoiGianBatDau)}</span>
       <span><strong>{appointment.tenKhachHang || appointment.maKhachHang}</strong><small>{appointment.maLichHen} · {appointment.tenBacSi || 'Chưa phân công bác sĩ'}</small></span>
@@ -66,16 +66,16 @@ export default function ReceptionDashboard({ token, onNavigate }) {
     {state.status === 'success' && data && <>
       <div className="reception-dashboard-metrics">
         <NavigateCard href="/le-tan/lich-hen" className="dashboard-metric" label="Xem lịch chờ xác nhận" onNavigate={onNavigate}>
-          <span className="dashboard-metric-label">Chờ xác nhận</span><strong>{data.soLichChoXacNhan}</strong><span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+          <span className="dashboard-metric-label">Chờ xác nhận</span><strong>{data.soLichChoXacNhan}</strong>
         </NavigateCard>
         <NavigateCard href={todayPath} className="dashboard-metric" label="Xem lịch hẹn hôm nay" onNavigate={onNavigate}>
-          <span className="dashboard-metric-label">Lịch hôm nay</span><strong>{data.soLichHomNay}</strong><span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+          <span className="dashboard-metric-label">Lịch hôm nay</span><strong>{data.soLichHomNay}</strong>
         </NavigateCard>
         <NavigateCard href="/le-tan/tiep-nhan?nhom=arrived" className="dashboard-metric" label="Xem khách đã đến chờ khám" onNavigate={onNavigate}>
-          <span className="dashboard-metric-label">Khách đã đến chờ khám</span><strong>{data.soKhachChoKham}</strong><span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+          <span className="dashboard-metric-label">Khách đã đến chờ khám</span><strong>{data.soKhachChoKham}</strong>
         </NavigateCard>
         <NavigateCard href="/le-tan/hoa-don?conNo=true" className="dashboard-metric" label="Xem hóa đơn còn nợ" onNavigate={onNavigate}>
-          <span className="dashboard-metric-label">Hóa đơn còn nợ</span><strong>{data.soHoaDonConNo}</strong><span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+          <span className="dashboard-metric-label">Hóa đơn còn nợ</span><strong>{data.soHoaDonConNo}</strong>
         </NavigateCard>
       </div>
 

@@ -80,6 +80,9 @@ export function AuthProvider({ children }) {
       tokenStore.clear()
       setSession(null)
     },
+    updateProfileName(name) {
+      setSession((current) => current ? { ...current, name } : current)
+    },
   }), [session, ready])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

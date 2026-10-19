@@ -21,8 +21,13 @@ import DoctorAppointments from '../features/appointments/DoctorAppointments'
 import DoctorRecords from '../features/records/DoctorRecords'
 import CustomerRecords from '../features/records/CustomerRecords'
 import PlaceholderPage from '../pages/PlaceholderPage'
+import AccountPage from '../features/account/AccountPage'
+import { roles } from './roles'
 
-export default function RolePage({ session, routePath, query, navigationState, onNavigate }) {
+export default function RolePage({ session, routePath, query, navigationState, onNavigate, onProfileNameChange, onPhoneChanged, onLogout }) {
+  if (routePath === `${roles[session.role]?.base}/tai-khoan`) {
+    return <AccountPage token={session.token} role={session.role} onProfileNameChange={onProfileNameChange} onPhoneChanged={onPhoneChanged} onLogout={onLogout} />
+  }
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/overview') {
     return <ManagerDashboard token={session.token} onNavigate={onNavigate} />
   }
