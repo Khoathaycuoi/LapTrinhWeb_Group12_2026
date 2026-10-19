@@ -13,6 +13,10 @@ public sealed class ThongTinCaNhanResponse
     [JsonPropertyName("sdt")]
     public string SoDienThoai { get; init; } = string.Empty;
 
+    [JsonPropertyName("maDinhDanh")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? MaDinhDanh { get; init; }
+
     [JsonPropertyName("anhDaiDienUrl")]
     public string? AnhDaiDienUrl { get; init; }
 

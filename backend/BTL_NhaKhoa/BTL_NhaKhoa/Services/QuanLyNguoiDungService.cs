@@ -111,6 +111,7 @@ public sealed class QuanLyNguoiDungService(NhaKhoaDbContext db)
             Id = maHoSo,
             Ten = conNguoi.HoTen,
             SoDienThoai = conNguoi.SoDienThoai,
+            MaDinhDanh = conNguoi.SoDinhDanh,
             AnhDaiDienUrl = TaiKhoanCaNhanService.TaoDuongDanAnh(conNguoi.TenAnhDaiDien),
             GioiTinh = conNguoi.GioiTinh,
             Role = taiKhoan.MaVaiTro switch

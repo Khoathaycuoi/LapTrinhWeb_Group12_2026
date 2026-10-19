@@ -202,6 +202,8 @@ public sealed class NguoiDungController(
     [Authorize(Roles = "QUAN_LY,LE_TAN")]
     public async Task<IActionResult> LayChiTietNguoiDung(string id)
     {
+        if (User.IsInRole("LE_TAN") && !id.StartsWith("KH_", StringComparison.OrdinalIgnoreCase))
+            return Forbid();
         var chiTiet = await quanLyNguoiDungService.LayChiTietAsync(id);
         return chiTiet == null ? NotFound("Không tìm thấy người dùng.") : Ok(chiTiet);
     }

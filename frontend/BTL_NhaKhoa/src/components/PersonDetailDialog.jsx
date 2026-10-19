@@ -38,6 +38,7 @@ export default function PersonDetailDialog({ type, id, detail, avatarUrl, onClos
         <DetailField label="Ngày sinh" value={displayDate(person.ngaySinh)} />
         <DetailField label="Giới tính" value={person.gioiTinh} />
         <DetailField label="Địa chỉ" value={person.diaChi} wide />
+        {person.maDinhDanh && <DetailField label="Mã định danh" value={person.maDinhDanh} wide />}
         {isStaff && person.role === 'BAC_SI' && <>
           <DetailField label="Bằng cấp" value={person.bangCap} />
           <DetailField label="Chứng chỉ" value={person.chungChi} />

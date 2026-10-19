@@ -62,6 +62,7 @@ public sealed class TaiKhoanCaNhanService(NhaKhoaDbContext db, IWebHostEnvironme
             Id = id,
             Ten = conNguoi.HoTen,
             SoDienThoai = conNguoi.SoDienThoai,
+            MaDinhDanh = conNguoi.SoDinhDanh,
             AnhDaiDienUrl = TaoDuongDanAnh(conNguoi.TenAnhDaiDien),
             GioiTinh = conNguoi.GioiTinh,
             Role = role,

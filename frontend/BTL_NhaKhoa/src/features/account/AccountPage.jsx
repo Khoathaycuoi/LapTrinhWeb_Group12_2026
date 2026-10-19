@@ -218,6 +218,7 @@ export default function AccountPage({ token, role, onProfileNameChange, onAvatar
           <div><dt>Giới tính</dt><dd>{displayValue(profile.gioiTinh)}</dd></div>
           <div><dt>Ngày sinh</dt><dd>{displayDate(profile.ngaySinh)}</dd></div>
           <div className="account-wide"><dt>Địa chỉ</dt><dd>{displayValue(profile.diaChi)}</dd></div>
+          {profile.maDinhDanh && <div className="account-wide"><dt>Mã định danh</dt><dd>{profile.maDinhDanh}</dd></div>}
           {role === 'BAC_SI' && <>
             <div><dt>Bằng cấp</dt><dd>{displayValue(profile.bangCap)}</dd></div>
             <div><dt>Chứng chỉ</dt><dd>{displayValue(profile.chungChi)}</dd></div>
