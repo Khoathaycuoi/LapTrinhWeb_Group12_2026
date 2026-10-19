@@ -4,6 +4,7 @@ export const doctorRecordsApi = {
   list: (token, page, unfinalized, signal) => request(`/api/ho-so-kham/cua-toi?page=${page}&pageSize=10${unfinalized ? '&chuaChot=true' : ''}`, { token, signal }),
   detail: (token, id, signal) => request(`/api/ho-so-kham/${encodeURIComponent(id)}`, { token, signal }),
   fromAppointment: (token, id, signal) => request(`/api/ho-so-kham/theo-lich/${encodeURIComponent(id)}`, { token, signal }),
+  patientHistory: (token, customerId, page, signal) => request(`/api/ho-so-kham/lich-su-khach-hang/${encodeURIComponent(customerId)}?page=${page}&pageSize=10`, { token, signal }),
   medicalHistory: (token, customerId, signal) => request(`/api/users/khach-hang/${encodeURIComponent(customerId)}/tien-su-benh`, { token, signal }),
   save: (token, id, payload) => request(`/api/ho-so-kham/${encodeURIComponent(id)}`, { token, method: 'PUT', body: JSON.stringify(payload) }),
   performService: (token, id, payload) => request(`/api/ho-so-kham/${encodeURIComponent(id)}/dich-vu-thuc-hien`, { token, method: 'POST', body: JSON.stringify(payload) }),

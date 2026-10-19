@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { bookingApi } from './bookingApi'
 import './BookingPage.css'
@@ -44,6 +44,9 @@ export default function BookingPage({ token, onNavigate, mode = 'customer', cust
   const [booking, setBooking] = useState(false)
   const [confirmBooking, setConfirmBooking] = useState(false)
   const [bookingError, setBookingError] = useState('')
+  const [draftReady, setDraftReady] = useState(atReception)
+  const [draftError, setDraftError] = useState('')
+  const draftSaveQueue = useRef(Promise.resolve())
 
   useEffect(() => {
     const controller = new AbortController()
@@ -51,16 +54,46 @@ export default function BookingPage({ token, onNavigate, mode = 'customer', cust
     Promise.all([
       bookingApi.services(token, controller.signal),
       bookingApi.doctors(token, controller.signal),
-    ]).then(([services, doctors]) => {
+      atReception ? Promise.resolve(null) : bookingApi.draft(token, controller.signal).catch(() => null),
+    ]).then(([services, doctors, draft]) => {
       if (!active) return
-      setCatalog(Array.isArray(services) && Array.isArray(doctors)
-        ? { status: 'success', services, doctors, error: '' }
-        : { status: 'error', services: [], doctors: [], error: 'Máy chủ chưa trả danh sách dịch vụ và bác sĩ.' })
+      if (!Array.isArray(services) || !Array.isArray(doctors)) {
+        setCatalog({ status: 'error', services: [], doctors: [], error: 'Máy chủ chưa trả thông tin đặt lịch hợp lệ.' })
+        return
+      }
+      if (!atReception) {
+        if (!draft) setDraftError('Chưa tải được bản nháp. Bạn vẫn có thể đặt lịch, nhưng lựa chọn có thể mất khi tải lại trang.')
+        const serviceIds = Array.isArray(draft?.danhSachMaDichVu)
+          ? draft.danhSachMaDichVu.filter((id) => services.some((service) => service.maDichVu === id)) : []
+        const restoredDoctor = doctors.some((doctor) => doctor.id === draft?.maBacSi) ? draft.maBacSi : ''
+        const restoredDate = typeof draft?.ngayHen === 'string' && draft.ngayHen >= todayLocal() ? draft.ngayHen : ''
+        const restoredStep = Math.min(3, Math.max(1, Number(draft?.buoc) || 1))
+        setSelectedServiceIds(serviceIds)
+        setDoctorId(restoredDoctor)
+        setDate(restoredDate)
+        setSelectedTime(restoredDate && typeof draft?.gioHen === 'string' ? draft.gioHen : '')
+        setStep(serviceIds.length ? restoredDate ? restoredStep : Math.min(restoredStep, 2) : 1)
+        setDraftReady(true)
+      }
+      setCatalog({ status: 'success', services, doctors, error: '' })
     }).catch((error) => {
       if (active) setCatalog({ status: 'error', services: [], doctors: [], error: error.message })
     })
     return () => { active = false; controller.abort() }
-  }, [token, catalogReload])
+  }, [token, catalogReload, atReception])
+
+  const queueDraftSave = useCallback((payload) => {
+    const save = draftSaveQueue.current.catch(() => {}).then(() => bookingApi.saveDraft(token, payload))
+    draftSaveQueue.current = save
+    save.then(() => setDraftError('')).catch(() => setDraftError('Chưa lưu được bản nháp. Vui lòng kiểm tra kết nối.'))
+    return save
+  }, [token])
+
+  useEffect(() => {
+    if (atReception || !draftReady || catalog.status !== 'success' || booking) return
+    queueDraftSave({ danhSachMaDichVu: selectedServiceIds, maBacSi: doctorId || null,
+      ngayHen: date || null, gioHen: selectedTime || null, buoc: step })
+  }, [atReception, draftReady, catalog.status, booking, selectedServiceIds, doctorId, date, selectedTime, step, queueDraftSave])
 
   const selectedServices = catalog.services.filter((service) => selectedServiceIds.includes(service.maDichVu))
   const totalMinutes = selectedServices.reduce((sum, service) => sum + Number(service.thoiLuongDuKienPhut), 0)
@@ -88,6 +121,7 @@ export default function BookingPage({ token, onNavigate, mode = 'customer', cust
         const times = [...new Set(fulfilled.flatMap((result) => result.value))].sort()
         setSlots({ key: slotKey, status: 'success', times, error: '',
           warning: rejected.length || invalidCount ? 'Một số bác sĩ chưa trả được giờ trống. Danh sách dưới đây chỉ gồm các giờ đã tra cứu thành công.' : '' })
+        setSelectedTime((current) => current && !times.includes(current) ? '' : current)
       })
 
     return () => { active = false; controller.abort() }
@@ -133,6 +167,10 @@ export default function BookingPage({ token, onNavigate, mode = 'customer', cust
     if (booking) return
     setBooking(true)
     try {
+      if (!atReception) {
+        await queueDraftSave({ danhSachMaDichVu: selectedServiceIds, maBacSi: doctorId || null,
+          ngayHen: date, gioHen: selectedTime, buoc: step }).catch(() => {})
+      }
       const response = await bookingApi.book(token, {
         ...(atReception ? { maKhachHang: customerId } : {}),
         ...(doctorId ? { maBacSi: doctorId } : {}),
@@ -170,6 +208,7 @@ export default function BookingPage({ token, onNavigate, mode = 'customer', cust
     </div>}
 
     {catalog.status === 'success' && <form onSubmit={(event) => { if (step === 3) submit(event); else { event.preventDefault(); nextStep() } }} className="booking-form">
+      {draftError && !atReception && <div className="alert alert-error" role="status">{draftError}</div>}
       <ol className="booking-stepper" aria-label="Các bước đặt lịch">
         {steps.map((label, index) => <li key={label} className={step === index + 1 ? 'active' : step > index + 1 ? 'completed' : ''} aria-current={step === index + 1 ? 'step' : undefined}>
           <span>{String(index + 1).padStart(2, '0')}</span><strong>{label}</strong>

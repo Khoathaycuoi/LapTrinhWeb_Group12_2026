@@ -13,4 +13,10 @@ export const bookingApi = {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
+  draft: (token, signal) => request('/api/lich-hen/ban-nhap-cua-toi', { token, signal }),
+  saveDraft: (token, payload) => request('/api/lich-hen/ban-nhap-cua-toi', {
+    token,
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }),
 }

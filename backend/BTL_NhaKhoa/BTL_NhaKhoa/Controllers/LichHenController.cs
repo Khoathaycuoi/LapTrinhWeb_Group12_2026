@@ -3,6 +3,7 @@ using BTL_NhaKhoa.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace BTL_NhaKhoa.Controllers;
 
@@ -13,6 +14,9 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
     QuanLyLichHenService quanLyLichHenService,
     QuanLyKhamBenhService quanLyKhamBenhService) : ControllerBase
 {
+    private const string KhoaBanNhap = "dat-lich:ban-nhap";
+    private const string KhoaChuBanNhap = "dat-lich:ma-tai-khoan";
+
     [HttpPost("dat-lich")]
     [Authorize(Roles = "KHACH_HANG,LE_TAN,QUAN_LY")]
     public async Task<IActionResult> DatLich([FromBody] DatLichRequest yeuCau)
@@ -20,7 +24,73 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
         if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
         var ketQua = await quanLyLichHenService.DatAsync(yeuCau, maTaiKhoan);
         if (ketQua.Loi != null) return Loi(ketQua);
+        if (User.IsInRole("KHACH_HANG"))
+        {
+            await HttpContext.Session.LoadAsync();
+            XoaBanNhap();
+        }
         return Content($"Đặt lịch hẹn thành công! Mã lịch hẹn: {ketQua.MaLichHen}", "text/plain");
+    }
+
+    [HttpGet("ban-nhap-cua-toi")]
+    [Authorize(Roles = "KHACH_HANG")]
+    public async Task<IActionResult> LayBanNhap()
+    {
+        if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        await HttpContext.Session.LoadAsync();
+        var session = HttpContext.Session;
+        if (session.GetString(KhoaChuBanNhap) != maTaiKhoan.ToString())
+        {
+            XoaBanNhap();
+            return Ok(new BanNhapDatLichResponse());
+        }
+
+        var json = session.GetString(KhoaBanNhap);
+        if (json == null) return Ok(new BanNhapDatLichResponse());
+        try
+        {
+            return Ok(JsonSerializer.Deserialize<BanNhapDatLichResponse>(json)
+                ?? new BanNhapDatLichResponse());
+        }
+        catch (JsonException)
+        {
+            XoaBanNhap();
+            return Ok(new BanNhapDatLichResponse());
+        }
+    }
+
+    [HttpPut("ban-nhap-cua-toi")]
+    [Authorize(Roles = "KHACH_HANG")]
+    public async Task<IActionResult> LuuBanNhap([FromBody] BanNhapDatLichRequest yeuCau)
+    {
+        if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        if (yeuCau.DanhSachMaDichVu is null ||
+            yeuCau.DanhSachMaDichVu.Any(x => string.IsNullOrWhiteSpace(x) || x.Length > 32))
+            return BadRequest("Danh sách dịch vụ trong bản nháp không hợp lệ.");
+
+        var banNhap = new BanNhapDatLichResponse
+        {
+            DanhSachMaDichVu = yeuCau.DanhSachMaDichVu.Distinct().ToList(),
+            MaBacSi = yeuCau.MaBacSi,
+            NgayHen = yeuCau.NgayHen,
+            GioHen = yeuCau.GioHen,
+            Buoc = yeuCau.Buoc
+        };
+        await HttpContext.Session.LoadAsync();
+        HttpContext.Session.SetString(KhoaChuBanNhap, maTaiKhoan.ToString());
+        HttpContext.Session.SetString(KhoaBanNhap, JsonSerializer.Serialize(banNhap));
+        return NoContent();
+    }
+
+    [HttpDelete("ban-nhap-cua-toi")]
+    [Authorize(Roles = "KHACH_HANG")]
+    public async Task<IActionResult> XoaBanNhapCuaToi()
+    {
+        if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        await HttpContext.Session.LoadAsync();
+        if (HttpContext.Session.GetString(KhoaChuBanNhap) == maTaiKhoan.ToString())
+            XoaBanNhap();
+        return NoContent();
     }
 
     [HttpGet("all")]
@@ -207,6 +277,12 @@ public sealed class LichHenController(HuyLichHenService huyLichHenService,
 
     private bool ThuDocTaiKhoan(out ulong maTaiKhoan) =>
         ulong.TryParse(User.FindFirstValue("ma_tai_khoan"), out maTaiKhoan);
+
+    private void XoaBanNhap()
+    {
+        HttpContext.Session.Remove(KhoaChuBanNhap);
+        HttpContext.Session.Remove(KhoaBanNhap);
+    }
 
     private static bool PhanTrangHopLe(int page, int pageSize) =>
         page >= 1 && pageSize is >= 1 and <= 50 && (long)(page - 1) * pageSize <= int.MaxValue;

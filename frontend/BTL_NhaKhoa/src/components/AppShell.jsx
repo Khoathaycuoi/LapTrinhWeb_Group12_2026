@@ -1,13 +1,11 @@
 import { roleNavigation, roles } from '../app/roles'
+import { apiAssetUrl } from '../lib/api'
 
-import { useState } from 'react'
-import ConfirmDialog from './ConfirmDialog'
 import './AppShell.css'
 
 const icons = ['◫', '▦', '♙', '✚', '▤', '◈', '◷', '▧']
 
-export default function AppShell({ role, name, path, onNavigate, onLogout, children }) {
-  const [confirmLogout, setConfirmLogout] = useState(false)
+export default function AppShell({ role, name, avatarUrl, path, onNavigate, children }) {
   const info = roles[role]
   const items = roleNavigation[role] ?? []
   const activeItem = items.find(([, key]) => path.endsWith(`/${key}`)) ?? items[0]
@@ -25,17 +23,18 @@ export default function AppShell({ role, name, path, onNavigate, onLogout, child
           const href = `${info.base}/${key}`
           const selected = activeItem?.[1] === key
           return <a key={key} href={href} className={selected ? 'nav-link active' : 'nav-link'} aria-current={selected ? 'page' : undefined}
-            onClick={(event) => { event.preventDefault(); onNavigate(href) }}><span className="nav-icon">{icons[index % icons.length]}</span>{label}</a>
+            onClick={(event) => { event.preventDefault(); onNavigate(href) }}><span className="nav-icon">{key === 'tai-khoan' ? '◉' : icons[index % icons.length]}</span>{label}</a>
         })}
       </nav>
       <div className="sidebar-bottom"><span className="online-dot" />Hệ thống phòng khám</div>
     </aside>
     <div className="main-column">
       <header className="topbar">
-        <div className="topbar-user"><span className="avatar">{avatarLetter}</span><span className="user-role">{displayName}</span><button className="logout-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button></div>
+        <a className="topbar-user" href={`${info.base}/tai-khoan`} onClick={(event) => { event.preventDefault(); onNavigate(`${info.base}/tai-khoan`) }} aria-label="Mở tài khoản của tôi">
+          <span className="avatar">{avatarUrl ? <img src={apiAssetUrl(avatarUrl)} alt="" /> : avatarLetter}</span><span className="user-role">{displayName}</span>
+        </a>
       </header>
       <div className="page-content">{children}</div>
     </div>
-    {confirmLogout && <ConfirmDialog title="Xác nhận đăng xuất" message="Bạn có chắc muốn kết thúc phiên đăng nhập hiện tại?" confirmLabel="Đăng xuất" onCancel={() => setConfirmLogout(false)} onConfirm={onLogout} />}
   </div>
 }

@@ -24,15 +24,12 @@
 .manager-staff-list article span { color: var(--color-primary); font-size: 11px; font-weight: 700; }
 .manager-staff-list h2 { margin: 5px 0; color: var(--color-text); font-size: 16px; }
 .manager-staff-list p { margin: 0; color: var(--color-muted); font-size: 12px; }
+.manager-staff-list article .manager-staff-state { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #F1F3F8; color: #69758D; font-size: 11px; font-weight: 700; }
+.manager-staff-list article .manager-staff-state-active { background: #E7F7EE; color: #287A54; }
 .manager-staff-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.manager-staff-detail { width: min(100%, 520px); text-align: left; }
-.manager-staff-detail dl { display: grid; grid-template-columns: 130px 1fr; gap: 12px; margin: 22px 0 0; font-size: 12px; }
-.manager-staff-detail dt { color: var(--color-muted); }
-.manager-staff-detail dd { margin: 0; color: var(--color-text); font-weight: 700; overflow-wrap: anywhere; }
 @media (max-width: 620px) {
   .manager-staff-heading, .manager-staff-list article { align-items: stretch; flex-direction: column; }
   .manager-staff-form { grid-template-columns: 1fr; }
   .manager-staff-tabs { display: flex; }
   .manager-staff-tabs button { flex: 1; }
-  .manager-staff-detail dl { grid-template-columns: 110px 1fr; }
 }

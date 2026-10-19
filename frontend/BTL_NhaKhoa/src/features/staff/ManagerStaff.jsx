@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import ListPagination from '../../components/ListPagination'
+import PersonDetailDialog from '../../components/PersonDetailDialog'
 import ToastNotice from '../../components/ToastNotice'
 import { staffApi } from './staffApi'
 import '../../components/ConfirmDialog.css'
@@ -18,7 +19,7 @@ function normalizePhone(value) {
   return phone.startsWith('+84') ? `0${phone.slice(3)}` : phone
 }
 
-export default function ManagerStaff({ token, currentPhone }) {
+export default function ManagerStaff({ token, currentPhone, currentAvatarUrl }) {
   const [group, setGroup] = useState('receptionist')
   const [keywordInput, setKeywordInput] = useState('')
   const [keyword, setKeyword] = useState('')
@@ -41,7 +42,7 @@ export default function ManagerStaff({ token, currentPhone }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     staffApi.list(token, group, keyword, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -61,7 +62,7 @@ export default function ManagerStaff({ token, currentPhone }) {
   useEffect(() => {
     if (!detailId) return undefined
     const controller = new AbortController()
-    setDetail({ status: 'loading', data: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setDetail({ status: 'loading', data: null, error: '' }) })
     staffApi.detail(token, detailId, controller.signal).then((data) => {
       if (!controller.signal.aborted) setDetail({ status: 'success', data, error: '' })
     }).catch((error) => {
@@ -171,7 +172,7 @@ export default function ManagerStaff({ token, currentPhone }) {
     {list.status === 'success' && <><p className="manager-staff-count">{list.totalItems} {groupLabel.toLocaleLowerCase('vi-VN')}</p>
       {list.items.length === 0 && <div className="manager-staff-feedback">Không có nhân sự phù hợp.</div>}
       <div className="manager-staff-list">{list.items.map((person) => <article key={person.id}>
-        <div><span>{person.id}</span><h2>{person.ten}</h2><p>{person.sdt} · {person.trangThai}</p></div>
+        <div><span>{person.id}</span><h2>{person.ten}</h2><p>{person.sdt} · <span className={`manager-staff-state ${person.trangThai === 'Hoạt động' ? 'manager-staff-state-active' : 'manager-staff-state-inactive'}`}>{person.trangThai}</span></p></div>
         <div className="manager-staff-actions"><button type="button" className="secondary-button" onClick={() => setDetailId(person.id)}>Chi tiết</button>
           {!(person.trangThai === 'Hoạt động' && currentPhone && normalizePhone(person.sdt) === normalizePhone(currentPhone)) &&
             <button type="button" className="secondary-button" onClick={() => { setStatusTarget({ person, active: person.trangThai !== 'Hoạt động' }); setStatusError('') }}>
@@ -179,14 +180,9 @@ export default function ManagerStaff({ token, currentPhone }) {
       </article>)}</div>
       <ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} />
     </>}
-    {detailId && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailId('') }}><section className="confirm-dialog manager-staff-detail" role="dialog" aria-modal="true" aria-label="Chi tiết nhân sự">
-      <div className="manager-staff-create-heading"><h2>Nhân sự {detailId}</h2><button type="button" className="secondary-button" onClick={() => setDetailId('')}>Đóng</button></div>
-      {detail.status === 'loading' && <p>Đang tải…</p>}
-      {detail.status === 'error' && <p role="alert">{detail.error}</p>}
-      {detail.status === 'success' && detail.data && <dl><dt>Họ và tên</dt><dd>{detail.data.ten}</dd><dt>Số điện thoại</dt><dd>{detail.data.sdt}</dd><dt>Ngày sinh</dt><dd>{detail.data.ngaySinh || 'Chưa cập nhật'}</dd><dt>Giới tính</dt><dd>{detail.data.gioiTinh || 'Chưa cập nhật'}</dd><dt>Địa chỉ</dt><dd>{detail.data.diaChi || 'Chưa cập nhật'}</dd>
-        {detail.data.role === 'BAC_SI' && <><dt>Chứng chỉ</dt><dd>{detail.data.chungChi || 'Chưa cập nhật'}</dd><dt>Bằng cấp</dt><dd>{detail.data.bangCap || 'Chưa cập nhật'}</dd><dt>Năm kinh nghiệm</dt><dd>{detail.data.soNamKinhNghiem ?? 'Chưa cập nhật'}</dd></>}
-        <dt>Trạng thái</dt><dd>{detail.data.trangThai}</dd></dl>}
-    </section></div>}
+    {detailId && <PersonDetailDialog type="staff" id={detailId} detail={detail}
+      avatarUrl={detail.data && currentPhone && normalizePhone(detail.data.sdt) === normalizePhone(currentPhone) ? currentAvatarUrl : undefined}
+      onClose={() => setDetailId('')} />}
     {confirmCreate && <ConfirmDialog title={`Tạo tài khoản ${groupLabel}?`} message={`Tạo tài khoản cho ${form.ten} với số ${form.sdt}?`}
       confirmLabel={createBusy ? 'Đang tạo…' : 'Tạo tài khoản'} busy={createBusy} onConfirm={createStaff} onCancel={() => setConfirmCreate(false)} />}
     {statusTarget && <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !statusBusy) setStatusTarget(null) }}><section className="confirm-dialog manager-staff-status" role="alertdialog" aria-modal="true" aria-labelledby="manager-staff-status-title">

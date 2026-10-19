@@ -11,7 +11,7 @@ import UnsupportedRolePage from './pages/UnsupportedRolePage'
 import './App.css'
 
 function AppContent() {
-  const { session, ready, login, logout } = useAuth()
+  const { session, ready, login, logout, updateProfileName, updateAvatar } = useAuth()
   const [path, setPath] = useState(window.location.pathname + window.location.search)
   const [registrationResult, setRegistrationResult] = useState(null)
 
@@ -62,8 +62,12 @@ function AppContent() {
 
   if (!roles[session.role]) return <UnsupportedRolePage onLogout={signOut} />
 
-  return <AppShell role={session.role} name={session.name} path={routePath} onNavigate={navigate} onLogout={signOut}>
-    <RolePage session={session} routePath={routePath} query={query} navigationState={window.history.state} onNavigate={navigate} />
+  return <AppShell role={session.role} name={session.name} avatarUrl={session.avatarUrl} path={routePath} onNavigate={navigate}>
+    <RolePage session={session} routePath={routePath} query={query} navigationState={window.history.state} onNavigate={navigate}
+      onProfileNameChange={updateProfileName}
+      onAvatarChange={updateAvatar}
+      onPhoneChanged={(phone) => { setRegistrationResult({ phone, message: 'Đổi số điện thoại thành công. Vui lòng đăng nhập lại.' }); signOut() }}
+      onLogout={signOut} />
   </AppShell>
 }
 

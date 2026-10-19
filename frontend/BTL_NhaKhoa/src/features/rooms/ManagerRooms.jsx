@@ -34,7 +34,7 @@ function RoomHistory({ token, room, onClose }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     roomsApi.history(token, room.maPhong, dates, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -103,7 +103,7 @@ export default function ManagerRooms({ token }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     roomsApi.list(token, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -170,7 +170,7 @@ export default function ManagerRooms({ token }) {
     {list.status === 'success' && <><p className="manager-room-count">{list.totalItems} phòng</p>
       {list.items.length === 0 && <div className="manager-room-feedback">Chưa có phòng nào.</div>}
       <div className="manager-room-list">{list.items.map((room) => <article key={room.maPhong}>
-        <div><span>{room.maPhong}</span><h2>{room.tenPhong}</h2><p>Trạng thái vận hành: {statuses[room.trangThai] || room.trangThai}</p></div>
+        <div><span>{room.maPhong}</span><h2>{room.tenPhong}</h2><p>Trạng thái vận hành: <span className={`manager-room-state manager-room-state-${room.trangThai}`}>{statuses[room.trangThai] || room.trangThai}</span></p></div>
         <div className="manager-room-actions"><button type="button" className="secondary-button" onClick={() => setHistoryRoom(room)}>Lịch sử</button>
           <label>Đổi trạng thái<select value={room.trangThai} onChange={(event) => { setStatusTarget({ room, status: event.target.value }); setStatusError('') }}>
             {Object.entries(statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>

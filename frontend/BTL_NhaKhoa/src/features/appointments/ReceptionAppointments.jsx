@@ -171,14 +171,16 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
   const [notice, setNotice] = useState('')
   const [expandedId, setExpandedId] = useState(null)
 
-  useEffect(() => { if (arrivalNotice) setNotice(arrivalNotice) }, [arrivalNotice])
+  useEffect(() => { if (arrivalNotice) queueMicrotask(() => setNotice(arrivalNotice)) }, [arrivalNotice])
 
   useEffect(() => {
     const params = new URLSearchParams(query)
-    setTab(params.get('tab') === 'pending' ? 'pending' : params.has('ngayHen') ? 'all' : defaultTab)
-    setDate(params.get('ngayHen') || '')
-    setTrackedOnly(params.get('nhom') === 'tracked')
-    setPage(1)
+    queueMicrotask(() => {
+      setTab(params.get('tab') === 'pending' ? 'pending' : params.has('ngayHen') ? 'all' : defaultTab)
+      setDate(params.get('ngayHen') || '')
+      setTrackedOnly(params.get('nhom') === 'tracked')
+      setPage(1)
+    })
   }, [query, defaultTab])
 
   useEffect(() => {
@@ -193,7 +195,7 @@ export default function ReceptionAppointments({ token, query = '', arrivalNotice
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     receptionAppointmentsApi.list(token, {
       status: tab === 'pending' ? 'CHO_XAC_NHAN' : '', upcoming: tab === 'pending', tracked: tab === 'all' && trackedOnly,
       date, customer, page, pageSize,

@@ -7,7 +7,7 @@ export default function ToastNotice({ message, onDismiss, tone = 'success' }) {
   useEffect(() => { onDismissRef.current = onDismiss }, [onDismiss])
 
   useEffect(() => {
-    if (!message || !onDismiss) return undefined
+    if (!message || !onDismissRef.current) return undefined
     const timer = window.setTimeout(() => onDismissRef.current?.(), tone === 'error' ? 6000 : 4000)
     return () => window.clearTimeout(timer)
   }, [message, tone])

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import ListPagination from '../../components/ListPagination'
 import { doctorRecordsApi } from './doctorRecordsApi'
 import DoctorRecordDetail from './DoctorRecordDetail'
+import DoctorPatientHistory from './DoctorPatientHistory'
 import './DoctorRecords.css'
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
@@ -10,15 +11,18 @@ export default function DoctorRecords({ token, query = '', navigationState, onNa
   const params = new URLSearchParams(query)
   const recordId = params.get('maHoSoKham')
   const appointmentId = params.get('maLichHen')
+  const customerId = params.get('maKhachHang')
+  const sourceRecordId = params.get('tuHoSo')
+  const fromAppointments = params.get('tuLich') === 'true'
   const unfinalized = params.get('chuaChot') === 'true'
   const [page, setPage] = useState(1)
   const [reload, setReload] = useState(0)
   const [list, setList] = useState({ status: 'loading', items: [], totalItems: 0, error: '' })
 
   useEffect(() => {
-    if (recordId || appointmentId) return undefined
+    if (recordId || appointmentId || customerId) return undefined
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     doctorRecordsApi.list(token, page, unfinalized, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -33,10 +37,16 @@ export default function DoctorRecords({ token, query = '', navigationState, onNa
         error: error.status === 0 ? error.message : 'Chưa tải được hồ sơ khám.' })
     })
     return () => controller.abort()
-  }, [token, page, reload, recordId, appointmentId, unfinalized])
+  }, [token, page, reload, recordId, appointmentId, customerId, unfinalized])
+
+  if (customerId) return <DoctorPatientHistory token={token} customerId={customerId} recordId={recordId} sourceRecordId={sourceRecordId} fromAppointments={fromAppointments}
+    onNavigate={onNavigate} onBack={() => onNavigate(sourceRecordId
+      ? `/bac-si/ho-so-kham?maHoSoKham=${encodeURIComponent(sourceRecordId)}`
+      : fromAppointments ? '/bac-si/lich-hen' : '/bac-si/ho-so-kham')} />
 
   if (recordId || appointmentId) return <DoctorRecordDetail key={recordId || appointmentId} token={token}
     recordId={recordId} appointmentId={appointmentId} initialNotice={navigationState?.notice}
+    onOpenHistory={(maKhachHang, maHoSoKham) => onNavigate(`/bac-si/ho-so-kham?maKhachHang=${encodeURIComponent(maKhachHang)}&tuHoSo=${encodeURIComponent(maHoSoKham)}`)}
     onBack={() => { setReload((value) => value + 1); onNavigate(unfinalized ? '/bac-si/ho-so-kham?chuaChot=true' : '/bac-si/ho-so-kham') }} />
 
   return <div className="doctor-records">

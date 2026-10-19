@@ -10,12 +10,63 @@ const reviewLabels = {
   CHUA_HOAN_TAT: 'Chưa hoàn tất', CHO_DUYET: 'Chờ duyệt',
   DA_DUYET: 'Đã duyệt', TU_CHOI: 'Bị từ chối',
 }
+const periodLabels = {
+  CHUA_XAC_DINH: 'Chưa xác định', LAM_VIEC: 'Làm việc',
+  NGHI_PHEP: 'Nghỉ phép', VANG_KHONG_PHEP: 'Vắng không phép',
+}
 const reviewLabel = (value) => reviewLabels[value] || 'Chưa xác định'
+const periodLabel = (value) => periodLabels[value] || 'Chưa xác định'
+const reviewTone = { CHUA_HOAN_TAT: 'pending', CHO_DUYET: 'processing', DA_DUYET: 'success', TU_CHOI: 'error' }
+const periodTone = { CHUA_XAC_DINH: 'neutral', LAM_VIEC: 'success', NGHI_PHEP: 'pending', VANG_KHONG_PHEP: 'error' }
+const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
 
 function time(value) {
   if (!value) return '—'
   const parsed = new Date(value)
   return Number.isNaN(parsed.getTime()) ? '—' : timeFormatter.format(parsed)
+}
+
+function dateTime(value) {
+  if (!value) return '—'
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? '—' : dateTimeFormatter.format(parsed)
+}
+
+function HistoryPeriod({ title, state, start, end, late, early, reason }) {
+  return <div className="attendance-history-period">
+    <div className="attendance-history-period-heading"><h3>{title}</h3><span className={`attendance-status attendance-status-${periodTone[state] || 'neutral'}`}>{periodLabel(state)}</span></div>
+    <p>Giờ vào: {time(start)} · Giờ ra: {time(end)}</p>
+    {late > 0 && <p className="attendance-history-warning">Đi trễ: {late} phút</p>}
+    {early > 0 && <p className="attendance-history-warning">Về sớm: {early} phút</p>}
+    {reason && <p>Lý do: {reason}</p>}
+  </div>
+}
+
+function HistoryItem({ item }) {
+  const [expanded, setExpanded] = useState(false)
+  const detailId = `attendance-detail-${item.maChamCong}`
+  return <article>
+    <div className="attendance-history-day"><strong>{item.ngayChamCong}</strong><span className={`attendance-status attendance-status-${reviewTone[item.trangThaiDuyet] || 'neutral'}`}>{reviewLabel(item.trangThaiDuyet)}</span>
+      <button type="button" className="attendance-history-toggle" aria-expanded={expanded} aria-controls={detailId} onClick={() => setExpanded((value) => !value)}>{expanded ? 'Thu gọn' : 'Chi tiết'}</button>
+    </div>
+    <div>Sáng: {time(item.gioVaoSang)} – {time(item.gioRaSang)}</div>
+    <div>Chiều: {time(item.gioVaoChieu)} – {time(item.gioRaChieu)}</div>
+    <div className="attendance-history-duration">{Math.floor(item.tongPhutLamViec / 60)} giờ {item.tongPhutLamViec % 60} phút</div>
+    {item.lyDoTuChoi && !expanded && <small className="attendance-history-rejected">Lý do từ chối: {item.lyDoTuChoi}</small>}
+    {expanded && <div id={detailId} className="attendance-history-detail">
+      <div className="attendance-history-periods">
+        <HistoryPeriod title="Buổi sáng" state={item.tinhTrangSang} start={item.gioVaoSang} end={item.gioRaSang} late={item.soPhutTreSang} early={item.soPhutVeSomSang} reason={item.lyDoSang} />
+        <HistoryPeriod title="Buổi chiều" state={item.tinhTrangChieu} start={item.gioVaoChieu} end={item.gioRaChieu} late={item.soPhutTreChieu} early={item.soPhutVeSomChieu} reason={item.lyDoChieu} />
+      </div>
+      {item.nguoiDuyet && <p className="attendance-history-approved">Đã duyệt bởi {item.nguoiDuyet} lúc {dateTime(item.duyetLuc)}.</p>}
+      {item.lyDoTuChoi && <p className="attendance-history-rejected">Bị từ chối bởi {item.nguoiTuChoi || 'Quản lý'} lúc {dateTime(item.tuChoiLuc)}. Lý do: {item.lyDoTuChoi}</p>}
+      {item.lichSuChinhSua?.length > 0 && <div className="attendance-history-changes"><h3>Lịch sử chỉnh sửa</h3><ul>{item.lichSuChinhSua.map((change, index) => <li key={`${change.thoiDiemSua}-${index}`}>
+        <strong>{dateTime(change.thoiDiemSua)} · {change.nguoiSua}</strong>
+        <span>Buổi {change.buoi === 'SANG' ? 'sáng' : 'chiều'}: {periodLabel(change.tinhTrangCu)} → {periodLabel(change.tinhTrangMoi)}; {time(change.gioVaoCu)}–{time(change.gioRaCu)} → {time(change.gioVaoMoi)}–{time(change.gioRaMoi)}</span>
+        <span>Lý do: {change.lyDo}</span>
+      </li>)}</ul></div>}
+    </div>}
+  </article>
 }
 
 function AttendancePeriod({ title, start, end, canIn, canOut, onAction }) {
@@ -41,7 +92,7 @@ export default function ReceptionAttendance({ token }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setToday({ status: 'loading', data: null, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setToday({ status: 'loading', data: null, error: '' }) })
     attendanceApi.today(token, controller.signal).then((data) => {
       if (!controller.signal.aborted) setToday({ status: 'success', data, error: '' })
     }).catch((error) => {
@@ -53,7 +104,7 @@ export default function ReceptionAttendance({ token }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setHistory({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setHistory({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     attendanceApi.history(token, page, dateRange, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -127,7 +178,7 @@ export default function ReceptionAttendance({ token }) {
     {today.status === 'error' && <div className="attendance-feedback" role="alert"><p>{today.error}</p><button type="button" className="secondary-button" onClick={() => setTodayReload((value) => value + 1)}>Thử lại</button></div>}
     {today.status === 'success' && <><div className="attendance-periods"><AttendancePeriod title="Buổi sáng" start={record?.gioVaoSang} end={record?.gioRaSang} canIn={today.data.coTheCheckInSang} canOut={today.data.coTheCheckOutSang} onAction={(type) => setPending({ type, period: 'SANG' })} />
         <AttendancePeriod title="Buổi chiều" start={record?.gioVaoChieu} end={record?.gioRaChieu} canIn={today.data.coTheCheckInChieu} canOut={today.data.coTheCheckOutChieu} onAction={(type) => setPending({ type, period: 'CHIEU' })} /></div>
-      <p className="attendance-review">{record ? `Trạng thái ngày: ${reviewLabel(record.trangThaiDuyet)}` : 'Hôm nay chưa có bản ghi chấm công.'}{record?.lyDoTuChoi && ` Lý do từ chối: ${record.lyDoTuChoi}`}</p>
+      <p className="attendance-review">{record ? <>Trạng thái ngày: <span className={`attendance-status attendance-status-${reviewTone[record.trangThaiDuyet] || 'neutral'}`}>{reviewLabel(record.trangThaiDuyet)}</span></> : 'Hôm nay chưa có bản ghi chấm công.'}{record?.lyDoTuChoi && <span className="attendance-history-rejected"> Lý do từ chối: {record.lyDoTuChoi}</span>}</p>
     </>}
     <section className="attendance-history"><h2>Lịch sử chấm công</h2>
       <form className="attendance-date-filter" onSubmit={applyDateFilter}>
@@ -140,7 +191,7 @@ export default function ReceptionAttendance({ token }) {
       {history.status === 'loading' && <p role="status">Đang tải lịch sử…</p>}
       {history.status === 'error' && <div role="alert"><p>{history.error}</p><button type="button" className="secondary-button" onClick={() => setHistoryReload((value) => value + 1)}>Thử lại</button></div>}
       {history.status === 'success' && <>{history.items.length === 0 && <p>{dateRange.fromDate || dateRange.toDate ? 'Không có bản ghi chấm công trong khoảng ngày đã chọn.' : 'Chưa có bản ghi chấm công.'}</p>}
-        <div className="attendance-history-list">{history.items.map((item) => <article key={item.maChamCong}><div><strong>{item.ngayChamCong}</strong><span>{reviewLabel(item.trangThaiDuyet)}</span></div><div>Sáng: {time(item.gioVaoSang)} – {time(item.gioRaSang)}</div><div>Chiều: {time(item.gioVaoChieu)} – {time(item.gioRaChieu)}</div><div>{Math.floor(item.tongPhutLamViec / 60)} giờ {item.tongPhutLamViec % 60} phút</div>{item.lyDoTuChoi && <small>Lý do từ chối: {item.lyDoTuChoi}</small>}</article>)}</div>
+        <div className="attendance-history-list">{history.items.map((item) => <HistoryItem key={item.maChamCong} item={item} />)}</div>
         <ListPagination page={page} pageSize={10} totalItems={history.totalItems} onPageChange={setPage} />
       </>}
     </section>

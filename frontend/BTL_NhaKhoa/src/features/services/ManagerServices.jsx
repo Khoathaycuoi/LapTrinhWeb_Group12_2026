@@ -26,7 +26,7 @@ export default function ManagerServices({ token }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    setList({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setList({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     servicesApi.list(token, filters, page, controller.signal).then((result) => {
       if (controller.signal.aborted) return
       if (!Array.isArray(result?.items) || !Number.isInteger(result.totalItems)) {
@@ -122,7 +122,7 @@ export default function ManagerServices({ token }) {
     {list.status === 'success' && <><p className="manager-services-count">{list.totalItems} dịch vụ</p>
       {list.items.length === 0 && <div className="manager-services-feedback">Không có dịch vụ phù hợp.</div>}
       <div className="manager-services-list">{list.items.map((service) => <article key={service.maDichVu}>
-        <div><span>{service.maDichVu}</span><h2>{service.tenDichVu}</h2><p>{service.moTa || 'Chưa có mô tả'}</p><small>{money.format(service.donGia)} · {service.thoiLuongDuKienPhut} phút · {service.trangThai}</small></div>
+        <div><span>{service.maDichVu}</span><h2>{service.tenDichVu}</h2><p>{service.moTa || 'Chưa có mô tả'}</p><small>{money.format(service.donGia)} · {service.thoiLuongDuKienPhut} phút · <span className={`manager-services-state ${service.trangThai === 'Hoạt động' ? 'manager-services-state-active' : ''}`}>{service.trangThai}</span></small></div>
         <div className="manager-services-actions"><button type="button" className="secondary-button" onClick={() => openForm(service)}>Sửa</button>
           <button type="button" className="secondary-button" onClick={() => { setStatusTarget(service); setStatusError('') }}>{service.trangThai === 'Hoạt động' ? 'Ngừng hoạt động' : 'Khôi phục'}</button></div>
       </article>)}</div>

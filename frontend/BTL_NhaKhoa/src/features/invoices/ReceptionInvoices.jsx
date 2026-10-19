@@ -168,11 +168,11 @@ export default function ReceptionInvoices({ token, query = '', onNavigate, manag
   const [notice, setNotice] = useState('')
   const basePath = managerMode ? '/quan-ly/hoa-don' : '/le-tan/hoa-don'
 
-  useEffect(() => { setPaymentFilter(paymentFilterFromQuery(query)); setPage(1) }, [query])
+  useEffect(() => { queueMicrotask(() => { setPaymentFilter(paymentFilterFromQuery(query)); setPage(1) }) }, [query])
 
   useEffect(() => {
     const controller = new AbortController()
-    setState({ status: 'loading', items: [], totalItems: 0, error: '' })
+    queueMicrotask(() => { if (!controller.signal.aborted) setState({ status: 'loading', items: [], totalItems: 0, error: '' }) })
     invoicesApi.list(token, { page, pageSize, paymentFilter, customerId, ...dateRange }, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return

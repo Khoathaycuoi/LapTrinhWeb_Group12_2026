@@ -30,7 +30,6 @@ function Metric({ label, value, description, money = false, href, onNavigate }) 
     <span className="dashboard-metric-label">{label}</span>
     <strong>{money ? moneyFormatter.format(value) : numberFormatter.format(value)}</strong>
     <span className="manager-dashboard-caption">{description}</span>
-    {href && <span className="dashboard-card-arrow" aria-hidden="true">↗</span>}
   </>
   if (!href) return <div className="dashboard-metric manager-dashboard-metric">{content}</div>
   return <a href={href} className="dashboard-card-link dashboard-metric manager-dashboard-metric"
@@ -47,7 +46,7 @@ function RevenueChart({ weeks }) {
     <div className="dashboard-panel-heading"><div><h2 id="manager-revenue-title">Doanh thu 4 tuần</h2><p>Khoản thu đã xác nhận, tính theo tuần từ thứ Hai.</p></div></div>
     {weeks.length ? <div className="manager-dashboard-bars">
       {weeks.map((week) => <div className="manager-dashboard-bar-row" key={week.tuanBatDau}>
-        <span className="manager-dashboard-bar-label">{formatShortDate(week.tuanBatDau)} – {formatShortDate(week.tuanKetThuc)}</span>
+        <span className="manager-dashboard-bar-label">{formatShortDate(week.tuanBatDau)} - {formatShortDate(week.tuanKetThuc)}</span>
         <div className="manager-dashboard-bar-track" aria-hidden="true"><span style={{ width: `${maximum > 0 ? week.soTien / maximum * 100 : 0}%` }} /></div>
         <strong>{moneyFormatter.format(week.soTien)}</strong>
       </div>)}
@@ -112,7 +111,8 @@ export default function ManagerDashboard({ token, onNavigate }) {
           href={data.ngay ? `/quan-ly/lich-hen?${new URLSearchParams({ ngayHen: data.ngay, nhom: 'tracked' })}` : '/quan-ly/lich-hen'} onNavigate={onNavigate} />
         <Metric label="Chờ xác nhận" value={data.soLichChoXacNhan} description="Lịch chưa đến giờ hẹn"
           href="/quan-ly/lich-hen?tab=pending" onNavigate={onNavigate} />
-        <Metric label="Đã thu trong tháng" value={data.doanhThuThang} description="Khoản thu đã xác nhận" money />
+        <Metric label="Đã thu trong tháng" value={data.doanhThuThang} description="Khoản thu đã xác nhận" money
+          href={data.ngay ? `/quan-ly/doanh-thu?nam=${data.ngay.slice(0, 4)}` : '/quan-ly/doanh-thu'} onNavigate={onNavigate} />
         <Metric label="Tổng còn nợ" value={data.tongCongNo} description="Số tiền chưa thanh toán" money
           href="/quan-ly/hoa-don?conNo=true" onNavigate={onNavigate} />
       </div>

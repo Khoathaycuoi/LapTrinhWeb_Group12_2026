@@ -25,6 +25,8 @@
 .manager-services-list h2 { margin: 5px 0; color: var(--color-text); font-size: 16px; }
 .manager-services-list p { margin: 0 0 8px; color: var(--color-muted); font-size: 12px; }
 .manager-services-list small { color: var(--color-text); font-size: 12px; }
+.manager-services-list article .manager-services-state { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #F1F3F8; color: #69758D; font-size: 11px; font-weight: 700; }
+.manager-services-list article .manager-services-state-active { background: #E7F7EE; color: #287A54; }
 .manager-services-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .manager-services-status .manager-services-error { margin: 0 0 15px; }
 @media (max-width: 620px) {

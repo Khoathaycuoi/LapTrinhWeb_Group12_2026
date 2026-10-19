@@ -81,19 +81,17 @@ export default function CustomerDashboard({ token, onNavigate }) {
         <CardLink href={confirmedAppointmentsPath} className="dashboard-metric" label="Xem lịch hẹn sắp tới" onNavigate={onNavigate}>
           <span className="dashboard-metric-label">Lịch hẹn sắp tới</span>
           <strong>{data.soLichSapToi}</strong>
-          <span className="dashboard-card-arrow" aria-hidden="true">↗</span>
         </CardLink>
         <CardLink href="/khach-hang/hoa-don?conNo=true" className="dashboard-metric" label="Xem hóa đơn còn nợ" onNavigate={onNavigate}>
           <span className="dashboard-metric-label">Hóa đơn còn nợ</span>
           <strong>{data.soHoaDonConNo}</strong>
           <span className="dashboard-metric-caption">Tổng còn nợ: {formatMoney(data.tongCongNo)}</span>
-          <span className="dashboard-card-arrow" aria-hidden="true">↗</span>
         </CardLink>
       </div>
 
       <div className="dashboard-panels">
         <CardLink href={confirmedAppointmentsPath} className="dashboard-panel" label="Mở danh sách lịch hẹn" onNavigate={onNavigate}>
-          <div className="dashboard-panel-heading"><h2>Lịch hẹn gần nhất</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
+          <div className="dashboard-panel-heading"><h2>Lịch hẹn gần nhất</h2></div>
           {appointment ? <div className="dashboard-appointment">
             <strong>{formatDate(appointment.thoiGianBatDau, true)}</strong>
             <span>Mã lịch hẹn: {appointment.maLichHen}</span>
@@ -102,7 +100,7 @@ export default function CustomerDashboard({ token, onNavigate }) {
         </CardLink>
 
         <CardLink href="/khach-hang/hoa-don?conNo=true" className="dashboard-panel" label="Mở danh sách hóa đơn còn nợ" onNavigate={onNavigate}>
-          <div className="dashboard-panel-heading"><h2>Hóa đơn còn nợ</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
+          <div className="dashboard-panel-heading"><h2>Hóa đơn còn nợ</h2></div>
           {invoices.length > 0 ? <ul className="dashboard-invoices">{invoices.map((invoice) => <li key={invoice.maHoaDon}>
             <div><strong>{invoice.maHoaDon}</strong><span>Lập ngày {formatDate(invoice.ngayLap)}</span></div>
             <div><strong>{formatMoney(invoice.conNo)}</strong><span>Còn nợ</span></div>
@@ -110,7 +108,7 @@ export default function CustomerDashboard({ token, onNavigate }) {
         </CardLink>
 
         <CardLink href="/khach-hang/lich-su-kham" className="dashboard-panel dashboard-exam-panel" label="Mở lịch sử khám" onNavigate={onNavigate}>
-          <div className="dashboard-panel-heading"><h2>Lần khám gần nhất</h2><span className="dashboard-card-arrow" aria-hidden="true">↗</span></div>
+          <div className="dashboard-panel-heading"><h2>Lần khám gần nhất</h2></div>
           {exam ? <div className="dashboard-exam">
             <div className="dashboard-exam-meta"><strong>{formatDate(exam.ngayKham)}</strong><span>Mã hồ sơ: {exam.maHoSoKham}</span></div>
             <p>{exam.tomTat || 'Chưa có tóm tắt lần khám.'}</p>

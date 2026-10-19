@@ -9,6 +9,7 @@ public sealed class ConNguoi
     public string? GioiTinh { get; set; }
     public DateOnly? NgaySinh { get; set; }
     public string? DiaChi { get; set; }
+    public string? TenAnhDaiDien { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public TaiKhoan? TaiKhoan { get; set; }
