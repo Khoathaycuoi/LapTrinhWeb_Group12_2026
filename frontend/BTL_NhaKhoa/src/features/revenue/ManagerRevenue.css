@@ -1,0 +1,36 @@
+.manager-revenue { max-width: 1240px; }
+.manager-revenue-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.manager-revenue-year { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.manager-revenue-year strong { min-width: 78px; color: var(--color-text); text-align: center; font-size: 14px; }
+.manager-revenue-year button { min-height: 40px; font-size: 12px; }
+.manager-revenue-year button:disabled { opacity: .45; cursor: not-allowed; }
+.manager-revenue-feedback, .manager-revenue-panel, .manager-revenue-summary > div { border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-card); }
+.manager-revenue-feedback { padding: 25px; color: var(--color-muted); font-size: 13px; }
+.manager-revenue-feedback p { margin: 7px 0 15px; }
+.manager-revenue-error { color: var(--color-error); }
+.manager-revenue-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+.manager-revenue-summary > div { display: grid; align-content: center; gap: 12px; min-height: 102px; padding: 19px 23px; }
+.manager-revenue-summary span { color: var(--color-muted); font-size: 12px; font-weight: 700; }
+.manager-revenue-summary strong { color: var(--color-text); font: 800 clamp(19px, 2vw, 26px)/1.25 Manrope, sans-serif; overflow-wrap: anywhere; }
+.manager-revenue-panel { padding: 23px 24px; }
+.manager-revenue-panel-heading { display: flex; justify-content: space-between; align-items: start; gap: 14px; margin-bottom: 20px; }
+.manager-revenue-panel-heading h2 { margin: 0; color: var(--color-text); font: 700 17px/1.4 Manrope, sans-serif; }
+.manager-revenue-panel-heading p { margin: 6px 0 0; color: var(--color-muted); font-size: 12px; }
+.manager-revenue-panel-heading > span { color: var(--color-primary); font-size: 13px; font-weight: 700; }
+.manager-revenue-months { display: grid; }
+.manager-revenue-month { display: grid; grid-template-columns: 85px minmax(0, 1fr) minmax(135px, 185px); align-items: center; gap: 18px; min-height: 57px; border-top: 1px solid var(--color-border); }
+.manager-revenue-month-label { color: var(--color-muted); font-size: 12px; font-weight: 700; }
+.manager-revenue-track { height: 10px; overflow: hidden; border-radius: 99px; background: #EDF1FA; }
+.manager-revenue-track > span { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }
+.manager-revenue-month-value { display: grid; gap: 3px; text-align: right; }
+.manager-revenue-month-value strong { color: var(--color-text); font-size: 13px; }
+.manager-revenue-month-value small { color: var(--color-muted); font-size: 11px; }
+
+@media (max-width: 700px) {
+  .manager-revenue-heading { align-items: start; flex-direction: column; }
+  .manager-revenue-summary { grid-template-columns: 1fr; }
+  .manager-revenue-summary > div { min-height: 75px; }
+  .manager-revenue-month { grid-template-columns: 75px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; }
+  .manager-revenue-month-value { grid-column: 2; grid-row: 1; }
+  .manager-revenue-track { grid-column: 1 / -1; grid-row: 2; }
+}

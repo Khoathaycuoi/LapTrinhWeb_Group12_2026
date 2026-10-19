@@ -9,7 +9,7 @@ export const roleNavigation = {
   QUAN_LY: [
     ['Tổng quan', 'overview'], ['Lịch hẹn', 'lich-hen'], ['Khách hàng', 'khach-hang'],
     ['Nhân sự', 'nhan-su'], ['Dịch vụ', 'dich-vu'], ['Phòng khám', 'phong'],
-    ['Chấm công', 'cham-cong'], ['Hóa đơn', 'hoa-don'], ['Tài khoản', 'tai-khoan'],
+    ['Chấm công', 'cham-cong'], ['Hóa đơn', 'hoa-don'], ['Doanh thu', 'doanh-thu'], ['Tài khoản', 'tai-khoan'],
   ],
   LE_TAN: [
     ['Tổng quan', 'overview'], ['Lịch hẹn', 'lich-hen'], ['Khách hàng', 'khach-hang'],

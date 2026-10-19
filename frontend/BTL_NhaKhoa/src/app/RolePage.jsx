@@ -22,6 +22,7 @@ import DoctorRecords from '../features/records/DoctorRecords'
 import CustomerRecords from '../features/records/CustomerRecords'
 import PlaceholderPage from '../pages/PlaceholderPage'
 import AccountPage from '../features/account/AccountPage'
+import ManagerRevenue from '../features/revenue/ManagerRevenue'
 import { roles } from './roles'
 
 export default function RolePage({ session, routePath, query, navigationState, onNavigate, onProfileNameChange, onAvatarChange, onPhoneChanged, onLogout }) {
@@ -38,6 +39,10 @@ export default function RolePage({ session, routePath, query, navigationState, o
 
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/hoa-don') {
     return <ManagerInvoices token={session.token} query={query} onNavigate={onNavigate} />
+  }
+
+  if (session.role === 'QUAN_LY' && routePath === '/quan-ly/doanh-thu') {
+    return <ManagerRevenue token={session.token} query={query} onNavigate={onNavigate} />
   }
 
   if (session.role === 'QUAN_LY' && routePath === '/quan-ly/khach-hang') {

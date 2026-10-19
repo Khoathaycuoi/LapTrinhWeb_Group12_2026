@@ -53,6 +53,7 @@ namespace BTL_NhaKhoa
             builder.Services.AddScoped<QuanLyHoaDonService>();
             builder.Services.AddScoped<QuanLyChamCongService>();
             builder.Services.AddScoped<DashboardService>();
+            builder.Services.AddScoped<BaoCaoDoanhThuService>();
             builder.Services.AddHostedService<HetHanLichChoService>();
             builder.Services.AddSingleton(new CauHinhJwt(signingKey, jwtIssuer, jwtAudience));
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
