@@ -1,11 +1,14 @@
+html:has(.auth-page) { scrollbar-gutter: stable; }
 .auth-page { display: grid; grid-template-columns: minmax(350px, .92fr) minmax(470px, 1.08fr); min-height: 100vh; background: #fff; }
 .auth-art {
-  position: relative;
+  position: sticky;
+  top: 0;
+  align-self: start;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  min-height: 100vh;
+  height: 100vh;
   padding: 8vh clamp(36px, 7vw, 100px);
   background: linear-gradient(145deg, #596FC8 1%, #687AC9 50%, #8270C9 100%);
   color: #fff;
@@ -26,6 +29,7 @@
 .art-decoration span:nth-child(2) { right: 12%; bottom: 23%; font-size: 30px; }
 .art-decoration span:nth-child(3) { right: 27%; bottom: 13%; font-size: 70px; }
 .auth-panel { display: grid; place-items: center; padding: 44px 32px; }
+.auth-panel--register { display: flex; justify-content: center; align-items: flex-start; padding-top: clamp(56px, 8vh, 96px); }
 .auth-form-wrap { width: min(100%, 410px); }
 .mobile-brand { display: none; }
 .auth-heading { margin-bottom: 27px; }

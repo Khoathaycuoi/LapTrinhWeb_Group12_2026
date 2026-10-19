@@ -55,7 +55,7 @@ export default function RegisterPage({ onSuccess, onNavigateLogin }) {
     }
   }
 
-  return <AuthLayout>
+  return <AuthLayout variant="register">
     <div className="auth-heading"><p className="eyebrow">XIN CHÀO</p><h2>Tạo tài khoản Khách hàng</h2><p>Tạo tài khoản cá nhân để sử dụng dịch vụ phòng khám.</p></div>
     {error && <div className="alert alert-error" role="alert">{error}</div>}
     <form onSubmit={submit} className="auth-form" noValidate>
