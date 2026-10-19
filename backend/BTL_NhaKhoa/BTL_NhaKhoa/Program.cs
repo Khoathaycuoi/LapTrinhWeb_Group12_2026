@@ -109,6 +109,18 @@ namespace BTL_NhaKhoa
                     .AllowAnyHeader()
                     .AllowAnyMethod()));
 
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(1);
+                options.Cookie.Name = "NhaKhoa.BookingDraft";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+                    ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+            });
+
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
@@ -155,6 +167,7 @@ namespace BTL_NhaKhoa
             app.UseHttpsRedirection();
 
             app.UseCors("React");
+            app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
 
