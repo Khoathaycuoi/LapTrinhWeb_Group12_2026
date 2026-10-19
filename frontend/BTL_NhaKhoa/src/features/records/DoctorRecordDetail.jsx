@@ -16,7 +16,7 @@ const actionCopy = {
   complete: ['Hoàn thành lịch khám?', 'Lịch hẹn sẽ chuyển sang Đã hoàn thành.', 'Hoàn thành'],
 }
 
-export default function DoctorRecordDetail({ token, recordId, appointmentId, initialNotice, onBack }) {
+export default function DoctorRecordDetail({ token, recordId, appointmentId, initialNotice, onBack, onOpenHistory }) {
   const [reload, setReload] = useState(0)
   const [state, setState] = useState({ status: 'loading', record: null, error: '' })
   const [history, setHistory] = useState({ status: 'loading', text: '', error: '' })
@@ -116,12 +116,16 @@ export default function DoctorRecordDetail({ token, recordId, appointmentId, ini
   }
 
   return <div className="doctor-records doctor-record-detail">
-    <button type="button" className="doctor-back-link" onClick={onBack}>← Danh sách hồ sơ</button>
+    <button type="button" className="doctor-back-link" onClick={onBack}><span aria-hidden="true">←</span>Danh sách hồ sơ</button>
     <div className="page-heading"><div><h1>Hồ sơ khám</h1><p className="page-description">{record?.maHoSoKham || recordId || appointmentId} {record?.maLichHen && `· Lịch ${record.maLichHen}`}</p></div></div>
     {state.status === 'loading' && <div className="doctor-record-feedback" role="status">Đang tải hồ sơ…</div>}
     {state.status === 'error' && <div className="doctor-record-feedback" role="alert"><p>{state.error}</p><button type="button" className="secondary-button" onClick={() => setReload((value) => value + 1)}>Thử lại</button></div>}
     {record && form && <>
       <div className="doctor-record-summary"><div><span>Khách hàng</span><strong>{record.maKhachHang}</strong></div><div><span>Ngày khám</span><strong>{new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(record.ngayKham))}</strong></div><div><span>Trạng thái</span><strong>{record.chotLuc ? 'Đã chốt' : 'Chưa chốt'}</strong></div></div>
+      {['DA_XAC_NHAN', 'DA_DEN', 'DANG_KHAM'].includes(record.trangThaiLichHen) && <div className="doctor-patient-history-action"><button type="button" className="secondary-button" onClick={() => {
+        if (dirty) { setActionError('Vui lòng lưu thay đổi hồ sơ trước khi xem lịch sử khám.'); return }
+        onOpenHistory(record.maKhachHang, record.maHoSoKham)
+      }}>Xem lịch sử khám của bệnh nhân</button></div>}
       <section className="doctor-record-section"><h2>Tiền sử bệnh</h2>
         {history.status === 'loading' && <p>Đang tải tiền sử bệnh…</p>}
         {history.status === 'success' && <p className="doctor-record-history">{history.text || 'Khách chưa cung cấp tiền sử bệnh.'}</p>}

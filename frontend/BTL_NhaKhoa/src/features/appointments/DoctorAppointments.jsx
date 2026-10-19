@@ -174,16 +174,19 @@ export default function DoctorAppointments({ token, query = '', navigationState,
         <div className="doctor-appointment-heading"><div><small>{item.maLichHen}</small><h2>{appointmentDate(item)}</h2></div><span className={`doctor-status doctor-status-${statusTones[item.trangThai] || 'muted'}`}>{item.trangThai}</span></div>
         <div className="doctor-appointment-meta"><div><span>Khách hàng</span><strong>{item.tenKH || item.maKH}</strong><small>{item.maKH}</small></div><div><span>Dịch vụ dự kiến</span><strong>{item.dichVusDuKien?.map((service) => service.tenDichVu).join(', ') || 'Chưa có thông tin'}</strong></div><div><span>Phòng</span><strong>{item.maPhong || 'Chưa phân phòng'}</strong></div><div><span>Thời lượng</span><strong>{item.thoiLuongDuKienPhut} phút</strong></div></div>
         <div className="doctor-appointment-actions">
-          <button type="button" className="doctor-details-button" aria-expanded={expandedId === item.maLichHen}
-            onClick={() => setExpandedId(expandedId === item.maLichHen ? null : item.maLichHen)}>
-            {expandedId === item.maLichHen ? 'Thu gọn' : 'Xem chi tiết'}
-          </button>
-          {((item.trangThai === 'Chờ xác nhận' && isFuture(item)) || (item.trangThai === 'Đã xác nhận' && isFuture(item)) || item.trangThai === 'Đã đến' || item.trangThai === 'Đang khám') && <>
-          {item.trangThai === 'Chờ xác nhận' && <><button type="button" className="doctor-reject-button" onClick={() => setDecision({ type: 'reject', item })}>Từ chối</button><button type="button" className="primary-button" onClick={() => setDecision({ type: 'confirm', item })}>Xác nhận</button></>}
-          {item.trangThai === 'Đã xác nhận' && <button type="button" className="doctor-reject-button" onClick={() => setDecision({ type: 'cancel', item })}>Hủy lịch</button>}
-          {item.trangThai === 'Đã đến' && <button type="button" className="primary-button" onClick={() => setStartTarget(item)}>Bắt đầu khám</button>}
-          {item.trangThai === 'Đang khám' && <button type="button" className="primary-button" onClick={() => onNavigate(`/bac-si/ho-so-kham?maLichHen=${encodeURIComponent(item.maLichHen)}`)}>Mở hồ sơ khám</button>}
-          </>}
+          <div className="doctor-appointment-view-actions">
+            <button type="button" className="doctor-details-button" aria-expanded={expandedId === item.maLichHen}
+              onClick={() => setExpandedId(expandedId === item.maLichHen ? null : item.maLichHen)}>
+              {expandedId === item.maLichHen ? 'Thu gọn' : 'Xem chi tiết'}
+            </button>
+            {['Chờ xác nhận', 'Đã xác nhận', 'Đã đến', 'Đang khám'].includes(item.trangThai) && <button type="button" className="doctor-details-button" onClick={() => onNavigate(`/bac-si/ho-so-kham?maKhachHang=${encodeURIComponent(item.maKH)}&tuLich=true`)}>Lịch sử khám</button>}
+          </div>
+          {((item.trangThai === 'Chờ xác nhận' && isFuture(item)) || (item.trangThai === 'Đã xác nhận' && isFuture(item)) || item.trangThai === 'Đã đến' || item.trangThai === 'Đang khám') && <div className="doctor-appointment-state-actions">
+            {item.trangThai === 'Chờ xác nhận' && <><button type="button" className="doctor-reject-button" onClick={() => setDecision({ type: 'reject', item })}>Từ chối</button><button type="button" className="primary-button" onClick={() => setDecision({ type: 'confirm', item })}>Xác nhận</button></>}
+            {item.trangThai === 'Đã xác nhận' && <button type="button" className="doctor-reject-button" onClick={() => setDecision({ type: 'cancel', item })}>Hủy lịch</button>}
+            {item.trangThai === 'Đã đến' && <button type="button" className="primary-button" onClick={() => setStartTarget(item)}>Bắt đầu khám</button>}
+            {item.trangThai === 'Đang khám' && <button type="button" className="primary-button" onClick={() => onNavigate(`/bac-si/ho-so-kham?maLichHen=${encodeURIComponent(item.maLichHen)}`)}>Mở hồ sơ khám</button>}
+          </div>}
         </div>
         {expandedId === item.maLichHen && <AppointmentDetails appointment={item} id={`doctor-details-${item.maLichHen}`} />}
       </article>)}</div><ListPagination page={page} pageSize={10} totalItems={list.totalItems} onPageChange={setPage} /></>}

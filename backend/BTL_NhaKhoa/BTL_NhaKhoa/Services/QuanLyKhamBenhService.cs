@@ -182,11 +182,43 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
         if (taiKhoan.MaVaiTro == "BAC_SI" &&
             await LaBacSiPhuTrachAsync(hoSo.MaBacSi, maTaiKhoan))
             return (new KetQuaKhamBenh(), TaoResponse(hoSo, true));
+        if (taiKhoan.MaVaiTro == "BAC_SI" && hoSo.ChotLuc.HasValue &&
+            await DuocPhanCongKhachHangAsync(hoSo.MaKhachHang, maTaiKhoan))
+            return (new KetQuaKhamBenh(), TaoResponse(hoSo, true));
         if (taiKhoan.MaVaiTro == "KHACH_HANG" && hoSo.ChotLuc.HasValue &&
             await db.KhachHangs.AnyAsync(x => x.MaKhachHang == hoSo.MaKhachHang &&
                 x.MaConNguoi == taiKhoan.MaConNguoi))
             return (new KetQuaKhamBenh(), TaoResponse(hoSo, false));
         return (new KetQuaKhamBenh("Bạn không có quyền xem hồ sơ này.", KhongCoQuyen: true), null);
+    }
+
+    public async Task<(KetQuaKhamBenh KetQua, DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>? DanhSach)>
+        LayLichSuKhachHangAsync(string maKhachHang, ulong maTaiKhoan, int page, int pageSize)
+    {
+        if (!QuanLyLichHenService.ThuDocMa(maKhachHang, "KH_", out var idKhachHang))
+            return (new KetQuaKhamBenh("Mã khách hàng không hợp lệ."), null);
+        if (!await db.KhachHangs.AnyAsync(x => x.MaKhachHang == idKhachHang))
+            return (new KetQuaKhamBenh("Không tìm thấy khách hàng.", KhongTimThay: true), null);
+        if (!await DuocPhanCongKhachHangAsync(idKhachHang, maTaiKhoan))
+            return (new KetQuaKhamBenh("Bạn không có quyền xem lịch sử khám của khách hàng này.", KhongCoQuyen: true), null);
+
+        var query = db.HoSoKhams.AsNoTracking().Where(x =>
+            x.MaKhachHang == idKhachHang && x.ChotLuc != null);
+        var totalItems = await query.CountAsync();
+        var items = await query.OrderByDescending(x => x.NgayKham)
+            .ThenByDescending(x => x.MaHoSoKham)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(x => new TomTatHoSoKhamResponse
+            {
+                MaHoSoKham = TaoMa("HSK_", x.MaHoSoKham),
+                NgayKham = x.NgayKham,
+                MaBacSi = TaoMa("BS_", x.MaBacSi),
+                TenBacSi = x.BacSi.NhanVien.ConNguoi.HoTen,
+                TomTat = x.TomTatChoKhach ?? string.Empty,
+                ChotLuc = x.ChotLuc
+            }).ToListAsync();
+        return (new KetQuaKhamBenh(),
+            new DanhSachPhanTrangResponse<TomTatHoSoKhamResponse>(items, totalItems, page, pageSize));
     }
 
     public async Task<(KetQuaKhamBenh KetQua, HoSoKhamResponse? HoSo)> LayTheoLichAsync(
@@ -294,6 +326,15 @@ public sealed class QuanLyKhamBenhService(NhaKhoaDbContext db)
         return maConNguoi.HasValue && await db.BacSis.AnyAsync(x =>
             x.MaBacSi == maBacSi && x.NhanVien.MaConNguoi == maConNguoi.Value);
     }
+
+    private Task<bool> DuocPhanCongKhachHangAsync(ulong maKhachHang, ulong maTaiKhoan) =>
+        db.LichHens.AsNoTracking().AnyAsync(x =>
+            x.MaKhachHang == maKhachHang &&
+            (x.TrangThai == "CHO_XAC_NHAN" || x.TrangThai == "DA_XAC_NHAN" || x.TrangThai == "DA_DEN" ||
+                x.TrangThai == "DANG_KHAM") &&
+            x.BacSi != null && x.BacSi.NhanVien.ConNguoi.TaiKhoan != null &&
+            x.BacSi.NhanVien.ConNguoi.TaiKhoan.MaTaiKhoan == maTaiKhoan &&
+            x.BacSi.NhanVien.ConNguoi.TaiKhoan.MaVaiTro == "BAC_SI");
 
     private IQueryable<HoSoKham> TaoTruyVanHoSo() => db.HoSoKhams.AsNoTracking()
         .Include(x => x.BacSi).ThenInclude(x => x.NhanVien).ThenInclude(x => x.ConNguoi)

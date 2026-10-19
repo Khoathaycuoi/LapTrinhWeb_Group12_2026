@@ -34,7 +34,7 @@ function RecordDetail({ token, recordId, onBack }) {
 
   const record = state.record
   return <div className="customer-records customer-record-detail">
-    <button type="button" className="customer-record-back" onClick={onBack}>← Lịch sử khám</button>
+    <button type="button" className="customer-record-back" onClick={onBack}><span aria-hidden="true">←</span>Lịch sử khám</button>
     <div className="page-heading"><div><h1>Chi tiết lần khám</h1><p className="page-description">Hồ sơ {recordId}</p></div></div>
     {state.status === 'loading' && <div className="customer-record-feedback" role="status">Đang tải hồ sơ khám…</div>}
     {state.status === 'error' && <div className="customer-record-feedback" role="alert"><p>{state.error}</p><button type="button" className="secondary-button" onClick={() => setReload((value) => value + 1)}>Thử lại</button></div>}

@@ -35,6 +35,19 @@ public sealed class HoSoKhamController(QuanLyKhamBenhService quanLyKhamBenhServi
         return ketQua.Loi != null ? Loi(ketQua) : Ok(hoSo);
     }
 
+    [HttpGet("lich-su-khach-hang/{maKhachHang}")]
+    [Authorize(Roles = "BAC_SI")]
+    public async Task<IActionResult> LayLichSuKhachHang(string maKhachHang,
+        [FromQuery] PhanTrangRequest? phanTrang = null)
+    {
+        if (!ThuDocTaiKhoan(out var maTaiKhoan)) return Unauthorized();
+        if (phanTrang?.CoPhanTrang == true && !phanTrang.HopLe)
+            return BadRequest("Trang hoặc kích thước trang không hợp lệ.");
+        var (ketQua, danhSach) = await quanLyKhamBenhService.LayLichSuKhachHangAsync(
+            maKhachHang, maTaiKhoan, phanTrang?.SoTrang ?? 1, phanTrang?.KichThuocTrang ?? 10);
+        return ketQua.Loi != null ? Loi(ketQua) : Ok(danhSach);
+    }
+
     [HttpGet("theo-lich/{maLichHen}")]
     [Authorize(Roles = "BAC_SI")]
     public async Task<IActionResult> LayTheoLich(string maLichHen)

@@ -15,7 +15,10 @@
 .doctor-record-feedback { padding: 24px; color: var(--color-muted); font-size: 13px; }
 .doctor-record-detail { display: grid; gap: 16px; }
 .doctor-record-detail .page-heading { margin-bottom: 0; }
-.doctor-back-link { justify-self: start; padding: 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer; }
+.doctor-back-link { justify-self: start; display: inline-flex; align-items: center; gap: 9px; min-height: 42px; padding: 6px 14px 6px 7px; border: 1px solid var(--color-border); border-radius: 11px; background: #fff; color: var(--color-primary-dark); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
+.doctor-back-link span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #E9EDFA; color: var(--color-primary); font-size: 19px; line-height: 1; }
+.doctor-back-link:hover { border-color: var(--color-primary); background: #F8FAFF; }
+.doctor-back-link:focus-visible { outline: 3px solid #AEBBF0; outline-offset: 2px; }
 .doctor-record-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 20px 24px; }
 .doctor-record-summary div { display: grid; gap: 6px; }
 .doctor-record-summary span { color: var(--color-muted); font-size: 11px; }
@@ -52,4 +55,19 @@
 .doctor-prescription-form > .primary-button { justify-self: end; }
 .doctor-record-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 22px; }
 .doctor-record-footer span { color: var(--color-muted); font-size: 12px; }
+.doctor-patient-history-action { display: flex; justify-content: flex-end; }
+.doctor-patient-history .page-heading { margin-bottom: 8px; }
+.doctor-patient-history:not(.doctor-record-detail) > .doctor-back-link { margin-bottom: 14px; }
+.doctor-history-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; }
+.doctor-history-fields span { color: var(--color-muted); font-size: 12px; }
+.doctor-history-fields p { margin: 6px 0 0; color: var(--color-text); white-space: pre-wrap; }
+.doctor-history-list { display: grid; gap: 14px; }
+.doctor-history-list > div { display: grid; gap: 6px; padding-top: 13px; border-top: 1px solid var(--color-border); }
+.doctor-history-list strong { font-size: 13px; }
+.doctor-history-list span { color: var(--color-muted); font-size: 12px; }
+.doctor-history-list p { margin: 0; white-space: pre-wrap; }
+.doctor-history-list ul { display: grid; gap: 12px; margin: 5px 0 0; padding-left: 23px; }
+.doctor-history-list li { padding-left: 4px; }
+.doctor-history-list li strong, .doctor-history-list li span { display: block; margin-bottom: 4px; }
 @media (max-width: 680px) { .doctor-record-list article, .doctor-record-footer, .doctor-service-row { align-items: stretch; flex-direction: column; } .doctor-record-list-actions { justify-content: space-between; } .doctor-record-summary, .doctor-record-form, .doctor-medicine-form { grid-template-columns: 1fr; } .doctor-medicine-heading, .doctor-wide-field { grid-column: auto; } .doctor-record-section { padding: 18px; } }
+@media (max-width: 680px) { .doctor-history-fields { grid-template-columns: 1fr; } .doctor-patient-history-action .secondary-button { width: 100%; } }
