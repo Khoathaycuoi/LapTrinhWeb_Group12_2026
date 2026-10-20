@@ -7,7 +7,6 @@ export default function AuthLayout({ children, variant }) {
       <p className="eyebrow">NHA KHOA G12</p>
       <h1>Chăm sóc nụ cười,<br />bắt đầu từ sự an tâm.</h1>
       <p className="art-copy">Một không gian chăm sóc sức khỏe răng miệng tận tâm cho cả gia đình.</p>
-      <div className="art-decoration" aria-hidden="true"><span>✧</span><span>＋</span><span>◌</span></div>
       <div className="art-footer">Hệ thống quản lý phòng khám</div>
     </section>
     <section className={`auth-panel${variant === 'register' ? ' auth-panel--register' : ''}`}>
