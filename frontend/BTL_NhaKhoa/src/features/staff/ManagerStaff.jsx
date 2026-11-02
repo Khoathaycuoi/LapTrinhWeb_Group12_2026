@@ -3,6 +3,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import ListPagination from '../../components/ListPagination'
 import PersonDetailDialog from '../../components/PersonDetailDialog'
 import ToastNotice from '../../components/ToastNotice'
+import PasswordField from '../../components/PasswordField'
 import { staffApi } from './staffApi'
 import '../../components/ConfirmDialog.css'
 import './ManagerStaff.css'
@@ -149,8 +150,8 @@ export default function ManagerStaff({ token, currentPhone, currentAvatarUrl }) 
       <form className="manager-staff-form" onSubmit={reviewCreate}>
         <label>Họ và tên<input required maxLength={150} value={form.ten} onChange={(event) => setForm({ ...form, ten: event.target.value })} /></label>
         <label>Số điện thoại<input required inputMode="tel" placeholder="10 chữ số, bắt đầu bằng 0" value={form.sdt} onChange={(event) => setForm({ ...form, sdt: event.target.value })} /></label>
-        <label>Mật khẩu<input required type="password" minLength={8} autoComplete="new-password" value={form.matKhau} onChange={(event) => setForm({ ...form, matKhau: event.target.value })} /></label>
-        <label>Nhập lại mật khẩu<input required type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} /></label>
+        <PasswordField label="Mật khẩu" required minLength={8} autoComplete="new-password" value={form.matKhau} onChange={(event) => setForm({ ...form, matKhau: event.target.value })} />
+        <PasswordField label="Nhập lại mật khẩu" required autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
         <label>Mã định danh (tùy chọn)<input inputMode="numeric" pattern="[0-9]{12}" maxLength={12} value={form.maDinhDanh} onChange={(event) => setForm({ ...form, maDinhDanh: event.target.value })} /></label>
         <label>Giới tính<select value={form.gioiTinh} onChange={(event) => setForm({ ...form, gioiTinh: event.target.value })}><option value="">Chưa chọn</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
         <label>Ngày sinh<input type="date" value={form.ngaySinh} onChange={(event) => setForm({ ...form, ngaySinh: event.target.value })} /></label>

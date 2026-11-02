@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import ToastNotice from '../../components/ToastNotice'
+import PasswordField from '../../components/PasswordField'
 import { apiAssetUrl } from '../../lib/api'
 import { accountApi } from './accountApi'
 import './AccountPage.css'
@@ -270,9 +271,9 @@ export default function AccountPage({ token, role, onProfileNameChange, onAvatar
       </form>}
 
       {mode === 'password' && <form className="account-form account-form-password" onSubmit={changePassword} noValidate>
-        <label>Mật khẩu hiện tại<input type="password" autoComplete="current-password" value={password.current} onChange={(event) => { setPassword({ ...password, current: event.target.value }); setPasswordError('') }} /></label>
-        <label>Mật khẩu mới<input type="password" autoComplete="new-password" value={password.next} onChange={(event) => { setPassword({ ...password, next: event.target.value }); setPasswordError('') }} /></label>
-        <label>Nhập lại mật khẩu mới<input type="password" autoComplete="new-password" value={password.confirm} onChange={(event) => { setPassword({ ...password, confirm: event.target.value }); setPasswordError('') }} /></label>
+        <PasswordField label="Mật khẩu hiện tại" autoComplete="current-password" value={password.current} onChange={(event) => { setPassword({ ...password, current: event.target.value }); setPasswordError('') }} />
+        <PasswordField label="Mật khẩu mới" autoComplete="new-password" value={password.next} onChange={(event) => { setPassword({ ...password, next: event.target.value }); setPasswordError('') }} />
+        <PasswordField label="Nhập lại mật khẩu mới" autoComplete="new-password" value={password.confirm} onChange={(event) => { setPassword({ ...password, confirm: event.target.value }); setPasswordError('') }} />
         {passwordError && <div className="alert alert-error" role="alert">{passwordError}</div>}
         <div className="account-actions"><button type="button" className="secondary-button" disabled={passwordBusy} onClick={() => openMode('view')}>Hủy</button><button type="submit" className="primary-button" disabled={passwordBusy}>{passwordBusy ? 'Đang xử lý…' : 'Đổi mật khẩu'}</button></div>
       </form>}
@@ -280,7 +281,7 @@ export default function AccountPage({ token, role, onProfileNameChange, onAvatar
       {mode === 'phone' && <form className="account-form account-form-phone" onSubmit={changePhone} noValidate>
         <p className="account-helper">Số mới sẽ dùng để đăng nhập. Bạn cần đăng nhập lại sau khi đổi.</p>
         <label>Số điện thoại mới<input inputMode="tel" autoComplete="tel" value={phone.next} onChange={(event) => { setPhone({ ...phone, next: event.target.value }); setPhoneError('') }} placeholder="10 chữ số, bắt đầu bằng 0" /></label>
-        <label>Mật khẩu hiện tại<input type="password" autoComplete="current-password" value={phone.currentPassword} onChange={(event) => { setPhone({ ...phone, currentPassword: event.target.value }); setPhoneError('') }} /></label>
+        <PasswordField label="Mật khẩu hiện tại" autoComplete="current-password" value={phone.currentPassword} onChange={(event) => { setPhone({ ...phone, currentPassword: event.target.value }); setPhoneError('') }} />
         {phoneError && <div className="alert alert-error" role="alert">{phoneError}</div>}
         <div className="account-actions"><button type="button" className="secondary-button" disabled={phoneBusy} onClick={() => openMode('view')}>Hủy</button><button type="submit" className="primary-button" disabled={phoneBusy}>{phoneBusy ? 'Đang xử lý…' : 'Đổi số điện thoại'}</button></div>
       </form>}
