@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AuthLayout from './AuthLayout'
 import ToastNotice from '../../components/ToastNotice'
+import PasswordField from '../../components/PasswordField'
 
 export default function LoginPage({ onLogin, onNavigateRegister, onNoticeDismiss, registeredPhone = '', notice = '' }) {
   const [phone, setPhone] = useState(registeredPhone)
@@ -38,7 +39,7 @@ export default function LoginPage({ onLogin, onNavigateRegister, onNoticeDismiss
     <ToastNotice message={notice} onDismiss={onNoticeDismiss} />
     <form onSubmit={submit} className="auth-form" noValidate>
       <label>Số điện thoại<input name="phone" autoComplete="username" inputMode="tel" value={phone} onChange={(event) => { setPhone(event.target.value); setError('') }} placeholder="Ví dụ: 0912345678" required /></label>
-      <label>Mật khẩu<input name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError('') }} placeholder="Nhập mật khẩu" required /></label>
+      <PasswordField label="Mật khẩu" name="password" autoComplete="current-password" value={password} onChange={(event) => { setPassword(event.target.value); setError('') }} placeholder="Nhập mật khẩu" required />
       <div className="auth-help-actions">
         <button type="button" className="text-button" onClick={() => setShowPasswordHelp(true)}>Quên mật khẩu?</button>
       </div>

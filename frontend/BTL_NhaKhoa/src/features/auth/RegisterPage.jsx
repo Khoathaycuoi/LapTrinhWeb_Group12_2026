@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { authApi } from '../../lib/api'
 import AuthLayout from './AuthLayout'
+import PasswordField from '../../components/PasswordField'
 
 const emptyRegistration = { ten: '', sdt: '', matKhau: '', maDinhDanh: '', gioiTinh: '', ngaySinh: '', diaChi: '', tienSuBenh: '' }
 
@@ -61,8 +62,8 @@ export default function RegisterPage({ onSuccess, onNavigateLogin }) {
     <form onSubmit={submit} className="auth-form" noValidate>
       <label>Họ và tên<input name="ten" value={form.ten} onChange={(event) => { update('ten', event.target.value); setError('') }} maxLength="150" required /></label>
       <label>Số điện thoại<input name="sdt" inputMode="tel" value={form.sdt} onChange={(event) => { update('sdt', event.target.value); setError('') }} placeholder="10 chữ số, bắt đầu bằng 0" required /></label>
-      <label>Mật khẩu<input name="matKhau" type="password" autoComplete="new-password" value={form.matKhau} onChange={(event) => { update('matKhau', event.target.value); setError('') }} minLength="8" required /><small>Tối thiểu 8 ký tự, gồm chữ cái và chữ số.</small></label>
-      <label>Nhập lại mật khẩu<input name="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => { setConfirmPassword(event.target.value); setError('') }} required /></label>
+      <PasswordField label="Mật khẩu" name="matKhau" autoComplete="new-password" value={form.matKhau} onChange={(event) => { update('matKhau', event.target.value); setError('') }} minLength="8" required hint="Tối thiểu 8 ký tự, gồm chữ cái và chữ số." />
+      <PasswordField label="Nhập lại mật khẩu" name="confirmPassword" autoComplete="new-password" value={confirmPassword} onChange={(event) => { setConfirmPassword(event.target.value); setError('') }} required />
       <details className="optional-fields"><summary>Thông tin bổ sung (không bắt buộc)</summary>
         <div className="optional-grid">
           <label>Mã định danh<input name="maDinhDanh" inputMode="numeric" value={form.maDinhDanh} onChange={(event) => { update('maDinhDanh', event.target.value); setError('') }} placeholder="12 chữ số" /></label>
