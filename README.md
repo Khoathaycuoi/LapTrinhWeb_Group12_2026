@@ -2,16 +2,16 @@
 
 ## 1. Yêu cầu môi trường
 
-- MySQL Server 8.0 và MySQL Workbench.
-- .NET SDK 10.0.
+- MySQL Server 8.0 trở lên và MySQL Workbench.
+- .NET SDK 10.0 trở lên.
 - Node.js 20.19 trở lên hoặc 22.12 trở lên, kèm npm.
 - Hai cổng `7184` (backend HTTPS) và `5173` (frontend) chưa bị chương trình khác sử dụng.
 
 ## 2. Tạo cơ sở dữ liệu
 
-Trong MySQL Workbench, kết nối đến MySQL Server và nhập file `nha_khoa_g12.sql` bằng **Server → Data Import → Import from Self-Contained File → Start Import**. Nhập trên MySQL mới hoặc database chưa có các bảng của dự án.
+Mở MySQL Workbench và kết nối đến MySQL Server. Chọn File → Open SQL Script, mở file **database/nha_khoa_g12.sql**, sau đó bấm Execute All để chạy toàn bộ file.
 
-File SQL tự tạo database `nha_khoa_g12`, 19 bảng nghiệp vụ và bốn tài khoản demo. Không cần chạy thêm `dotnet ef database update` sau khi nhập file này.
+Sau khi chạy, file SQL tạo database `nha_khoa_g12`, 19 bảng nghiệp vụ và bốn tài khoản demo. Không cần chạy thêm `dotnet ef database update` sau khi nhập file này.
 
 ## 3. Cấu hình backend
 
